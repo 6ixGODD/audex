@@ -19,10 +19,13 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
+  "halo>=0.0.31,<0.0.32",
   "pyaudio>=0.2.14,<0.3",
   "pydantic>=2.12.4,<3",
   "pydantic-settings>=2.12,<3",
   "pyqt6>=6.10,<7",
+  "sqlalchemy>=2.0.44,<3",
+  "sqlmodel>=0.0.27,<0.0.28",
 ]
 
 optional-dependencies.dev = [ "pre-commit>=4.4,<5", "ruff>=0.14.5,<0.15" ]
