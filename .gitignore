@@ -90,3 +90,5 @@ pyrightconfig.json
 
 # Config files
 .config.yml
+
+!audex/lib/
