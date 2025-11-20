@@ -44,8 +44,10 @@ class AudexError(Exception):
         ```
     """
 
+    __slots__ = ("message",)
+
     default_message: t.ClassVar[str] = "An error occurred in Audex."
-    code: t.ClassVar[int] = 1
+    code: t.ClassVar[int] = 0x01
 
     def __init__(self, message: str | None = None) -> None:
         """Initialize the exception.
@@ -86,7 +88,7 @@ class RequiredModuleNotFoundError(AudexError):
     """
 
     default_message = "Required module {module_name} not found. Please install it to proceed."
-    code: t.ClassVar[int] = 2
+    code: t.ClassVar[int] = 0x02
 
     def __init__(self, *module_name: str, message: str | None = None) -> None:
         """Initialize the exception.
@@ -144,7 +146,7 @@ class ValidationError(AudexError):
     """
 
     default_message = "Validation failed: {reason}"
-    code: t.ClassVar[int] = 20
+    code: t.ClassVar[int] = 0x14
 
     def __init__(self, reason: str, message: str | None = None) -> None:
         """Initialize the exception.

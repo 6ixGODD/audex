@@ -14,7 +14,7 @@ from pydantic_core.core_schema import no_info_plain_validator_function
 from pydantic_core.core_schema import plain_serializer_function_ser_schema
 
 
-def gen_id(prefix: str = "", suffix: str = "", without_hyphen: bool = True) -> str:
+def gen_id(prefix: str = "", suffix: str = "", without_hyphen: bool = True, digis: int = 32) -> str:
     """Generate a unique identifier (UUID) with optional prefix and
     suffix.
 
@@ -23,14 +23,15 @@ def gen_id(prefix: str = "", suffix: str = "", without_hyphen: bool = True) -> s
         suffix: A string to append to the generated UUID (default: "").
         without_hyphen: Whether to remove hyphens from the UUID
             (default: True).
+        digis: Number of digits to include from the UUID (default: 32).
 
     Returns:
         A unique identifier string with the specified prefix and suffix.
     """
-    uuid_str = str(uuid.uuid4())
-    if without_hyphen:
-        uuid_str = uuid_str.replace("-", "")
-    return f"{prefix}{uuid_str}{suffix}"
+    uid = uuid.uuid4()
+    uid_str = uid.hex if without_hyphen else str(uid)
+    uid_str = uid_str[:digis]
+    return f"{prefix}{uid_str}{suffix}"
 
 
 def utcnow() -> datetime.datetime:
