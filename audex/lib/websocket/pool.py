@@ -111,6 +111,8 @@ class WebsocketConnectionPool(LoggingMixin, t.AsyncContextManager):
         headers: Optional headers sent with each connection.
     """
 
+    __logtag__ = "websocket.pool"
+
     def __init__(
         self,
         *,

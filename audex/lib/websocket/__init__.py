@@ -5,5 +5,5 @@ from audex.exceptions import AudexError
 
 class WebsocketError(AudexError, RuntimeError):
     __slots__ = ()
-    code = 1000
+    code = 0x9001
     default_message = "A WebSocket error occurred"
