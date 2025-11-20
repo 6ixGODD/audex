@@ -4,8 +4,7 @@ import inspect
 import types
 import typing as t
 
-if t.TYPE_CHECKING:
-    from audex.logger import Logger
+import loguru
 
 
 class AsyncContextMixin:
@@ -52,10 +51,5 @@ class LoggingMixin:
         if not inspect.isabstract(cls) and not getattr(cls, "__logtag__", None):
             raise TypeError(f"{cls.__name__} must define __logtag__ class variable")
 
-    def __init__(self, *args: t.Any, logger: Logger | None = None, **kwargs: t.Any) -> None:
-        if logger is not None:
-            self.logger = logger.with_tag(self.__logtag__)
-        super().__init__(*args, **kwargs)
-
-    def setup_log(self, logger: Logger) -> None:
-        self.logger = logger.with_tag(self.__logtag__)
+    def __init__(self) -> None:
+        self.logger = loguru.logger.bind(tag=self.__logtag__)
