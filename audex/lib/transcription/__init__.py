@@ -4,9 +4,9 @@ import abc
 import typing as t
 
 from audex.exceptions import AudexError
-from audex.lib.transript.types import Delta
-from audex.lib.transript.types import Done
-from audex.lib.transript.types import Start
+from audex.lib.transcription.types import Delta
+from audex.lib.transcription.types import Done
+from audex.lib.transcription.types import Start
 from audex.lib.types import DuplexSession
 
 

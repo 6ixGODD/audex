@@ -10,13 +10,13 @@ from pydantic import TypeAdapter
 from audex import utils
 from audex.helper.mixin import LoggingMixin
 from audex.helper.stream import AsyncStream
-from audex.lib.transript import Delta
-from audex.lib.transript import Done
-from audex.lib.transript import ReceiveType
-from audex.lib.transript import Start
-from audex.lib.transript import Transcription
-from audex.lib.transript import TranscriptionError
-from audex.lib.transript import TranscriptSession
+from audex.lib.transcription import Delta
+from audex.lib.transcription import Done
+from audex.lib.transcription import ReceiveType
+from audex.lib.transcription import Start
+from audex.lib.transcription import Transcription
+from audex.lib.transcription import TranscriptionError
+from audex.lib.transcription import TranscriptSession
 from audex.lib.websocket.connection import WebsocketConnection
 from audex.lib.websocket.pool import WebsocketConnectionPool
 
