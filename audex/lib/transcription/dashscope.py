@@ -22,7 +22,6 @@ from audex.lib.websocket.pool import WebsocketConnectionPool
 
 
 class InvalidParamError(TranscriptionError):
-    code = 0x1002
     default_message = "Invalid transcription parameters"
 
     def __init__(
@@ -173,9 +172,10 @@ class DashscopeParaformer(LoggingMixin, Transcription):
 
     def __init__(
         self,
+        *,
         model: str = "paraformer-realtime-v2",
         url: str = "wss://dashscope.aliyuncs.com/api-ws/v1/inference",
-        api_key: str | None = None,
+        api_key: str,
         user_agent: str | None = None,
         workspace: str | None = None,
         max_connections: int = 1000,

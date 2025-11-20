@@ -23,13 +23,13 @@ class ConnectionPoolExhaustedError(WebsocketError):
     """Raised when the connection pool has reached its maximum
     capacity."""
 
-    code = 1200
+    default_message = "Connection pool exhausted."
 
 
 class ConnectionPoolUnavailableError(WebsocketError):
     """Raised when attempting to use a closed or unavailable pool."""
 
-    code = 1201
+    default_message = "Connection pool is unavailable."
 
 
 class PendingConnection:

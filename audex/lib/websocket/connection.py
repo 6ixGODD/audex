@@ -19,26 +19,26 @@ class ConnectionBusyError(WebsocketError):
     """Raised when attempting to use a connection that is already
     busy."""
 
-    code = 1100
+    default_message = "Connection is already busy"
 
 
 class ConnectionUnavailableError(WebsocketError):
     """Raised when a connection is unavailable or cannot be
     established."""
 
-    code = 1101
+    default_message = "Connection is unavailable"
 
 
 class ConnectionClosedError(WebsocketError):
     """Raised when attempting to use a closed connection."""
 
-    code = 1102
+    default_message = "Connection is closed"
 
 
 class ConnectionDrainTimeoutError(WebsocketError):
     """Raised when connection draining exceeds the timeout."""
 
-    code = 1103
+    default_message = "Connection draining timed out"
 
 
 # Type alias for drain condition callback

@@ -30,5 +30,4 @@ class TranscriptSession(DuplexSession[bytes, ReceiveType], abc.ABC): ...
 
 
 class TranscriptionError(AudexError):
-    code = 0x1001
     default_message = "Transcription service error"
