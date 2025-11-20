@@ -1,5 +1,5 @@
 # Source directories to format and lint
-src = ["boxlab", "tests"]
+src = ["audex", "tests"]
 
 # Exclude a variety of commonly ignored directories
 exclude = [
@@ -87,7 +87,7 @@ section-order = [
 ]
 
 # Specify first-party packages for proper import grouping
-known-first-party = ["boxlab"]
+known-first-party = ["audex"]
 
 [lint.pydocstyle]
 # Use Google-style docstring convention
