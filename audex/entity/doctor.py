@@ -19,6 +19,12 @@ class Doctor(BaseEntity):
         username: The unique username of the doctor for login.
         password_hash: The hashed password for secure authentication.
         name: The doctor's real name for display and records.
+        employee_number: The doctor's employee number (工号) in the hospital.
+            Optional field for hospital staff identification.
+        department: The department (科室) where the doctor works.
+            Optional field for organizational tracking.
+        hospital_name: The name of the hospital where the doctor works.
+            Optional field for multi-hospital systems.
         vp_key: The voiceprint audio file key/path in storage. Used for 1:1
             speaker verification to distinguish doctor from patient. None if
             not yet registered.
@@ -38,6 +44,9 @@ class Doctor(BaseEntity):
             username="dr_zhang",
             password_hash="hashed_password_here",
             name="张医生",
+            employee_number="H12345",
+            department="内科",
+            hospital_name="市人民医院",
             is_active=True,
         )
 
@@ -56,6 +65,9 @@ class Doctor(BaseEntity):
     username: str = StringField()
     password_hash: str = StringField()
     name: str = StringField()
+    employee_number: str | None = StringField(nullable=True)
+    department: str | None = StringField(nullable=True)
+    hospital_name: str | None = StringField(nullable=True)
     vp_key: str | None = StringField(nullable=True)
     vp_text: str | None = StringField(nullable=True)
     is_active: bool = BoolField(default=True)

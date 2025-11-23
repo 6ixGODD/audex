@@ -33,6 +33,24 @@ class DoctorTable(BaseTable[Doctor], table=True):
         max_length=100,
         description="Doctor's real name",
     )
+    employee_number: str | None = sqlm.Field(
+        default=None,
+        nullable=True,
+        max_length=50,
+        description="Doctor's employee number (工号)",
+    )
+    department: str | None = sqlm.Field(
+        default=None,
+        nullable=True,
+        max_length=100,
+        description="Department where doctor works (科室)",
+    )
+    hospital_name: str | None = sqlm.Field(
+        default=None,
+        nullable=True,
+        max_length=200,
+        description="Name of the hospital",
+    )
     vp_key: str | None = sqlm.Field(
         default=None,
         nullable=True,
@@ -65,6 +83,9 @@ class DoctorTable(BaseTable[Doctor], table=True):
             username=entity.username,
             password_hash=entity.password_hash,
             name=entity.name,
+            employee_number=entity.employee_number,
+            department=entity.department,
+            hospital_name=entity.hospital_name,
             vp_key=entity.vp_key,
             vp_text=entity.vp_text,
             is_active=entity.is_active,
@@ -83,6 +104,9 @@ class DoctorTable(BaseTable[Doctor], table=True):
             username=self.username,
             password_hash=self.password_hash,
             name=self.name,
+            employee_number=self.employee_number,
+            department=self.department,
+            hospital_name=self.hospital_name,
             vp_key=self.vp_key,
             vp_text=self.vp_text,
             is_active=self.is_active,

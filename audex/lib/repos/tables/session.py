@@ -33,6 +33,18 @@ class SessionTable(BaseTable[Session], table=True):
         max_length=100,
         description="Patient name for this session",
     )
+    outpatient_number: str | None = sqlm.Field(
+        default=None,
+        nullable=True,
+        max_length=50,
+        description="Outpatient number (门诊号)",
+    )
+    medical_record_number: str | None = sqlm.Field(
+        default=None,
+        nullable=True,
+        max_length=50,
+        description="Medical record number (病历号)",
+    )
     status: str = sqlm.Field(
         default=SessionStatus.DRAFT.value,
         max_length=20,
@@ -69,6 +81,8 @@ class SessionTable(BaseTable[Session], table=True):
             uid=entity.id,
             doctor_id=entity.doctor_id,
             patient_name=entity.patient_name,
+            outpatient_number=entity.outpatient_number,
+            medical_record_number=entity.medical_record_number,
             status=entity.status.value,
             started_at=entity.started_at,
             ended_at=entity.ended_at,
@@ -87,6 +101,8 @@ class SessionTable(BaseTable[Session], table=True):
             id=self.uid,
             doctor_id=self.doctor_id,
             patient_name=self.patient_name,
+            outpatient_number=self.outpatient_number,
+            medical_record_number=self.medical_record_number,
             status=SessionStatus.parse(self.status),
             started_at=self.started_at,
             ended_at=self.ended_at,

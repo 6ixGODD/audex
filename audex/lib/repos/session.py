@@ -156,6 +156,8 @@ class SessionRepository(SQLiteRepository[Session]):
 
             session_obj.doctor_id = data.doctor_id
             session_obj.patient_name = data.patient_name
+            session_obj.outpatient_number = data.outpatient_number
+            session_obj.medical_record_number = data.medical_record_number
             session_obj.status = data.status.value
             session_obj.started_at = data.started_at
             session_obj.ended_at = data.ended_at
@@ -197,6 +199,8 @@ class SessionRepository(SQLiteRepository[Session]):
                 session_obj = table_objs[data.id]
                 session_obj.doctor_id = data.doctor_id
                 session_obj.patient_name = data.patient_name
+                session_obj.outpatient_number = data.outpatient_number
+                session_obj.medical_record_number = data.medical_record_number
                 session_obj.status = data.status.value
                 session_obj.started_at = data.started_at
                 session_obj.ended_at = data.ended_at

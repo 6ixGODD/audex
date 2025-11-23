@@ -177,6 +177,9 @@ class DoctorRepository(SQLiteRepository[Doctor]):
             doctor_obj.username = data.username
             doctor_obj.password_hash = data.password_hash
             doctor_obj.name = data.name
+            doctor_obj.employee_number = data.employee_number
+            doctor_obj.department = data.department
+            doctor_obj.hospital_name = data.hospital_name
             doctor_obj.vp_key = data.vp_key
             doctor_obj.vp_text = data.vp_text
             doctor_obj.is_active = data.is_active
@@ -218,6 +221,9 @@ class DoctorRepository(SQLiteRepository[Doctor]):
                 doctor_obj.username = data.username
                 doctor_obj.password_hash = data.password_hash
                 doctor_obj.name = data.name
+                doctor_obj.employee_number = data.employee_number
+                doctor_obj.department = data.department
+                doctor_obj.hospital_name = data.hospital_name
                 doctor_obj.vp_key = data.vp_key
                 doctor_obj.vp_text = data.vp_text
                 doctor_obj.is_active = data.is_active

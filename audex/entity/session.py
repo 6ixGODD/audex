@@ -27,6 +27,10 @@ class Session(BaseEntity):
             reference to Doctor entity.
         patient_name: The name of the patient in this session. Optional field
             for record keeping.
+        outpatient_number: The outpatient number (门诊号) for this visit.
+            Optional field for clinical record linking.
+        medical_record_number: The medical record number (病历号) of the patient.
+            Optional field for patient history tracking.
         status: The current status of the session (DRAFT, IN_PROGRESS, COMPLETED,
             CANCELLED). Defaults to DRAFT.
         started_at: Timestamp when the session first started recording. None
@@ -46,6 +50,8 @@ class Session(BaseEntity):
         session = Session(
             doctor_id="doctor-abc123",
             patient_name="李女士",
+            outpatient_number="2024112301",
+            medical_record_number="MR-987654",
             notes="初诊",
         )
 
@@ -70,6 +76,8 @@ class Session(BaseEntity):
     id: str = StringField(immutable=True, default_factory=lambda: utils.gen_id(prefix="session-"))
     doctor_id: str = StringField()
     patient_name: str | None = StringField(nullable=True)
+    outpatient_number: str | None = StringField(nullable=True)
+    medical_record_number: str | None = StringField(nullable=True)
     status: SessionStatus = StringBackedField(SessionStatus, default=SessionStatus.DRAFT)
     started_at: datetime.datetime | None = DateTimeField(nullable=True)
     ended_at: datetime.datetime | None = DateTimeField(nullable=True)
