@@ -4,9 +4,10 @@ import abc
 import datetime
 import typing as t
 
-from prototypex import utils
-from prototypex.entity import BaseEntity
 import sqlmodel as sqlm
+
+from audex import utils
+from audex.entity import BaseEntity
 
 E = t.TypeVar("E", bound=BaseEntity)
 
@@ -46,15 +47,3 @@ class BaseTable(sqlm.SQLModel, abc.ABC, t.Generic[E], table=False):
 
     def __repr__(self) -> str:
         return f"TABLE <{self.__class__.__name__}(uid={self.uid!r})>"
-
-
-# from prototypex.infras.repository.tables import admin
-# from prototypex.infras.repository.tables import api
-# from prototypex.infras.repository.tables import api_key
-# from prototypex.infras.repository.tables import app
-# from prototypex.infras.repository.tables import subscription
-# from prototypex.infras.repository.tables import user
-#
-# TABLES: set[type[sqlm.SQLModel]] = (
-#     admin.TABLES | api_key.TABLES | api.TABLES | app.TABLES | subscription.TABLES | user.TABLES
-# )
