@@ -62,7 +62,12 @@ class SessionService(BaseService):
         session_id = await self.session_repo.create(session)
         self.logger.info(f"Session created successfully with ID: {session_id}")
 
-        return session
+        # Retrieve the created session to get the actual ID from database
+        created_session = await self.session_repo.read(session_id)
+        if created_session is None:
+            raise ValueError(f"Failed to retrieve created session with ID: {session_id}")
+        
+        return created_session
 
     async def start_session(self, session_id: str) -> Session:
         """Start a session and begin recording.

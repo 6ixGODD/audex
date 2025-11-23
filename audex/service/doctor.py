@@ -100,7 +100,12 @@ class DoctorService(BaseService):
         doctor_id = await self.doctor_repo.create(doctor)
         self.logger.info(f"Doctor registered successfully with ID: {doctor_id}")
 
-        return doctor
+        # Retrieve the created doctor to get the actual ID from database
+        created_doctor = await self.doctor_repo.read(doctor_id)
+        if created_doctor is None:
+            raise ValueError(f"Failed to retrieve created doctor with ID: {doctor_id}")
+        
+        return created_doctor
 
     async def login(self, username: str, password: str) -> Doctor:
         """Authenticate a doctor and return their account.

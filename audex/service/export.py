@@ -129,8 +129,10 @@ class ExportService(BaseService):
             Dictionary with conversation data.
         """
         # Retrieve all utterances for the session
+        from audex.entity.utterance import Utterance
+        
         utterances = await self.utterance_repo.list(
-            session.filter().id.eq(session.id),
+            Utterance.filter().session_id.eq(session.id),
             page_index=0,
             page_size=10000,  # Get all utterances
         )
