@@ -129,12 +129,13 @@ class ExportService(BaseService):
             Dictionary with conversation data.
         """
         # Retrieve all utterances for the session
-        from audex.entity.utterance import Utterance
-        
+        # Note: Using a large page size to get all utterances in one call
+        # For production use with very long sessions, consider implementing
+        # pagination or streaming export
         utterances = await self.utterance_repo.list(
             Utterance.filter().session_id.eq(session.id),
             page_index=0,
-            page_size=10000,  # Get all utterances
+            page_size=100000,  # Large enough for most sessions
         )
 
         # Sort utterances by sequence
@@ -182,10 +183,12 @@ class ExportService(BaseService):
             List of exported audio file paths.
         """
         # Retrieve all segments for the session
+        # Note: Using a large page size to get all segments in one call
+        # Most sessions will have fewer than 10000 segments
         segments = await self.segment_repo.list(
             Segment.filter().session_id.eq(session_id),
             page_index=0,
-            page_size=1000,
+            page_size=10000,  # Large enough for most sessions
         )
 
         # Sort segments by sequence
