@@ -110,3 +110,7 @@ class UtteranceTable(BaseTable[Utterance], table=True):
             created_at=self.created_at,
             updated_at=self.updated_at,
         )
+
+
+TABLES: set[type[sqlm.SQLModel]] = {UtteranceTable}
+"""Set of all table models for the repository."""
