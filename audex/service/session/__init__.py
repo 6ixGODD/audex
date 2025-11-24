@@ -113,7 +113,7 @@ class SessionService(BaseService):
         """Delete a session and all associated data."""
         deleted = await self.session_repo.delete(session_id)
         if not deleted:
-            raise SessionNotFoundError(f"Session {session_id} not found")
+            raise SessionNotFoundError(session_id=session_id)
 
         # Also delete associated utterances
         f = utterance_filter().session_id.eq(session_id)
@@ -140,7 +140,7 @@ class SessionService(BaseService):
         """Mark session as completed."""
         session = await self.session_repo.read(session_id)
         if session is None:
-            raise SessionNotFoundError(f"Session {session_id} not found")
+            raise SessionNotFoundError(session_id=session_id)
 
         session.complete()
         await self.session_repo.update(session)
@@ -152,7 +152,7 @@ class SessionService(BaseService):
     async def cancel(self, session_id: str) -> Session:
         session = await self.session_repo.read(session_id)
         if session is None:
-            raise SessionNotFoundError(f"Session {session_id} not found")
+            raise SessionNotFoundError(session_id=session_id)
 
         session.cancel()
         await self.session_repo.update(session)
@@ -185,7 +185,7 @@ class SessionService(BaseService):
             raise SessionServiceError(f"No VP found for doctor {s.doctor_id}")
         session = await self.session_repo.read(session_id)
         if session is None:
-            raise SessionNotFoundError(f"Session {session_id} not found")
+            raise SessionNotFoundError(session_id=session_id)
 
         # Update session status to IN_PROGRESS
         session.start()

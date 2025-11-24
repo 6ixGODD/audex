@@ -21,3 +21,12 @@ class RegisterCommand(t.NamedTuple):
     hospital: str | None = None
     phone: CNPhone | None = None
     email: Email | None = None
+
+
+class UpdateCommand(t.NamedTuple):
+    name: str | None = None
+    department: str | None = None
+    title: str | None = None
+    hospital: str | None = None
+    phone: CNPhone | None = None
+    email: Email | None = None
