@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import typing as t
 
-from pydantic import BaseModel
 from pydantic import Field
+
+from audex.lib.restful import BaseModel
 
 
 class RequestHeader(BaseModel):
     app_id: str = Field(
         ...,
-        serialization_alias="app_id",
         description="Application ID obtained from XFYun platform",
     )
     status: t.Literal[3] = Field(
@@ -34,9 +34,9 @@ class XFYunResponseHeader(BaseModel):
 
 
 class ResFormat(BaseModel):
-    encoding: t.Literal["utf-8"] = Field(
-        default="utf-8",
-        description="Encoding format, fixed to utf-8",
+    encoding: t.Literal["utf8"] = Field(
+        default="utf8",
+        description="Encoding format, fixed to utf8",
     )
     compress: t.Literal["raw"] = Field(
         default="raw",
@@ -111,21 +111,25 @@ class S782b4996CreateGroupParams(BaseModel):
     )
     group_id: str = Field(
         ...,
+        alias="groupId",
         serialization_alias="groupId",
         description="Unique identifier for the group, supports letters, numbers and underscores, max length 32",
     )
     group_name: str | None = Field(
         default=None,
+        alias="groupName",
         serialization_alias="groupName",
         description="Name of the group, optional, length range 0-256",
     )
     group_info: str | None = Field(
         default=None,
+        alias="groupInfo",
         serialization_alias="groupInfo",
         description="Description information for the group, optional, length range 0-256",
     )
     create_group_res: ResFormat = Field(
         default_factory=ResFormat,
+        alias="createGroupRes",
         serialization_alias="createGroupRes",
         description="Expected response format configuration",
     )
@@ -152,24 +156,28 @@ class CreateGroupRequest(BaseModel):
 class CreateGroupResult(BaseModel):
     group_id: str = Field(
         ...,
+        alias="groupId",
         serialization_alias="groupId",
         description="Created group unique identifier",
     )
     group_name: str | None = Field(
         default=None,
+        alias="groupName",
         serialization_alias="groupName",
         description="Created group name",
     )
     group_info: str | None = Field(
         default=None,
+        alias="groupInfo",
         serialization_alias="groupInfo",
         description="Created group description",
     )
 
 
 class CreateGroupPayload(BaseModel):
-    create_group_res: TextResult = Field(
-        ...,
+    create_group_res: TextResult | None = Field(
+        default=None,
+        alias="createGroupRes",
         serialization_alias="createGroupRes",
         description="Base64 encoded group creation result",
     )
@@ -186,21 +194,25 @@ class S782b4996CreateFeatureParams(BaseModel):
     )
     group_id: str = Field(
         ...,
+        alias="groupId",
         serialization_alias="groupId",
         description="Group ID where the feature will be stored, max length 32",
     )
     feature_id: str = Field(
         ...,
+        alias="featureId",
         serialization_alias="featureId",
         description="Unique identifier for the feature, length range 0-32",
     )
     feature_info: str | None = Field(
         default=None,
+        alias="featureInfo",
         serialization_alias="featureInfo",
         description="Feature description, recommended to include timestamp, length range 0-256",
     )
     create_feature_res: ResFormat = Field(
         default_factory=ResFormat,
+        alias="createFeatureRes",
         serialization_alias="createFeatureRes",
         description="Expected response format configuration",
     )
@@ -231,6 +243,7 @@ class CreateFeatureRequest(BaseModel):
 class CreateFeatureResult(BaseModel):
     feature_id: str = Field(
         ...,
+        alias="featureId",
         serialization_alias="featureId",
         description="Created feature unique identifier",
     )
@@ -239,6 +252,7 @@ class CreateFeatureResult(BaseModel):
 class CreateFeaturePayload(BaseModel):
     create_feature_res: TextResult = Field(
         ...,
+        alias="createFeatureRes",
         serialization_alias="createFeatureRes",
         description="Base64 encoded feature creation result",
     )
@@ -255,17 +269,20 @@ class S782b4996UpdateFeatureParams(BaseModel):
     )
     group_id: str = Field(
         ...,
+        alias="groupId",
         serialization_alias="groupId",
         pattern=r"^[a-zA-Z0-9_]+$",
         description="Group ID where the feature is stored, max length 32",
     )
     feature_id: str | None = Field(
         default=None,
+        alias="featureId",
         serialization_alias="featureId",
         description="Feature ID to update, length range 0-32",
     )
     feature_info: str | None = Field(
         default=None,
+        alias="featureInfo",
         serialization_alias="featureInfo",
         description="Updated feature description, recommended to include timestamp, length range 0-256",
     )
@@ -275,6 +292,7 @@ class S782b4996UpdateFeatureParams(BaseModel):
     )
     update_feature_res: ResFormat = Field(
         default_factory=ResFormat,
+        alias="updateFeatureRes",
         serialization_alias="updateFeatureRes",
         description="Expected response format configuration",
     )
@@ -312,76 +330,13 @@ class UpdateFeatureResult(BaseModel):
 class UpdateFeaturePayload(BaseModel):
     update_feature_res: TextResult = Field(
         ...,
+        alias="updateFeatureRes",
         serialization_alias="updateFeatureRes",
         description="Base64 encoded feature update result",
     )
 
 
 class UpdateFeatureResponse(XFYunResponse[UpdateFeaturePayload]): ...
-
-
-# Query Feature List -----------------------------------------------------------
-class S782b4996QueryFeatureListParams(BaseModel):
-    func: t.Literal["queryFeatureList"] = Field(
-        default="queryFeatureList",
-        description="Function identifier for querying feature list",
-    )
-    group_id: str = Field(
-        ...,
-        serialization_alias="groupId",
-        description="Group ID to query features from, max length 32",
-    )
-    query_feature_list_res: ResFormat = Field(
-        default_factory=ResFormat,
-        serialization_alias="queryFeatureListRes",
-        description="Expected response format configuration",
-    )
-
-
-class QueryFeatureListParams(BaseModel):
-    s782b4996: S782b4996QueryFeatureListParams = Field(
-        ...,
-        description="Service-specific parameters for voiceprint recognition",
-    )
-
-
-class QueryFeatureListRequest(BaseModel):
-    header: RequestHeader = Field(
-        ...,
-        description="Request header with platform parameters",
-    )
-    parameter: QueryFeatureListParams = Field(
-        ...,
-        description="Service feature parameters",
-    )
-
-
-class FeatureInfo(BaseModel):
-    feature_id: str = Field(
-        ...,
-        serialization_alias="featureId",
-        description="Unique feature identifier",
-    )
-    feature_info: str | None = Field(
-        None,
-        serialization_alias="featureInfo",
-        description="Feature description, recommended to include timestamp for easy identification",
-    )
-
-
-class QueryFeatureListResult(BaseModel):
-    __root__: list[FeatureInfo]
-
-
-class QueryFeatureListPayload(BaseModel):
-    query_feature_list_res: TextResult = Field(
-        ...,
-        serialization_alias="queryFeatureListRes",
-        description="Base64 encoded feature list",
-    )
-
-
-class QueryFeatureListResponse(XFYunResponse[QueryFeatureListPayload]): ...
 
 
 # Search Score Feature (1:1 Verification) --------------------------------------
@@ -392,17 +347,20 @@ class S782b4996SearchScoreFeaParams(BaseModel):
     )
     group_id: str = Field(
         ...,
+        alias="groupId",
         serialization_alias="groupId",
         description="Group ID where the target feature is stored, max length 32",
     )
     dst_feature_id: str = Field(
         ...,
+        alias="dstFeatureId",
         serialization_alias="dstFeatureId",
         max_length=32,
         description="Target feature ID to compare against, length range 0-32",
     )
     search_score_fea_res: ResFormat = Field(
         default_factory=ResFormat,
+        alias="searchScoreFeaRes",
         serialization_alias="searchScoreFeaRes",
         description="Expected response format configuration",
     )
@@ -437,11 +395,13 @@ class SearchScoreFeaResult(BaseModel):
     )
     feature_id: str = Field(
         ...,
+        alias="featureId",
         serialization_alias="featureId",
         description="Target feature unique identifier",
     )
     feature_info: str | None = Field(
         None,
+        alias="featureInfo",
         serialization_alias="featureInfo",
         description="Target feature description",
     )
@@ -450,6 +410,7 @@ class SearchScoreFeaResult(BaseModel):
 class SearchScoreFeaPayload(BaseModel):
     search_score_fea_res: TextResult = Field(
         ...,
+        alias="searchScoreFeaRes",
         serialization_alias="searchScoreFeaRes",
         description="Base64 encoded comparison result",
     )
@@ -466,16 +427,19 @@ class S782b4996SearchFeaParams(BaseModel):
     )
     group_id: str = Field(
         ...,
+        alias="groupId",
         serialization_alias="groupId",
         description="Group ID to search features in, max length 32",
     )
     top_k: int = Field(
         ...,
+        alias="topK",
         serialization_alias="topK",
         description="Number of top matching features to return, max 10 (requires sufficient features in the group)",
     )
     search_fea_res: ResFormat = Field(
         default_factory=ResFormat,
+        alias="searchFeaRes",
         serialization_alias="searchFeaRes",
         description="Expected response format configuration",
     )
@@ -510,11 +474,13 @@ class ScoreItem(BaseModel):
     )
     feature_id: str = Field(
         ...,
+        alias="featureId",
         serialization_alias="featureId",
         description="Matched feature unique identifier",
     )
     feature_info: str | None = Field(
         None,
+        alias="featureInfo",
         serialization_alias="featureInfo",
         description="Matched feature description",
     )
@@ -523,6 +489,7 @@ class ScoreItem(BaseModel):
 class SearchFeaResult(BaseModel):
     score_list: list[ScoreItem] = Field(
         ...,
+        alias="scoreList",
         serialization_alias="scoreList",
         description="List of top K matching features ordered by similarity score (descending)",
     )
@@ -531,6 +498,7 @@ class SearchFeaResult(BaseModel):
 class SearchFeaPayload(BaseModel):
     search_fea_res: TextResult = Field(
         ...,
+        alias="searchFeaRes",
         serialization_alias="searchFeaRes",
         description="Base64 encoded search results",
     )
@@ -547,16 +515,19 @@ class S782b4996DeleteFeatureParams(BaseModel):
     )
     group_id: str = Field(
         ...,
+        alias="groupId",
         serialization_alias="groupId",
         description="Group ID where the feature is stored, max length 32",
     )
     feature_id: str = Field(
         ...,
+        alias="featureId",
         serialization_alias="featureId",
         description="Feature ID to delete, length range 1-32",
     )
     delete_feature_res: ResFormat = Field(
         default_factory=ResFormat,
+        alias="deleteFeatureRes",
         serialization_alias="deleteFeatureRes",
         description="Expected response format configuration",
     )
@@ -590,6 +561,7 @@ class DeleteFeatureResult(BaseModel):
 class DeleteFeaturePayload(BaseModel):
     delete_feature_res: TextResult = Field(
         ...,
+        alias="deleteFeatureRes",
         serialization_alias="deleteFeatureRes",
         description="Base64 encoded deletion result",
     )
@@ -606,11 +578,13 @@ class S782b4996DeleteGroupParams(BaseModel):
     )
     group_id: str = Field(
         ...,
+        alias="groupId",
         serialization_alias="groupId",
         description="Group ID to delete, max length 32",
     )
     delete_group_res: ResFormat = Field(
         default_factory=ResFormat,
+        alias="deleteGroupRes",
         serialization_alias="deleteGroupRes",
         description="Expected response format configuration",
     )
@@ -644,6 +618,7 @@ class DeleteGroupResult(BaseModel):
 class DeleteGroupPayload(BaseModel):
     delete_group_res: TextResult = Field(
         ...,
+        alias="deleteGroupRes",
         serialization_alias="deleteGroupRes",
         description="Base64 encoded deletion result",
     )

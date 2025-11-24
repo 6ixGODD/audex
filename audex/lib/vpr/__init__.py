@@ -9,6 +9,10 @@ from audex.helper.mixin import LoggingMixin
 class VPR(LoggingMixin, abc.ABC):
     group_id: str | None
 
+    def __init__(self, group_id: str | None = None) -> None:
+        super().__init__()
+        self.group_id = group_id
+
     @abc.abstractmethod
     async def create_group(self, name: str, gid: str | None = None) -> str: ...
 
