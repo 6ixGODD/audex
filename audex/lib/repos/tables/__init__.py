@@ -55,12 +55,16 @@ class BaseTable(sqlm.SQLModel, abc.ABC, t.Generic[E], table=False):
     @abc.abstractmethod
     def to_entity(self) -> E: ...
 
+    @abc.abstractmethod
+    def update(self, entity: E) -> None: ...
+
 
 from audex.lib.repos.tables import doctor  # noqa: E402
 from audex.lib.repos.tables import segment  # noqa: E402
 from audex.lib.repos.tables import session  # noqa: E402
 from audex.lib.repos.tables import utterance  # noqa: E402
+from audex.lib.repos.tables import vp  # noqa: E402
 
 TABLES: set[type[sqlm.SQLModel]] = (
-    doctor.TABLES | segment.TABLES | session.TABLES | utterance.TABLES
+    doctor.TABLES | segment.TABLES | session.TABLES | utterance.TABLES | vp.TABLES
 )

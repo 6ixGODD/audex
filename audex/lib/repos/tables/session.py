@@ -118,6 +118,23 @@ class SessionTable(BaseTable[Session], table=True):
             updated_at=self.updated_at,
         )
 
+    def update(self, entity: Session) -> None:
+        """Update table model fields from Session entity.
+
+        Args:
+            entity: The Session entity with updated data.
+        """
+        self.doctor_id = entity.doctor_id
+        self.patient_name = entity.patient_name
+        self.clinic_number = entity.clinic_number
+        self.medical_record_number = entity.medical_record_number
+        self.diagnosis = entity.diagnosis
+        self.status = entity.status.value
+        self.started_at = entity.started_at
+        self.ended_at = entity.ended_at
+        self.notes = entity.notes
+        self.updated_at = entity.updated_at
+
 
 TABLES: set[type[sqlm.SQLModel]] = {SessionTable}
 """Set of all table models for the repository."""

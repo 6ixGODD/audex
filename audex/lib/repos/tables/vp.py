@@ -87,3 +87,17 @@ class VPTable(BaseTable[VP], table=True):
             created_at=self.created_at,
             updated_at=self.updated_at,
         )
+
+    def update(self, entity: VP) -> None:
+        """Update the VPTable instance with data from a VP entity."""
+        self.doctor_id = entity.doctor_id
+        self.vpr_uid = entity.vpr_uid
+        self.vpr_group_id = entity.vpr_group_id
+        self.audio_key = entity.audio_key
+        self.text_content = entity.text_content
+        self.sample_rate = entity.sample_rate
+        self.is_active = entity.is_active
+        self.updated_at = entity.updated_at
+
+
+TABLES: set[type[sqlm.SQLModel]] = {VPTable}

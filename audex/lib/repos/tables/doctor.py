@@ -116,6 +116,22 @@ class DoctorTable(BaseTable[Doctor], table=True):
             is_active=self.is_active,
         )
 
+    def update(self, entity: Doctor) -> None:
+        """Update table model fields from Doctor entity.
+
+        Args:
+            entity: The Doctor entity with updated data.
+        """
+        self.eid = entity.eid
+        self.password_hash = entity.password_hash.value
+        self.name = entity.name
+        self.department = entity.department
+        self.title = entity.title
+        self.hospital = entity.hospital
+        self.phone = entity.phone.value
+        self.email = entity.email.value
+        self.is_active = entity.is_active
+
 
 TABLES: set[type[sqlm.SQLModel]] = {DoctorTable}
 """Set of all table models for the repository."""

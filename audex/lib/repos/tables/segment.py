@@ -90,6 +90,20 @@ class SegmentTable(BaseTable[Segment], table=True):
             updated_at=self.updated_at,
         )
 
+    def update(self, entity: Segment) -> None:
+        """Update table model fields from Segment entity.
+
+        Args:
+            entity: The Segment entity with updated data.
+        """
+        self.session_id = entity.session_id
+        self.sequence = entity.sequence
+        self.audio_key = entity.audio_key
+        self.started_at = entity.started_at
+        self.ended_at = entity.ended_at
+        self.duration_ms = entity.duration_ms
+        self.updated_at = entity.updated_at
+
 
 TABLES: set[type[sqlm.SQLModel]] = {SegmentTable}
 """Set of all table models for the repository."""

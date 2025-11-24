@@ -111,6 +111,23 @@ class UtteranceTable(BaseTable[Utterance], table=True):
             updated_at=self.updated_at,
         )
 
+    def update(self, entity: Utterance) -> None:
+        """Update table model fields from Utterance entity.
+
+        Args:
+            entity: The Utterance entity with updated data.
+        """
+        self.session_id = entity.session_id
+        self.segment_id = entity.segment_id
+        self.sequence = entity.sequence
+        self.speaker = entity.speaker.value
+        self.text = entity.text
+        self.confidence = entity.confidence
+        self.start_time_ms = entity.start_time_ms
+        self.end_time_ms = entity.end_time_ms
+        self.timestamp = entity.timestamp
+        self.updated_at = entity.updated_at
+
 
 TABLES: set[type[sqlm.SQLModel]] = {UtteranceTable}
 """Set of all table models for the repository."""
