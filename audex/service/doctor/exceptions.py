@@ -32,3 +32,14 @@ class InvalidCredentialsError(DoctorServiceError):
         if message is None:
             message = self.default_message.format(reason=reason)
         super().__init__(message)
+
+
+class VoiceprintNotFoundError(DoctorServiceError):
+    __slots__ = ("doctor_id", "message")
+    default_message = "Voiceprint not found for doctor {doctor_id}."
+
+    def __init__(self, message: str | None = None, *, doctor_id: str) -> None:
+        if message is None:
+            message = self.default_message.format(doctor_id=doctor_id)
+        super().__init__(message)
+        self.doctor_id = doctor_id

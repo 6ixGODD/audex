@@ -22,7 +22,6 @@ from audex.lib.repos.vp import VPRepository
 from audex.lib.session import SessionManager
 from audex.lib.transcription import Transcription
 from audex.lib.transcription import events
-from audex.lib.types import DuplexSession
 from audex.lib.vpr import VPR
 from audex.service import BaseService
 from audex.service.decorators import require_auth
@@ -32,6 +31,7 @@ from audex.service.session.types import CreateSessionCommand
 from audex.service.session.types import Delta
 from audex.service.session.types import Done
 from audex.service.session.types import Start
+from audex.types import DuplexAbstractSession
 from audex.valueobj.utterance import Speaker
 
 
@@ -204,7 +204,7 @@ class SessionService(BaseService):
         )
 
 
-class SessionContainer(LoggingMixin, DuplexSession[bytes, Start | Delta | Done]):
+class SessionContainer(LoggingMixin, DuplexAbstractSession[bytes, Start | Delta | Done]):
     """Container for managing an active recording session.
 
     Handles audio recording, transcription, speaker identification, and
