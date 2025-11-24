@@ -4,6 +4,8 @@ import typing as t
 
 from pydantic import Field
 
+from audex.config.helper.client.http import HttpClientConfig
+from audex.config.helper.provider.unisound import UnisoundCredentialConfig
 from audex.config.helper.provider.xfyun import XFYunCredentialConfig
 from audex.helper.settings import BaseModel
 
@@ -19,9 +21,27 @@ class XFYunVPRConfig(BaseModel):
         description="The group ID for voiceprint recognition.",
     )
 
+    http: HttpClientConfig = Field(
+        default_factory=HttpClientConfig,
+        description="HTTP client configuration for XFYun VPR service.",
+    )
+
 
 class UnisoundVPRConfig(BaseModel):
-    pass
+    credential: UnisoundCredentialConfig = Field(
+        default_factory=UnisoundCredentialConfig,
+        description="Credentials for Unisound VPR service.",
+    )
+
+    group_id: str | None = Field(
+        default=None,
+        description="The group ID for voiceprint recognition.",
+    )
+
+    http: HttpClientConfig = Field(
+        default_factory=HttpClientConfig,
+        description="HTTP client configuration for Unisound VPR service.",
+    )
 
 
 class VPRConfig(BaseModel):

@@ -12,6 +12,7 @@ class HttpClientConfig(BaseModel):
         default=None,
         description="Proxy URL to route HTTP requests through. Example: 'http://localhost:8080'",
     )
+
     timeout: float = Field(
         default=10.0,
         description="Timeout in seconds for HTTP requests.",

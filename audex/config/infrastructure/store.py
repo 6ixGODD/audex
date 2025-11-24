@@ -8,9 +8,9 @@ from audex.helper.settings import BaseModel
 
 
 class StoreConfig(BaseModel):
-    type: t.Literal["file"] = Field(
-        default="file",
-        description="Type of the store, can be 'file' or 'obs'.",
+    type: t.Literal["localfile"] = Field(
+        default="localfile",
+        description="Type of the store.",
     )
 
     base_url: str = Field(

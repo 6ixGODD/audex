@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import typing as t
-
 from pydantic import Field
 
 from audex.helper.settings import BaseModel
@@ -35,16 +33,4 @@ class SQLiteConfig(BaseModel):
     pool_pre_ping: bool = Field(
         default=True,
         description="Enable connection health checks before using a connection from the pool.",
-    )
-
-
-class DatabaseConfig(BaseModel):
-    provider: t.Literal["sqlite"] = Field(
-        default="sqlite",
-        description="Database provider type. Currently only 'sqlite' is supported.",
-    )
-
-    sqlite: SQLiteConfig = Field(
-        default_factory=SQLiteConfig,
-        description="Configuration settings for SQLite database.",
     )
