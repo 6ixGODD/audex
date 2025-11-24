@@ -13,5 +13,6 @@ def make_session_manager(config: Config) -> SessionManager:
     from audex.lib.session import SessionManager
 
     return SessionManager(
-        app_name=config.core.app_name, ttl=datetime.timedelta(minutes=config.core.session.tt)
+        app_name=config.core.app_name,
+        ttl=datetime.timedelta(hours=config.core.session.ttl_hours),
     )

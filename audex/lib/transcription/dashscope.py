@@ -35,7 +35,7 @@ class InvalidParamError(TranscriptionError):
 
 class RunTaskPayloadParams(BaseModel):
     format: t.Literal["pcm", "wav", "mp3", "opus", "speex", "aac", "amr"] = "pcm"
-    sample_rate: t.Literal[8000, 16000, 22050, 24000, 44100, 48000] = 16000
+    sample_rate: int = 16000
     vocabulary_id: str | None = None
     disfluency_removal_enabled: bool | None = None
     language_hints: list[t.Literal["zh", "en", "ja", "yue", "ko", "de", "fr", "ru"]] | None = None
@@ -183,7 +183,7 @@ class DashscopeParaformer(LoggingMixin, Transcription):
         drain_timeout: float = 5.0,
         # Runtime parameters
         fmt: t.Literal["pcm", "wav", "mp3", "opus", "speex", "aac", "amr"] = "pcm",
-        sample_rate: t.Literal[8000, 16000, 22050, 24000, 44100, 48000] = 8000,
+        sample_rate: int = 8000,
         silence_duration_ms: int | None = None,
         vocabulary_id: str | None = None,
         disfluency_removal_enabled: bool | None = None,
@@ -274,7 +274,7 @@ class DashscopeParaformer(LoggingMixin, Transcription):
         self,
         *,
         fmt: t.Literal["pcm", "mp3"] = "pcm",
-        sample_rate: t.Literal[8000, 16000, 22050, 44100, 48000] = 16000,
+        sample_rate: int = 16000,
         silence_duration_ms: int | None = None,
         vocabulary_id: str | None = None,
     ) -> TranscriptSession:
@@ -316,7 +316,7 @@ class DashscopeParaformerSession(LoggingMixin, TranscriptSession):
         pool: WebsocketConnectionPool,
         model: str,
         fmt: t.Literal["pcm", "wav", "mp3", "opus", "speex", "aac", "amr"],
-        sample_rate: t.Literal[8000, 16000, 22050, 24000, 44100, 48000],
+        sample_rate: int,
         vocabulary_id: str | None = None,
         disfluency_removal_enabled: bool | None = None,
         lang_hints: list[t.Literal["zh", "en", "ja", "yue", "ko", "de", "fr", "ru"]] | None = None,

@@ -15,11 +15,6 @@ class DashscopeTranscriptionSessionConfig(BaseModel):
         description="Audio format for transcription session.",
     )
 
-    sample_rate: t.Literal[8000, 16000, 22050, 24000, 44100, 48000] = Field(
-        default=16000,
-        description="Sample rate of the audio in Hz.",
-    )
-
     silence_duration_ms: int | None = Field(
         default=None,
         description="Duration of silence in milliseconds to consider as end of speech.",

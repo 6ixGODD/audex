@@ -17,7 +17,7 @@ class ServiceContainer(containers.DeclarativeContainer):
     # Components
     doctor = providers.Factory(
         make_doctor_service,
-        sm=infrastructure.sm,
+        session_manager=infrastructure.session_manager,
         config=config,
         doctor_repo=repository.doctor,
         vp_repo=repository.vp,
@@ -27,7 +27,7 @@ class ServiceContainer(containers.DeclarativeContainer):
 
     session = providers.Factory(
         make_session_service,
-        sm=infrastructure.sm,
+        session_manager=infrastructure.session_manager,
         config=config,
         session_repo=repository.session,
         segment_repo=repository.segment,

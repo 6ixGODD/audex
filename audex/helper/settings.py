@@ -46,7 +46,9 @@ class Settings(ps.BaseSettings):
             return cls.model_validate(data, strict=True)
 
     def _collect_field_desc(
-        self, model: type[pyd.BaseModel] | None = None, prefix: str = ""
+        self,
+        model: type[pyd.BaseModel] | None = None,
+        prefix: str = "",
     ) -> dict[str, str]:
         """Recursively collect field descriptions from the model and
         nested models.
@@ -511,6 +513,7 @@ class BaseModel(pyd.BaseModel):
 
     def __repr__(self) -> str:
         field_reprs = ", ".join(
-            f"{field_name}={getattr(self, field_name)!r}" for field_name in self.model_fields()
+            f"{field_name}={getattr(self, field_name)!r}"
+            for field_name in self.model_fields  # type: ignore
         )
         return f"MODEL <{self.__class__.__name__}({field_reprs})>"

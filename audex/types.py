@@ -1,12 +1,7 @@
 from __future__ import annotations
 
 import abc
-import enum
 import typing as t
-
-
-class SessionState(enum.Enum):
-    IDLE, ACTIVE, CLOSED = "IDLE", "ACTIVE", "CLOSED"
 
 
 class AbstractSession(abc.ABC):

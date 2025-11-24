@@ -20,13 +20,6 @@ class RecorderConfig(BaseModel):
         description="Number of audio channels.",
     )
 
-    rate: int = Field(
-        default=16000,
-        ge=8000,
-        le=192000,
-        description="Sampling rate in Hz.",
-    )
-
     chunk: int = Field(
         default=1024,
         ge=256,

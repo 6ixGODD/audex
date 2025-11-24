@@ -62,7 +62,7 @@ class SessionService(BaseService):
 
     def __init__(
         self,
-        sm: SessionManager,
+        session_manager: SessionManager,
         config: SessionServiceConfig,
         session_repo: SessionRepository,
         segment_repo: SegmentRepository,
@@ -72,7 +72,7 @@ class SessionService(BaseService):
         transcription: Transcription,
         recorder: AudioRecorder,
     ):
-        super().__init__(sm=sm)
+        super().__init__(session_manager=session_manager)
         self.config = config
         self.session_repo = session_repo
         self.segment_repo = segment_repo
@@ -176,7 +176,7 @@ class SessionService(BaseService):
 
     @require_auth
     async def session(self, session_id: str) -> SessionContext:
-        s = await self.sm.get_session()
+        s = await self.session_manager.get_session()
         if not s:
             raise SessionServiceError("No active session found")
         f = vp_filter().doctor_id.eq(s.doctor_id)

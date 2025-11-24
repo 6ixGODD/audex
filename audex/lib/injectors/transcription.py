@@ -11,7 +11,7 @@ def make_transcription(config: Config) -> Transcription:
         return DashscopeParaformer(
             model=config.provider.transcription.dashscope.model,
             api_key=config.provider.transcription.dashscope.credential.api_key,
-            user_agent=config.provider.transcription.dashscope.credential.user_agent,
+            user_agent=config.provider.transcription.dashscope.user_agent,
             workspace=config.provider.transcription.dashscope.workspace,
             max_connections=config.provider.transcription.dashscope.websocket.max_connections,
             idle_timeout=config.provider.transcription.dashscope.websocket.idle_timeout,

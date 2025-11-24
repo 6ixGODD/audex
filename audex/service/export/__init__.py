@@ -9,10 +9,10 @@ from audex.service import BaseService
 class ExportService(BaseService):
     def __init__(
         self,
-        sm: SessionManager,
+        session_manager: SessionManager,
         usb: USBManager,
         store: Store,
     ):
-        super().__init__(sm=sm)
+        super().__init__(session_manager=session_manager)
         self.usb = usb
         self.store = store

@@ -48,14 +48,14 @@ class DoctorService(BaseService):
 
     def __init__(
         self,
-        sm: SessionManager,
+        session_manager: SessionManager,
         config: DoctorServiceConfig,
         doctor_repo: DoctorRepository,
         vp_repo: VPRepository,
         vpr: VPR,
         recorder: AudioRecorder,
     ):
-        super().__init__(sm=sm)
+        super().__init__(session_manager=session_manager)
         self.config = config
         self.doctor_repo = doctor_repo
         self.vp_repo = vp_repo
@@ -77,7 +77,7 @@ class DoctorService(BaseService):
                 reason=InvalidCredentialReasons.INVALID_PASSWORD,
             )
 
-        await self.sm.login(
+        await self.session_manager.login(
             doctor_id=doctor.id,
             eid=doctor.eid,
             doctor_name=doctor.name,
@@ -88,7 +88,7 @@ class DoctorService(BaseService):
     @require_auth
     async def logout(self) -> None:
         """Logout the current doctor."""
-        if not await self.sm.logout():
+        if not await self.session_manager.logout():
             raise ValueError("No active session to logout")
 
         self.logger.info("Doctor logged out")
@@ -111,7 +111,7 @@ class DoctorService(BaseService):
         doctor.id = uid
 
         # Auto-login after registration
-        await self.sm.login(
+        await self.session_manager.login(
             doctor_id=uid,
             eid=doctor.eid,
             doctor_name=doctor.name,
@@ -123,7 +123,7 @@ class DoctorService(BaseService):
     @require_auth
     async def delete_account(self) -> None:
         """Delete the current doctor's account."""
-        session = await self.sm.get_session()
+        session = await self.session_manager.get_session()
         if not session:
             raise DoctorServiceError("No active session")
 
@@ -139,7 +139,7 @@ class DoctorService(BaseService):
         await self.vp_repo.delete_many(f.build())
 
         # Logout first
-        await self.sm.logout()
+        await self.session_manager.logout()
 
         # Delete doctor account
         if not await self.doctor_repo.delete(doctor.id):
@@ -150,7 +150,7 @@ class DoctorService(BaseService):
     @require_auth
     async def current_doctor(self) -> Doctor:
         """Get the current logged-in doctor."""
-        session = await self.sm.get_session()
+        session = await self.session_manager.get_session()
         if not session:
             raise DoctorServiceError("No active session")
 
@@ -186,7 +186,7 @@ class DoctorService(BaseService):
                 print(f"Enrolled! VPR UID: {result.vpr_uid}")
             ```
         """
-        session = await self.sm.get_session()
+        session = await self.session_manager.get_session()
         if not session:
             raise DoctorServiceError("No active session")
 
@@ -227,7 +227,7 @@ class DoctorService(BaseService):
                 print(f"Updated! VPR UID: {result.vpr_uid}")
             ```
         """
-        session = await self.sm.get_session()
+        session = await self.session_manager.get_session()
         if not session:
             raise DoctorServiceError("No active session")
 
@@ -261,7 +261,7 @@ class DoctorService(BaseService):
     @require_auth
     async def get_active_vp(self) -> VP | None:
         """Get the current doctor's active voiceprint."""
-        session = await self.sm.get_session()
+        session = await self.session_manager.get_session()
         if not session:
             raise DoctorServiceError("No active session")
 
@@ -281,7 +281,7 @@ class DoctorService(BaseService):
     @require_auth
     async def deactivate_vp(self) -> None:
         """Deactivate the current doctor's voiceprint."""
-        session = await self.sm.get_session()
+        session = await self.session_manager.get_session()
         if not session:
             raise DoctorServiceError("No active session")
 
@@ -306,7 +306,7 @@ class DoctorService(BaseService):
     @require_auth
     async def update(self, command: UpdateCommand) -> Doctor:
         """Update the current doctor's profile information."""
-        session = await self.sm.get_session()
+        session = await self.session_manager.get_session()
         if not session:
             raise DoctorServiceError("No active session")
 
@@ -345,7 +345,7 @@ class DoctorService(BaseService):
         new_password: Password,
     ) -> None:
         """Change the current doctor's password."""
-        session = await self.sm.get_session()
+        session = await self.session_manager.get_session()
         if not session:
             raise DoctorServiceError("No active session")
 
@@ -486,11 +486,7 @@ class VPUpdateContext(LoggingMixin, AsyncContextMixin, AbstractSession):
 
     async def start(self) -> None:
         """Start recording for voiceprint update."""
-        await self.recorder.start(
-            "voiceprints",
-            self.doctor.id,
-            "update",
-        )
+        await self.recorder.start("voiceprints", self.doctor.id, "update")
         self.logger.info(f"Started voiceprint update recording for {self.doctor.eid}")
 
     async def close(self) -> VPEnrollResult:

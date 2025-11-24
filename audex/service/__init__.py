@@ -13,6 +13,6 @@ class BaseService(LoggingMixin):
         cls.__logtag__ = f"audex.service:{cls.__name__}"
         super().__init_subclass__(**kwargs)
 
-    def __init__(self, sm: SessionManager):
+    def __init__(self, session_manager: SessionManager):
         super().__init__()
-        self.sm = sm
+        self.session_manager = session_manager

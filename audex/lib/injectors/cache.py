@@ -4,11 +4,12 @@ import typing as t
 
 if t.TYPE_CHECKING:
     from audex.config import Config
-    from audex.lib.cache import KeyBuilder
     from audex.lib.cache import KVCache
 
 
 def make_cache(config: Config) -> KVCache:
+    from audex.lib.cache import KeyBuilder
+
     key_builder = KeyBuilder(
         split_char=config.infrastructure.cache.split_char,
         prefix=config.infrastructure.cache.prefix,

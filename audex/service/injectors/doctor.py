@@ -7,14 +7,25 @@ from audex.lib.repos.vp import VPRepository
 from audex.lib.session import SessionManager
 from audex.lib.vpr import VPR
 from audex.service.doctor import DoctorService
+from audex.service.doctor import DoctorServiceConfig
 
 
 def make_doctor_service(
-    sm: SessionManager,
+    session_manager: SessionManager,
     config: Config,
     doctor_repo: DoctorRepository,
     vp_repo: VPRepository,
     vpr: VPR,
     recorder: AudioRecorder,
 ) -> DoctorService:
-    pass
+    return DoctorService(
+        session_manager=session_manager,
+        config=DoctorServiceConfig(
+            vpr_sr=config.core.audio.vpr_sample_rate,
+            vpr_text_content=config.core.audio.vpr_text_content,
+        ),
+        doctor_repo=doctor_repo,
+        vp_repo=vp_repo,
+        vpr=vpr,
+        recorder=recorder,
+    )
