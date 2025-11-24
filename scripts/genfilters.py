@@ -15,7 +15,6 @@ from audex.entity import FieldSpec
 from audex.entity.fields import ListFieldSpec
 from audex.entity.fields import StringBackedFieldSpec
 from audex.entity.fields import StringFieldSpec
-
 from scripts.tools import common
 
 # Add project root to path
