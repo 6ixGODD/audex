@@ -14,7 +14,7 @@ from audex.helper.mixin import LoggingMixin
 class LifeSpan(LoggingMixin, t.AsyncContextManager):
     __logtag__ = "audex.lifespan"
 
-    def __init__(self, contexts: t.Sequence[t.Any]) -> None:
+    def __init__(self, *contexts: object) -> None:
         super().__init__()
         self.contexts = contexts
 

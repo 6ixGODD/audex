@@ -6,6 +6,7 @@ import typing as t
 from pydantic import Field
 from pydantic import model_validator
 
+from audex.helper.mixin import ContextMixin
 from audex.helper.settings import BaseModel
 
 
@@ -60,7 +61,7 @@ class Rotation(BaseModel):
         return self
 
 
-class LoggingTarget(BaseModel):
+class LoggingTarget(ContextMixin, BaseModel):
     logname: t.Literal["stdout", "stderr"] | os.PathLike[str] = Field(
         default="stdout",
         description="Name of the target, can be 'stdout', 'stderr', or a file path",
@@ -97,7 +98,7 @@ class LoggingConfig(BaseModel):
         description="List of logging targets",
     )
 
-    def setup(self) -> None:
+    def init(self) -> None:
         from loguru import logger
 
         logger.remove()
