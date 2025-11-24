@@ -8,7 +8,7 @@ from audex.filters.generated import doctor_filter
 from audex.filters.generated import vp_filter
 from audex.helper.mixin import AsyncContextMixin
 from audex.helper.mixin import LoggingMixin
-from audex.lib.audio import AudioRecorder
+from audex.lib.recorder import AudioRecorder
 from audex.lib.repos.doctor import DoctorRepository
 from audex.lib.repos.vp import VPRepository
 from audex.lib.session import SessionManager
@@ -28,7 +28,14 @@ from audex.types import AbstractSession
 from audex.valueobj.common.auth import Password
 
 
-class Config(t.NamedTuple):
+class DoctorServiceConfig(t.NamedTuple):
+    """DoctorService configuration.
+
+    Attributes:
+        vpr_sr: Sample rate for VPR verification.
+        vpr_text_content: Text content for VPR enrollment.
+    """
+
     vpr_sr: int = 16000
     vpr_text_content: str = "请朗读: 您好，我是一名医生，我将为您提供专业的医疗服务。"
 
@@ -42,18 +49,18 @@ class DoctorService(BaseService):
     def __init__(
         self,
         sm: SessionManager,
-        config: Config,
+        config: DoctorServiceConfig,
         doctor_repo: DoctorRepository,
         vp_repo: VPRepository,
-        recorder: AudioRecorder,
         vpr: VPR,
+        recorder: AudioRecorder,
     ):
         super().__init__(sm=sm)
         self.config = config
         self.doctor_repo = doctor_repo
         self.vp_repo = vp_repo
-        self.recorder = recorder
         self.vpr = vpr
+        self.recorder = recorder
 
     async def login(self, command: LoginCommand) -> None:
         """Login a doctor by employee ID and password."""
@@ -260,10 +267,7 @@ class DoctorService(BaseService):
 
         doctor = await self.doctor_repo.read(session.doctor_id)
         if not doctor:
-            raise DoctorNotFoundError(
-                "Doctor not found",
-                doctor_id=session.doctor_id,
-            )
+            raise DoctorNotFoundError("Doctor not found", doctor_id=session.doctor_id)
 
         f = vp_filter().doctor_id.eq(doctor.id).is_active.eq(True)
         return await self.vp_repo.first(f.build())

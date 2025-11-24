@@ -14,7 +14,7 @@ from audex.filters.generated import utterance_filter
 from audex.filters.generated import vp_filter
 from audex.helper.mixin import LoggingMixin
 from audex.helper.stream import AsyncStream
-from audex.lib.audio import AudioRecorder
+from audex.lib.recorder import AudioRecorder
 from audex.lib.repos.segment import SegmentRepository
 from audex.lib.repos.session import SessionRepository
 from audex.lib.repos.utterance import UtteranceRepository
@@ -35,7 +35,7 @@ from audex.types import DuplexAbstractSession
 from audex.valueobj.utterance import Speaker
 
 
-class Config(t.NamedTuple):
+class SessionServiceConfig(t.NamedTuple):
     """SessionService configuration.
 
     Attributes:
@@ -63,7 +63,7 @@ class SessionService(BaseService):
     def __init__(
         self,
         sm: SessionManager,
-        config: Config,
+        config: SessionServiceConfig,
         session_repo: SessionRepository,
         segment_repo: SegmentRepository,
         utterance_repo: UtteranceRepository,
@@ -175,7 +175,7 @@ class SessionService(BaseService):
         )
 
     @require_auth
-    async def session(self, session_id: str) -> SessionContainer:
+    async def session(self, session_id: str) -> SessionContext:
         s = await self.sm.get_session()
         if not s:
             raise SessionServiceError("No active session found")
@@ -191,7 +191,7 @@ class SessionService(BaseService):
         session.start()
         await self.session_repo.update(session)
 
-        return SessionContainer(
+        return SessionContext(
             config=self.config,
             session=session,
             session_repo=self.session_repo,
@@ -204,18 +204,18 @@ class SessionService(BaseService):
         )
 
 
-class SessionContainer(LoggingMixin, DuplexAbstractSession[bytes, Start | Delta | Done]):
-    """Container for managing an active recording session.
+class SessionContext(LoggingMixin, DuplexAbstractSession[bytes, Start | Delta | Done]):
+    """Context for managing an active recording session.
 
     Handles audio recording, transcription, speaker identification, and
     utterance storage.
     """
 
-    __logtag__ = "audex.service.session:SessionContainer"
+    __logtag__ = "audex.service.session:SessionContext"
 
     def __init__(
         self,
-        config: Config,
+        config: SessionServiceConfig,
         session: Session,
         session_repo: SessionRepository,
         segment_repo: SegmentRepository,
