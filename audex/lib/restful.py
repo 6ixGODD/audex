@@ -123,6 +123,7 @@ class RESTfulMixin(AsyncContextMixin):
         cast_to: type[RespT],
         validate: bool = True,
         strict: bool = True,
+        raise_for_status: bool = True,
         max_retries: int = 3,
         retry_wait: float = 2.0,
     ) -> RespT:
@@ -143,6 +144,8 @@ class RESTfulMixin(AsyncContextMixin):
             validate: Whether to validate response data. Defaults to True.
             strict: Whether to use strict validation (reject extra fields).
                 Defaults to True.
+            raise_for_status: Whether to raise an exception for HTTP error
+                status codes. Defaults to True.
             max_retries: Maximum number of retry attempts. Defaults to 3.
             retry_wait: Wait time in seconds between retries. Defaults to 2.0.
 
@@ -193,9 +196,14 @@ class RESTfulMixin(AsyncContextMixin):
             json: t.Mapping[str, t.Any] | None,
         ) -> httpx.Response:
             response = await self.http_client.request(
-                method, endpoint, headers=headers, params=params, json=json
+                method,
+                endpoint,
+                headers=headers,
+                params=params,
+                json=json,
             )
-            response.raise_for_status()
+            if raise_for_status:
+                response.raise_for_status()
             return response
 
         response = await _make_request(method, endpoint, headers, params, json)
@@ -226,3 +234,18 @@ class RESTfulMixin(AsyncContextMixin):
 
     def __repr__(self) -> str:
         return f"RESTFUL <{self.__class__.__name__} base_url={self.url}>"
+
+
+class BaseModel(pyd.BaseModel):
+    """Base Pydantic model with common configuration.
+
+    Sets common configurations for all derived models, such as allowing
+    arbitrary types and enabling ORM mode.
+    """
+
+    model_config = pyd.ConfigDict(
+        arbitrary_types_allowed=True,  # Allow arbitrary types
+        serialize_by_alias=True,  # Use alias names when serializing
+        validate_by_alias=True,  # Use alias names when validating
+        extra="ignore",
+    )
