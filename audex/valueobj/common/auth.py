@@ -79,6 +79,6 @@ class HashedPassword(SingleValueObject[str]):
         return hash.argon2_verify(password.value, self.value)
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, HashedPassword):
+        if not isinstance(other, Password):
             return NotImplemented
-        return self.value == other.value
+        return hash.argon2_verify(other.value, self.value)

@@ -106,4 +106,4 @@ class Doctor(BaseEntity):
         Returns:
             True if the password matches the stored hash, False otherwise.
         """
-        return self.password_hash == password.hash()
+        return self.password_hash == password

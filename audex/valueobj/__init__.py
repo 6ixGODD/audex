@@ -26,7 +26,8 @@ class BaseValueObject(pyd.BaseModel, abc.ABC):
 
     def __repr__(self) -> str:
         field_reprs = ", ".join(
-            f"{field_name}={getattr(self, field_name)!r}" for field_name in self.model_fields()
+            f"{field_name}={getattr(self, field_name)!r}"
+            for field_name in self.model_fields  # type: ignore
         )
         return f"VALUEOBJECT <{self.__class__.__name__}({field_reprs})>"
 
