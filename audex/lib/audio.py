@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import asyncio
-import collections
+import array
 import datetime
 import io
-import pathlib
 import typing as t
 import wave
 
@@ -16,7 +14,7 @@ from audex.helper.mixin import LoggingMixin
 from audex.lib.store import Store
 
 
-class AudioConfig(t.TypedDict):
+class AudioConfig(t.NamedTuple):
     """Audio recording configuration.
 
     Attributes:
@@ -27,11 +25,28 @@ class AudioConfig(t.TypedDict):
         input_device_index: Index of input device, None for default.
     """
 
-    format: int
-    channels: int
-    rate: int
-    chunk: int
-    input_device_index: int | None
+    format: int = pyaudio.paInt16
+    channels: int = 1
+    rate: int = 16000
+    chunk: int = 1024
+    input_device_index: int | None = None
+
+
+class AudioFrame:
+    """Single audio frame with timestamp.
+
+    Uses __slots__ to minimize memory footprint.
+
+    Attributes:
+        timestamp: When this frame was captured.
+        data: Raw audio bytes.
+    """
+
+    __slots__ = ("data", "timestamp")
+
+    def __init__(self, timestamp: datetime.datetime, data: bytes) -> None:
+        self.timestamp = timestamp
+        self.data = data
 
 
 class AudioSegment(t.NamedTuple):
@@ -60,6 +75,9 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
     recording session. Audio data is automatically uploaded to the
     configured Store.
 
+    All recorded frames are kept in memory with timestamps, allowing
+    efficient extraction of arbitrary time ranges after recording.
+
     Attributes:
         store: Storage backend for uploading audio files.
         config: Audio recording configuration.
@@ -69,35 +87,38 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
         # Create recorder
         recorder = AudioRecorder(
             store=local_store,
-            config={
-                "format": pyaudio.paInt16,
-                "channels": 1,
-                "rate": 16000,
-                "chunk": 1024,
-                "input_device_index": None,
-            },
+            config=AudioConfig(
+                format=pyaudio.paInt16,
+                channels=1,
+                rate=16000,
+                chunk=1024,
+            ),
         )
 
         await recorder.init()
 
         # Start recording
-        await recorder.start_recording(
-            key_prefix="session-123/segment"
-        )
+        await recorder.start("session-123", "segment")
 
         # Record for some time...
         await asyncio.sleep(5)
 
-        # Stop and get the segment
-        segment = await recorder.stop_recording()
-        print(f"Recorded {segment.duration_ms}ms to {segment.key}")
-
-        # Start another segment
-        await recorder.start_recording(
-            key_prefix="session-123/segment"
+        # Extract segment by time range
+        start_time = (
+            datetime.datetime.utcnow()
+            - datetime.timedelta(seconds=3)
         )
-        await asyncio.sleep(3)
-        segment2 = await recorder.stop_recording()
+        end_time = datetime.datetime.utcnow()
+        audio_data = await recorder.segment(
+            started_at=start_time,
+            ended_at=end_time,
+            channels=1,
+            rate=8000,  # Resample to 8kHz
+        )
+
+        # Stop and get the full segment
+        segment = await recorder.stop()
+        print(f"Recorded {segment.duration_ms}ms to {segment.key}")
 
         # Cleanup
         await recorder.close()
@@ -113,30 +134,14 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
     ) -> None:
         super().__init__()
         self.store = store
-        self.config = config or self._default_config()
+        self.config = config or AudioConfig()
 
         self._audio: pyaudio.PyAudio | None = None
         self._stream: pyaudio.Stream | None = None
-        self._frames: collections.deque[bytes] = collections.deque()
+        self._frames: list[AudioFrame] = []  # Use list for efficient indexing
         self._is_recording = False
-        self._recording_task: asyncio.Task[None] | None = None
         self._current_key: str | None = None
         self._started_at: datetime.datetime | None = None
-
-    @staticmethod
-    def _default_config() -> AudioConfig:
-        """Get default audio configuration.
-
-        Returns:
-            Default AudioConfig with 16kHz mono recording.
-        """
-        return AudioConfig(
-            format=pyaudio.paInt16,
-            channels=1,
-            rate=16000,
-            chunk=1024,
-            input_device_index=None,
-        )
 
     async def init(self) -> None:
         """Initialize the audio system.
@@ -168,7 +173,7 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
         Stops any active recording and cleans up PyAudio resources.
         """
         if self._is_recording:
-            await self.stop_recording()
+            await self.stop()
 
         if self._stream is not None:
             self._stream.stop_stream()
@@ -199,11 +204,11 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
         """
         return self._current_key
 
-    async def start_recording(self, key_prefix: str) -> str:
+    async def start(self, *prefixes: str) -> str:
         """Start a new recording segment.
 
         Args:
-            key_prefix: Prefix for the storage key (e.g., "session-123/segment").
+            *prefixes: Prefix parts for the storage key (e.g., "session-123", "segment").
                 A unique ID and .wav extension will be appended.
 
         Returns:
@@ -214,8 +219,8 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
 
         Example:
             ```python
-            key = await recorder.start_recording("session-abc/segment")
-            # key might be: "audex/session-abc/segment-xyz123.wav"
+            key = await recorder.start("session-abc", "segment")
+            # key might be: "audex/session-abc/segment/xyz123.wav"
             ```
         """
         if self._is_recording:
@@ -226,18 +231,18 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
 
         # Generate unique key
         segment_id = utils.gen_id(prefix="")
-        self._current_key = self.store.key_builder.build(f"{key_prefix}-{segment_id}.wav")
+        self._current_key = self.store.key_builder.build(*prefixes, f"{segment_id}.wav")
         self._frames.clear()
         self._started_at = utils.utcnow()
 
         # Open audio stream
         self._stream = self._audio.open(
-            format=self.config["format"],
-            channels=self.config["channels"],
-            rate=self.config["rate"],
+            format=self.config.format,
+            channels=self.config.channels,
+            rate=self.config.rate,
             input=True,
-            frames_per_buffer=self.config["chunk"],
-            input_device_index=self.config["input_device_index"],
+            frames_per_buffer=self.config.chunk,
+            input_device_index=self.config.input_device_index,
             stream_callback=self._audio_callback,
         )
 
@@ -257,6 +262,7 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
         """PyAudio callback for capturing audio frames.
 
         This is called automatically by PyAudio on a separate thread.
+        Stores frames with timestamps for later extraction.
 
         Args:
             in_data: Input audio data.
@@ -268,10 +274,249 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
             Tuple of (None, pyaudio.paContinue).
         """
         if in_data and self._is_recording:
-            self._frames.append(in_data)
+            timestamp = utils.utcnow()
+            self._frames.append(AudioFrame(timestamp, in_data))
         return None, pyaudio.paContinue
 
-    async def stop_recording(self) -> AudioSegment:
+    def _find_frame_index(self, target_time: datetime.datetime) -> int:
+        """Binary search to find frame index closest to target time.
+
+        Args:
+            target_time: Target timestamp to search for.
+
+        Returns:
+            Index of the frame closest to target time (rounded down).
+        """
+        if not self._frames:
+            return 0
+
+        left, right = 0, len(self._frames) - 1
+
+        # Handle boundary cases
+        if target_time <= self._frames[0].timestamp:
+            return 0
+        if target_time >= self._frames[-1].timestamp:
+            return len(self._frames) - 1
+
+        # Binary search
+        while left <= right:
+            mid = (left + right) // 2
+            mid_time = self._frames[mid].timestamp
+
+            if mid_time == target_time:
+                return mid
+            if mid_time < target_time:
+                left = mid + 1
+            else:
+                right = mid - 1
+
+        # Return the index just before target time
+        return right if right >= 0 else 0
+
+    def _resample_audio(
+        self,
+        audio_data: bytes,
+        src_rate: int,
+        dst_rate: int,
+        src_channels: int,
+        dst_channels: int,
+        sample_width: int,
+    ) -> bytes:
+        """Resample audio data to different rate and/or channel
+        configuration.
+
+        Uses simple linear interpolation for resampling and channel mixing/splitting.
+
+        Args:
+            audio_data: Input audio data as bytes.
+            src_rate: Source sample rate.
+            dst_rate: Destination sample rate.
+            src_channels: Source number of channels.
+            dst_channels: Destination number of channels.
+            sample_width: Bytes per sample (e.g., 2 for int16).
+
+        Returns:
+            Resampled audio data as bytes.
+        """
+        # Convert bytes to array of samples
+        format_char = {1: "b", 2: "h", 4: "i"}[sample_width]
+        samples = array.array(format_char, audio_data)
+
+        # Reshape into frames (interleaved channels)
+        num_frames = len(samples) // src_channels
+        frames = [samples[i * src_channels : (i + 1) * src_channels] for i in range(num_frames)]
+
+        # Channel conversion
+        if src_channels != dst_channels:
+            new_frames = []
+            for frame in frames:
+                if dst_channels == 1 and src_channels == 2:
+                    # Stereo to mono: average channels
+                    new_frames.append([sum(frame) // len(frame)])
+                elif dst_channels == 2 and src_channels == 1:
+                    # Mono to stereo: duplicate channel
+                    new_frames.append([frame[0], frame[0]])
+                else:
+                    # For other cases, just take first dst_channels
+                    new_frames.append(frame[:dst_channels])
+            frames = new_frames
+
+        # Sample rate conversion
+        if src_rate != dst_rate:
+            ratio = src_rate / dst_rate
+            new_num_frames = int(num_frames / ratio)
+            new_frames = []
+
+            for i in range(new_num_frames):
+                # Linear interpolation
+                src_idx = i * ratio
+                idx_low = int(src_idx)
+                idx_high = min(idx_low + 1, num_frames - 1)
+                frac = src_idx - idx_low
+
+                frame_low = frames[idx_low]
+                frame_high = frames[idx_high]
+
+                # Interpolate each channel
+                new_frame = [
+                    int(frame_low[ch] * (1 - frac) + frame_high[ch] * frac)
+                    for ch in range(dst_channels)
+                ]
+                new_frames.append(new_frame)
+
+            frames = new_frames
+
+        # Flatten frames back to samples
+        result_samples = array.array(format_char)
+        for frame in frames:
+            result_samples.extend(frame)
+
+        return result_samples.tobytes()
+
+    async def segment(
+        self,
+        started_at: datetime.datetime,
+        ended_at: datetime.datetime,
+        *,
+        channels: int | None = None,
+        rate: int | None = None,
+        format: int | None = None,
+    ) -> bytes:
+        """Extract audio segment data between two timestamps.
+
+        Efficiently extracts frames recorded between the specified timestamps
+        using binary search, then optionally resamples/reformats them. The
+        segment is returned as a complete WAV file in bytes.
+
+        Args:
+            started_at: Start timestamp of the segment.
+            ended_at: End timestamp of the segment.
+            channels: Target number of channels. If None, uses recording config.
+            rate: Target sample rate. If None, uses recording config.
+            format: Target audio format. If None, uses recording config.
+
+        Returns:
+            Bytes of the audio segment in WAV format with specified config.
+
+        Raises:
+            RuntimeError: If audio system not initialized.
+            ValueError: If end time is before start time, or no frames available.
+
+        Example:
+            ```python
+            # Extract last 3 seconds at 8kHz mono
+            start = datetime.datetime.utcnow() - datetime.timedelta(
+                seconds=3
+            )
+            end = datetime.datetime.utcnow()
+            data = await recorder.segment(
+                started_at=start,
+                ended_at=end,
+                channels=1,
+                rate=8000,
+            )
+
+            # Save to file
+            with open("/tmp/segment.wav", "wb") as f:
+                f.write(data)
+            ```
+        """
+        if self._audio is None:
+            raise RuntimeError("Audio system not initialized")
+
+        # Validate time range
+        if ended_at < started_at:
+            raise ValueError(
+                f"End time ({ended_at.isoformat()}) must be after "
+                f"start time ({started_at.isoformat()})"
+            )
+
+        if not self._frames:
+            raise ValueError("No audio frames available")
+
+        # Use recording config as defaults
+        target_channels = channels if channels is not None else self.config.channels
+        target_rate = rate if rate is not None else self.config.rate
+        target_format = format if format is not None else self.config.format
+
+        # Find frame indices using binary search (efficient!)
+        start_idx = self._find_frame_index(started_at)
+        end_idx = self._find_frame_index(ended_at)
+
+        # Ensure we have at least one frame
+        if start_idx == end_idx:
+            end_idx = min(start_idx + 1, len(self._frames) - 1)
+
+        # Extract frames efficiently with slice (no iteration!)
+        selected_frames = self._frames[start_idx : end_idx + 1]
+
+        self.logger.debug(
+            f"Extracted frames {start_idx} to {end_idx} (total: {len(selected_frames)} frames)"
+        )
+
+        # Combine frame data
+        combined_frames = b"".join(frame.data for frame in selected_frames)
+
+        # Resample/reformat if needed
+        needs_conversion = (
+            target_channels != self.config.channels
+            or target_rate != self.config.rate
+            or target_format != self.config.format
+        )
+
+        if needs_conversion:
+            sample_width = self._audio.get_sample_size(self.config.format)
+            combined_frames = self._resample_audio(
+                audio_data=combined_frames,
+                src_rate=self.config.rate,
+                dst_rate=target_rate,
+                src_channels=self.config.channels,
+                dst_channels=target_channels,
+                sample_width=sample_width,
+            )
+            self.logger.debug(
+                f"Resampled: {self.config.rate}Hz {self.config.channels}ch -> "
+                f"{target_rate}Hz {target_channels}ch"
+            )
+
+        # Create WAV file in memory
+        wav_buffer = io.BytesIO()
+        with wave.open(wav_buffer, "wb") as wf:
+            wf.setnchannels(target_channels)
+            wf.setsampwidth(self._audio.get_sample_size(target_format))
+            wf.setframerate(target_rate)
+            wf.writeframes(combined_frames)
+
+        wav_data = wav_buffer.getvalue()
+
+        self.logger.debug(
+            f"Created WAV segment: {len(selected_frames)} frames, "
+            f"{len(wav_data)} bytes, {target_rate}Hz {target_channels}ch"
+        )
+
+        return wav_data
+
+    async def stop(self) -> AudioSegment:
         """Stop the current recording and save to storage.
 
         Returns:
@@ -282,7 +527,7 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
 
         Example:
             ```python
-            segment = await recorder.stop_recording()
+            segment = await recorder.stop()
             print(f"Duration: {segment.duration_ms}ms")
             print(f"Saved to: {segment.key}")
             ```
@@ -301,8 +546,8 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
         ended_at = utils.utcnow()
 
         # Collect frames
-        frames = b"".join(self._frames)
-        self._frames.clear()
+        frames = b"".join(frame.data for frame in self._frames)
+        frame_count = len(self._frames)
 
         # Calculate duration
         if self._started_at is None:
@@ -313,9 +558,9 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
         # Create WAV file in memory
         wav_buffer = io.BytesIO()
         with wave.open(wav_buffer, "wb") as wf:
-            wf.setnchannels(self.config["channels"])
-            wf.setsampwidth(self._audio.get_sample_size(self.config["format"]))
-            wf.setframerate(self.config["rate"])
+            wf.setnchannels(self.config.channels)
+            wf.setsampwidth(self._audio.get_sample_size(self.config.format))
+            wf.setframerate(self.config.rate)
             wf.writeframes(frames)
 
         wav_data = wav_buffer.getvalue()
@@ -331,15 +576,17 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
             metadata={
                 "content_type": "audio/wav",
                 "duration_ms": duration_ms,
-                "sample_rate": self.config["rate"],
-                "channels": self.config["channels"],
+                "sample_rate": self.config.rate,
+                "channels": self.config.channels,
                 "started_at": self._started_at.isoformat(),
                 "ended_at": ended_at.isoformat(),
+                "frame_count": frame_count,
             },
         )
 
         self.logger.info(
-            f"Stopped recording. Duration: {duration_ms}ms, Size: {len(wav_data)} bytes"
+            f"Stopped recording. Duration: {duration_ms}ms, "
+            f"Frames: {frame_count}, Size: {len(wav_data)} bytes"
         )
 
         segment = AudioSegment(
@@ -350,90 +597,25 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
             frames=frames,
         )
 
-        # Reset state
+        # Reset state but keep frames in memory for potential segment extraction
         self._current_key = None
         self._started_at = None
 
         return segment
 
-    async def export_segment(
-        self,
-        key: str,
-        output_path: str | pathlib.Path,
-    ) -> None:
-        """Export a recorded segment to a local file.
+    def clear_frames(self) -> None:
+        """Clear all recorded frames from memory.
 
-        Args:
-            key: Storage key of the segment to export.
-            output_path: Local file path to save the audio.
-
-        Raises:
-            Exception: If download or file write fails.
+        Use this to free memory after you're done extracting segments.
 
         Example:
             ```python
-            await recorder.export_segment(
-                key="audex/session-123/segment-001.wav",
-                output_path="/tmp/recording.wav",
-            )
+            # After recording and extracting all needed segments
+            recorder.clear_frames()
             ```
         """
-        output_path = pathlib.Path(output_path)
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-
-        data = await self.store.download(key)
-        if isinstance(data, bytes):
-            output_path.write_bytes(data)
-        else:
-            # Handle streaming case
-            with output_path.open("wb") as f:
-                async for chunk in data:
-                    f.write(chunk)
-
-        self.logger.info(f"Exported segment {key} to {output_path}")
-
-    async def list_segments(self, prefix: str) -> list[str]:
-        """List all audio segments with a given prefix.
-
-        Args:
-            prefix: Key prefix to filter segments (e.g., "session-123").
-
-        Returns:
-            List of storage keys for matching segments.
-
-        Example:
-            ```python
-            segments = await recorder.list_segments("session-123")
-            # Returns: [
-            #     "audex/session-123/segment-001.wav",
-            #     "audex/session-123/segment-002.wav",
-            # ]
-            ```
-        """
-        full_prefix = self.store.key_builder.build(prefix)
-        keys: list[str] = []
-
-        async for batch in await self.store.list(prefix=full_prefix):
-            keys.extend(batch)
-
-        self.logger.debug(f"Found {len(keys)} segments with prefix {prefix}")
-        return keys
-
-    async def delete_segment(self, key: str) -> None:
-        """Delete a recorded segment from storage.
-
-        Args:
-            key: Storage key of the segment to delete.
-
-        Example:
-            ```python
-            await recorder.delete_segment(
-                "audex/session-123/segment-001.wav"
-            )
-            ```
-        """
-        await self.store.delete(key)
-        self.logger.info(f"Deleted segment {key}")
+        self._frames.clear()
+        self.logger.debug("Cleared all recorded frames from memory")
 
     def list_input_devices(self) -> list[dict[str, t.Any]]:
         """List available audio input devices.
