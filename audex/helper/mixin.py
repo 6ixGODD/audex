@@ -43,6 +43,16 @@ class ContextMixin:
         return False
 
 
+class LifecycleMixin:
+    def start(self) -> None: ...
+    def stop(self) -> None: ...
+
+
+class AsyncLifecycleMixin:
+    async def start(self) -> None: ...
+    async def stop(self) -> None: ...
+
+
 class LoggingMixin:
     __logtag__: t.ClassVar[str]
 
