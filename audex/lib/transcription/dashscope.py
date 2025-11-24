@@ -181,6 +181,19 @@ class DashscopeParaformer(LoggingMixin, Transcription):
         max_connections: int = 1000,
         idle_timeout: int = 60,
         drain_timeout: float = 5.0,
+        # Runtime parameters
+        fmt: t.Literal["pcm", "wav", "mp3", "opus", "speex", "aac", "amr"] = "pcm",
+        sample_rate: t.Literal[8000, 16000, 22050, 24000, 44100, 48000] = 8000,
+        silence_duration_ms: int | None = None,
+        vocabulary_id: str | None = None,
+        disfluency_removal_enabled: bool | None = None,
+        lang_hints: list[t.Literal["zh", "en", "ja", "yue", "ko", "de", "fr", "ru"]] | None = None,
+        semantic_punctuation: bool | None = None,
+        multi_thres_mode: bool | None = None,
+        punctuation_pred: bool | None = None,
+        heartbeat: bool | None = None,
+        itn: bool | None = None,
+        resources: list[str] | None = None,
         **kwargs: t.Any,
     ):
         super().__init__()
@@ -206,6 +219,19 @@ class DashscopeParaformer(LoggingMixin, Transcription):
             drain_timeout=drain_timeout,
             **kwargs,
         )
+
+        self.fmt = fmt
+        self.sample_rate = sample_rate
+        self.silence_duration_ms = silence_duration_ms
+        self.vocabulary_id = vocabulary_id
+        self.disfluency_removal_enabled = disfluency_removal_enabled
+        self.lang_hints = lang_hints
+        self.semantic_punctuation = semantic_punctuation
+        self.multi_thres_mode = multi_thres_mode
+        self.punctuation_pred = punctuation_pred
+        self.heartbeat = heartbeat
+        self.itn = itn
+        self.resources = resources
 
     def verify(
         self,
@@ -247,45 +273,37 @@ class DashscopeParaformer(LoggingMixin, Transcription):
     def session(
         self,
         *,
-        fmt: t.Literal["pcm", "wav", "mp3", "opus", "speex", "aac", "amr"] = "pcm",
-        sample_rate: t.Literal[8000, 16000, 22050, 24000, 44100, 48000] = 8000,
+        fmt: t.Literal["pcm", "mp3"] = "pcm",
+        sample_rate: t.Literal[8000, 16000, 22050, 44100, 48000] = 16000,
         silence_duration_ms: int | None = None,
         vocabulary_id: str | None = None,
-        disfluency_removal_enabled: bool | None = None,
-        lang_hints: list[t.Literal["zh", "en", "ja", "yue", "ko", "de", "fr", "ru"]] | None = None,
-        semantic_punctuation: bool | None = None,
-        multi_thres_mode: bool | None = None,
-        punctuation_pred: bool | None = None,
-        heartbeat: bool | None = None,
-        itn: bool | None = None,
-        resources: list[str] | None = None,
     ) -> TranscriptSession:
         self.verify(
             model=self.model,
-            sr=sample_rate,
-            has_lang_hints=lang_hints is not None,
-            semantic_punctuation=semantic_punctuation,
-            multi_thres_mode=multi_thres_mode,
-            punctuation_pred=punctuation_pred,
-            heartbeat=heartbeat,
-            itn=itn,
+            sr=self.sample_rate or sample_rate,
+            has_lang_hints=self.lang_hints is not None,
+            semantic_punctuation=self.semantic_punctuation,
+            multi_thres_mode=self.multi_thres_mode,
+            punctuation_pred=self.punctuation_pred,
+            heartbeat=self.heartbeat,
+            itn=self.itn,
         )
 
         return DashscopeParaformerSession(
             pool=self.pool,
             model=self.model,
-            fmt=fmt,
-            sample_rate=sample_rate,
-            vocabulary_id=vocabulary_id,
-            disfluency_removal_enabled=disfluency_removal_enabled,
-            lang_hints=lang_hints,
-            semantic_punctuation=semantic_punctuation,
-            max_sentence_silence=silence_duration_ms,
-            multi_thres_mode=multi_thres_mode,
-            punctuation_pred=punctuation_pred,
-            heartbeat=heartbeat,
-            itn=itn,
-            resources=resources,
+            fmt=self.fmt or fmt,
+            sample_rate=self.sample_rate or sample_rate,
+            vocabulary_id=self.vocabulary_id or vocabulary_id,
+            disfluency_removal_enabled=self.disfluency_removal_enabled,
+            lang_hints=self.lang_hints,
+            semantic_punctuation=self.semantic_punctuation,
+            max_sentence_silence=self.silence_duration_ms or silence_duration_ms,
+            multi_thres_mode=self.multi_thres_mode,
+            punctuation_pred=self.punctuation_pred,
+            heartbeat=self.heartbeat,
+            itn=self.itn,
+            resources=self.resources,
         )
 
 

@@ -18,7 +18,7 @@ class Transcription(abc.ABC):
         fmt: t.Literal["pcm", "mp3"] = "pcm",
         sample_rate: t.Literal[8000, 16000, 22050, 44100, 48000] = 16000,
         silence_duration_ms: int | None = None,
-        **kwargs: t.Any,
+        vocabulary_id: str | None = None,
     ) -> TranscriptSession:
         pass
 
