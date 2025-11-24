@@ -12,8 +12,11 @@ class VPR(LoggingMixin, abc.ABC):
     async def create_group(self, name: str, gid: str | None = None) -> str: ...
 
     @abc.abstractmethod
-    async def register(
-        self, data: bytes, sr: t.Literal[8000, 16000], uid: str | None = None
+    async def enroll(
+        self,
+        data: bytes,
+        sr: t.Literal[8000, 16000],
+        uid: str | None = None,
     ) -> str: ...
 
     @abc.abstractmethod

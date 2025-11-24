@@ -170,11 +170,9 @@ class XFYunVPR(RESTfulMixin, VPR):
         self.group_id = obj.group_id
         return self.group_id
 
-    async def register(
-        self, data: bytes, sr: t.Literal[8000, 16000], uid: str | None = None
-    ) -> str:
+    async def enroll(self, data: bytes, sr: t.Literal[8000, 16000], uid: str | None = None) -> str:
         if not self.group_id:
-            raise VPRError("Group ID is not set. Cannot register feature.")
+            raise VPRError("Group ID is not set. Cannot enroll feature.")
         uid = uid or utils.gen_id()
         response = await self.request(
             endpoint=self.endpoint,
@@ -194,7 +192,7 @@ class XFYunVPR(RESTfulMixin, VPR):
             cast_to=CreateFeatureResponse,
         )
         if response.header.code != 0:
-            raise VPRError(f"Failed to register feature: {response.header.message}")
+            raise VPRError(f"Failed to enroll feature: {response.header.message}")
         text = response.payload.create_feature_res.text
         # Base-64 decode the model from text
         obj_str = base64.b64decode(text).decode("utf-8")
@@ -206,7 +204,7 @@ class XFYunVPR(RESTfulMixin, VPR):
 
     async def update(self, uid: str, data: bytes, sr: t.Literal[8000, 16000]) -> None:
         if not self.group_id:
-            raise VPRError("Group ID is not set. Cannot register feature.")
+            raise VPRError("Group ID is not set. Cannot enroll feature.")
         response = await self.request(
             endpoint=self.endpoint,
             method="POST",

@@ -93,14 +93,9 @@ class UnisoundVPR(RESTfulMixin, VPR):
         self.group_id = group_id
         return self.group_id
 
-    async def register(
-        self,
-        data: bytes,
-        sr: t.Literal[8000, 16000],
-        uid: str | None = None,
-    ) -> str:
+    async def enroll(self, data: bytes, sr: t.Literal[8000, 16000], uid: str | None = None) -> str:
         if not self.group_id:
-            raise VPRError("Group ID is not set. Cannot register feature.")
+            raise VPRError("Group ID is not set. Cannot enroll feature.")
 
         uid = uid or utils.gen_id()
         auth_params = self._build_auth_params()
@@ -124,7 +119,7 @@ class UnisoundVPR(RESTfulMixin, VPR):
         )
 
         if response.code != 0:
-            raise VPRError(f"Failed to register feature: [{response.code}] {response.msg}")
+            raise VPRError(f"Failed to enroll feature: [{response.code}] {response.msg}")
 
         if not response.data or response.data.featureId != uid:
             raise VPRError("Feature ID mismatch after registration.")
