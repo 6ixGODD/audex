@@ -53,11 +53,13 @@ class UnisoundResponse(BaseModel, t.Generic[DataT]):
 class CreateGroupRequest(AuthParams):
     group_id: str = Field(
         ...,
+        alias="groupId",
         serialization_alias="groupId",
         description="Voiceprint group ID",
     )
     group_info: str = Field(
         ...,
+        alias="groupInfo",
         serialization_alias="groupInfo",
         description="Voiceprint group information",
     )
@@ -66,11 +68,13 @@ class CreateGroupRequest(AuthParams):
 class CreateGroupData(BaseModel):
     group_id: str = Field(
         ...,
+        alias="groupId",
         serialization_alias="groupId",
         description="Voiceprint group ID",
     )
     group_info: str = Field(
         ...,
+        alias="groupInfo",
         serialization_alias="groupInfo",
         description="Voiceprint group information",
     )
@@ -87,31 +91,37 @@ class CreateGroupResponse(BaseModel):
 class CreateFeatureRequest(AuthParams):
     group_id: str = Field(
         ...,
+        alias="groupId",
         serialization_alias="groupId",
         description="Voiceprint group ID",
     )
     feature_id: str = Field(
         ...,
+        alias="featureId",
         serialization_alias="featureId",
         description="Voiceprint feature ID",
     )
     feature_info: str = Field(
         ...,
+        alias="featureInfo",
         serialization_alias="featureInfo",
         description="Voiceprint feature description",
     )
     audio_data: str = Field(
         ...,
+        alias="audioData",
         serialization_alias="audioData",
         description="Base64 encoded audio data",
     )
     audio_sample_rate: str = Field(
         ...,
+        alias="audioSampleRate",
         serialization_alias="audioSampleRate",
         description="Audio sample rate",
     )
     audio_format: t.Literal["pcm", "mp3", "opus", "adpcm"] = Field(
         ...,
+        alias="audioFormat",
         serialization_alias="audioFormat",
         description="Audio format",
     )
@@ -120,11 +130,13 @@ class CreateFeatureRequest(AuthParams):
 class CreateFeatureData(BaseModel):
     feature_id: str = Field(
         ...,
+        alias="featureId",
         serialization_alias="featureId",
         description="Voiceprint feature ID",
     )
     feature_info: str = Field(
         ...,
+        alias="featureInfo",
         serialization_alias="featureInfo",
         description="Voiceprint feature information",
     )
@@ -141,31 +153,37 @@ class CreateFeatureResponse(BaseModel):
 class UpdateFeatureRequest(AuthParams):
     group_id: str = Field(
         ...,
+        alias="groupId",
         serialization_alias="groupId",
         description="Voiceprint group ID",
     )
     feature_id: str = Field(
         ...,
+        alias="featureId",
         serialization_alias="featureId",
         description="Voiceprint feature ID",
     )
     feature_info: str | None = Field(
         None,
+        alias="featureInfo",
         serialization_alias="featureInfo",
         description="Voiceprint feature description",
     )
     audio_data: str = Field(
         ...,
+        alias="audioData",
         serialization_alias="audioData",
         description="Base64 encoded audio data",
     )
     audio_sample_rate: int = Field(
         ...,
+        alias="audioSampleRate",
         serialization_alias="audioSampleRate",
         description="Audio sample rate",
     )
     audio_format: t.Literal["pcm", "mp3", "opus", "adpcm"] = Field(
         ...,
+        alias="audioFormat",
         serialization_alias="audioFormat",
         description="Audio format",
     )
@@ -189,26 +207,31 @@ class UpdateFeatureResponse(BaseModel):
 class ConfirmFeatureRequest(AuthParams):
     group_id: str = Field(
         ...,
+        alias="groupId",
         serialization_alias="groupId",
         description="Voiceprint group ID",
     )
     feature_id: str = Field(
         ...,
+        alias="featureId",
         serialization_alias="featureId",
         description="Voiceprint feature ID",
     )
     audio_data: str = Field(
         ...,
+        alias="audioData",
         serialization_alias="audioData",
         description="Base64 encoded audio data",
     )
     audio_sample_rate: str = Field(
         ...,
+        alias="audioSampleRate",
         serialization_alias="audioSampleRate",
         description="Audio sample rate",
     )
     audio_format: t.Literal["pcm", "mp3", "opus", "adpcm"] = Field(
         ...,
+        alias="audioFormat",
         serialization_alias="audioFormat",
         description="Audio format",
     )
@@ -221,11 +244,13 @@ class ConfirmFeatureData(BaseModel):
     )
     feature_id: str = Field(
         ...,
+        alias="featureId",
         serialization_alias="featureId",
         description="Voiceprint feature ID",
     )
     feature_info: str = Field(
         ...,
+        alias="featureInfo",
         serialization_alias="featureInfo",
         description="Voiceprint feature information",
     )
@@ -242,11 +267,13 @@ class ConfirmFeatureResponse(BaseModel):
 class IdentifyFeatureByGroupIdRequest(AuthParams):
     group_id: str = Field(
         ...,
+        alias="groupId",
         serialization_alias="groupId",
         description="Voiceprint group ID",
     )
     top_n: int = Field(
         ...,
+        alias="topN",
         serialization_alias="topN",
         ge=1,
         le=10,
@@ -254,16 +281,19 @@ class IdentifyFeatureByGroupIdRequest(AuthParams):
     )
     audio_data: str = Field(
         ...,
+        alias="audioData",
         serialization_alias="audioData",
         description="Base64 encoded audio data",
     )
     audio_sample_rate: t.Literal[8000, 16000] = Field(
         ...,
+        alias="audioSampleRate",
         serialization_alias="audioSampleRate",
         description="Audio sample rate",
     )
     audio_format: t.Literal["pcm", "mp3", "opus", "adpcm"] = Field(
         ...,
+        alias="audioFormat",
         serialization_alias="audioFormat",
         description="Audio format",
     )
@@ -276,11 +306,13 @@ class IdentifyFeatureResult(BaseModel):
     )
     feature_id: str = Field(
         ...,
+        alias="featureId",
         serialization_alias="featureId",
         description="Voiceprint feature ID",
     )
     feature_info: str = Field(
         ...,
+        alias="featureInfo",
         serialization_alias="featureInfo",
         description="Voiceprint feature information",
     )
@@ -297,11 +329,13 @@ class IdentifyFeatureByGroupIdResponse(BaseModel):
 class FeatureListItem(BaseModel):
     group_id: str = Field(
         ...,
+        alias="groupId",
         serialization_alias="groupId",
         description="Voiceprint group ID",
     )
     feature_id: str = Field(
         ...,
+        alias="featureId",
         serialization_alias="featureId",
         description="Voiceprint feature ID",
     )
@@ -310,11 +344,13 @@ class FeatureListItem(BaseModel):
 class IdentifyFeatureByIdsRequest(AuthParams):
     feature_list: list[FeatureListItem] = Field(
         ...,
+        alias="featureList",
         serialization_alias="featureList",
         description="List of voiceprint feature IDs",
     )
     top_n: int = Field(
         ...,
+        alias="topN",
         serialization_alias="topN",
         ge=1,
         le=10,
@@ -322,16 +358,19 @@ class IdentifyFeatureByIdsRequest(AuthParams):
     )
     audio_data: str = Field(
         ...,
+        alias="audioData",
         serialization_alias="audioData",
         description="Base64 encoded audio data",
     )
     audio_sample_rate: t.Literal[8000, 16000] = Field(
         ...,
+        alias="audioSampleRate",
         serialization_alias="audioSampleRate",
         description="Audio sample rate",
     )
     audio_format: t.Literal["pcm", "mp3", "opus", "adpcm"] = Field(
         ...,
+        alias="audioFormat",
         serialization_alias="audioFormat",
         description="Audio format",
     )
@@ -348,11 +387,13 @@ class IdentifyFeatureByIdsResponse(BaseModel):
 class DeleteFeatureRequest(AuthParams):
     group_id: str = Field(
         ...,
+        alias="groupId",
         serialization_alias="groupId",
         description="Voiceprint group ID",
     )
     feature_id: str = Field(
         ...,
+        alias="featureId",
         serialization_alias="featureId",
         description="Voiceprint feature ID",
     )
@@ -376,6 +417,7 @@ class DeleteFeatureResponse(BaseModel):
 class DeleteGroupRequest(AuthParams):
     group_id: str = Field(
         ...,
+        alias="groupId",
         serialization_alias="groupId",
         description="Voiceprint group ID",
     )
@@ -399,6 +441,7 @@ class DeleteGroupResponse(BaseModel):
 class QueryFeatureListRequest(AuthParams):
     group_id: str = Field(
         ...,
+        alias="groupId",
         serialization_alias="groupId",
         description="Voiceprint group ID",
     )
@@ -407,11 +450,13 @@ class QueryFeatureListRequest(AuthParams):
 class FeatureInfo(BaseModel):
     feature_id: str = Field(
         ...,
+        alias="featureId",
         serialization_alias="featureId",
         description="Voiceprint feature ID",
     )
     feature_info: str = Field(
         ...,
+        alias="featureInfo",
         serialization_alias="featureInfo",
         description="Voiceprint feature information",
     )
