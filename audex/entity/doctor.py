@@ -4,7 +4,10 @@ from audex import utils
 from audex.entity import BaseEntity
 from audex.entity import touch_after
 from audex.entity.fields import BoolField
+from audex.entity.fields import StringBackedField
 from audex.entity.fields import StringField
+from audex.valueobj.common.auth import HashedPassword
+from audex.valueobj.common.email import Email
 
 
 class Doctor(BaseEntity):
@@ -55,13 +58,13 @@ class Doctor(BaseEntity):
 
     id: str = StringField(immutable=True, default_factory=lambda: utils.gen_id(prefix="doctor-"))
     eid: str = StringField()
-    password_hash: str = StringField()
+    password_hash: HashedPassword = StringBackedField(HashedPassword)
     name: str = StringField()
     department: str | None = StringField(nullable=True)
     title: str | None = StringField(nullable=True)
     hospital: str | None = StringField(nullable=True)
     phone: str | None = StringField(nullable=True)
-    email: str | None = StringField(nullable=True)
+    email: Email | None = StringBackedField(Email, nullable=True)
     is_active: bool = BoolField(default=True)
 
     @property

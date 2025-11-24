@@ -4,6 +4,7 @@ import datetime
 
 from audex import utils
 from audex.entity import BaseEntity
+from audex.entity import touch_after
 from audex.entity.fields import DateTimeField
 from audex.entity.fields import FloatField
 from audex.entity.fields import IntegerField
@@ -119,3 +120,23 @@ class Utterance(BaseEntity):
             True if speaker is PATIENT, False otherwise.
         """
         return self.speaker == Speaker.PATIENT
+
+    @touch_after
+    def incr(self) -> None:
+        """Increment the sequence number of this utterance by 1.
+
+        Note:
+            The updated_at timestamp is automatically updated.
+        """
+        self.sequence += 1
+
+    @touch_after
+    def decr(self) -> None:
+        """Decrement the sequence number of this utterance by 1.
+
+        Note:
+            The updated_at timestamp is automatically updated.
+        """
+        if self.sequence > 1:
+            self.sequence -= 1
+        raise ValueError("Sequence number cannot be less than 1.")

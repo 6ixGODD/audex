@@ -4,6 +4,7 @@ import datetime
 
 from audex import utils
 from audex.entity import BaseEntity
+from audex.entity import touch_after
 from audex.entity.fields import DateTimeField
 from audex.entity.fields import IntegerField
 from audex.entity.fields import StringField
@@ -80,3 +81,35 @@ class Segment(BaseEntity):
             True if ended_at is None, False otherwise.
         """
         return self.ended_at is None
+
+    @touch_after
+    def incr(self) -> None:
+        """Increment the sequence number of this segment by 1.
+
+        Note:
+            The updated_at timestamp is automatically updated.
+        """
+        self.sequence += 1
+
+    @touch_after
+    def decr(self) -> None:
+        """Decrement the sequence number of this segment by 1.
+
+        Note:
+            The updated_at timestamp is automatically updated.
+        """
+        if self.sequence > 1:
+            self.sequence -= 1
+        raise ValueError("Sequence number cannot be less than 1.")
+
+    @touch_after
+    def stop(self) -> None:
+        """Stop the recording of this segment by setting ended_at and
+        calculating duration_ms.
+
+        Note:
+            The updated_at timestamp is automatically updated.
+        """
+        if self.ended_at is None:
+            self.ended_at = utils.utcnow()
+            self.duration_ms = int((self.ended_at - self.started_at).total_seconds() * 1000)
