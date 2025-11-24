@@ -22,6 +22,7 @@ dependencies = [
   "aiofiles>=25.1,<26",
   "argon2-cffi>=25.1,<26",
   "cachetools>=6.2.2,<7",
+  "dependency-injector>=4.48.2,<5",
   "halo>=0.0.31,<0.0.32",
   "httpx>=0.28.1,<0.29",
   "loguru>=0.7.3,<0.8",
