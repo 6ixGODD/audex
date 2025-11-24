@@ -6,6 +6,8 @@ import sqlmodel as sqlm
 
 from audex.entity.doctor import Doctor
 from audex.lib.repos.tables import BaseTable
+from audex.valueobj.common.auth import HashedPassword
+from audex.valueobj.common.email import Email
 
 
 class DoctorTable(BaseTable[Doctor], table=True):
@@ -19,35 +21,56 @@ class DoctorTable(BaseTable[Doctor], table=True):
 
     __tablename__ = "doctors"
 
-    username: str = sqlm.Field(
+    eid: str = sqlm.Field(
+        ...,
         unique=True,
         index=True,
         max_length=100,
-        description="Unique username for login",
+        description="Employee/staff ID in the hospital system.",
     )
     password_hash: str = sqlm.Field(
+        ...,
         max_length=255,
-        description="Hashed password for authentication",
+        description="The hashed password for secure authentication.",
     )
     name: str = sqlm.Field(
+        ...,
         max_length=100,
-        description="Doctor's real name",
+        description="The doctor's real name for display and records.",
     )
-    vp_key: str | None = sqlm.Field(
+    department: str | None = sqlm.Field(
         default=None,
         nullable=True,
-        max_length=500,
-        description="Voiceprint audio file key/path",
+        max_length=100,
+        description="Department or specialty. Optional.",
     )
-    vp_text: str | None = sqlm.Field(
+    title: str | None = sqlm.Field(
         default=None,
         nullable=True,
-        description="Voiceprint registration text content",
+        max_length=100,
+        description="Professional title (e.g., Attending, Resident). Optional.",
+    )
+    hospital: str | None = sqlm.Field(
+        default=None,
+        nullable=True,
+        max_length=150,
+        description="Affiliated hospital name. Optional.",
+    )
+    phone: str | None = sqlm.Field(
+        default=None,
+        nullable=True,
+        max_length=20,
+        description="Contact phone number. Optional.",
+    )
+    email: str | None = sqlm.Field(
+        default=None,
+        nullable=True,
+        max_length=100,
+        description="Contact email address. Optional.",
     )
     is_active: bool = sqlm.Field(
         default=True,
-        nullable=False,
-        description="Account active status",
+        description="Indicates if the doctor's account is active.",
     )
 
     @classmethod
@@ -61,15 +84,16 @@ class DoctorTable(BaseTable[Doctor], table=True):
             DoctorTable instance.
         """
         return cls(
-            uid=entity.id,
-            username=entity.username,
-            password_hash=entity.password_hash,
+            id=entity.id,
+            eid=entity.eid,
+            password_hash=entity.password_hash.value,
             name=entity.name,
-            vp_key=entity.vp_key,
-            vp_text=entity.vp_text,
+            department=entity.department,
+            title=entity.title,
+            hospital=entity.hospital,
+            phone=entity.phone,
+            email=entity.email.value,
             is_active=entity.is_active,
-            created_at=entity.created_at,
-            updated_at=entity.updated_at,
         )
 
     def to_entity(self) -> Doctor:
@@ -79,15 +103,16 @@ class DoctorTable(BaseTable[Doctor], table=True):
             Doctor entity instance.
         """
         return Doctor(
-            id=self.uid,
-            username=self.username,
-            password_hash=self.password_hash,
+            id=self.id,
+            eid=self.eid,
+            password_hash=HashedPassword.parse(self.password_hash, validate=False),
             name=self.name,
-            vp_key=self.vp_key,
-            vp_text=self.vp_text,
+            department=self.department,
+            title=self.title,
+            hospital=self.hospital,
+            phone=self.phone,
+            email=Email.parse(self.email, validate=False),
             is_active=self.is_active,
-            created_at=self.created_at,
-            updated_at=self.updated_at,
         )
 
 

@@ -48,6 +48,13 @@ class BaseTable(sqlm.SQLModel, abc.ABC, t.Generic[E], table=False):
     def __repr__(self) -> str:
         return f"TABLE <{self.__class__.__name__}(uid={self.uid!r})>"
 
+    @classmethod
+    @abc.abstractmethod
+    def from_entity(cls, entity: E) -> t.Self: ...
+
+    @abc.abstractmethod
+    def to_entity(self) -> E: ...
+
 
 from audex.lib.repos.tables import doctor  # noqa: E402
 from audex.lib.repos.tables import segment  # noqa: E402

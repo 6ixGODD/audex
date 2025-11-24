@@ -22,7 +22,6 @@ class SessionTable(BaseTable[Session], table=True):
     __tablename__ = "sessions"
 
     doctor_id: str = sqlm.Field(
-        foreign_key="doctors.uid",
         index=True,
         max_length=50,
         description="Foreign key to doctor who owns this session",
@@ -32,6 +31,24 @@ class SessionTable(BaseTable[Session], table=True):
         nullable=True,
         max_length=100,
         description="Patient name for this session",
+    )
+    clinic_number: str | None = sqlm.Field(
+        default=None,
+        nullable=True,
+        max_length=50,
+        description="Clinic number or ID for this session",
+    )
+    medical_record_number: str | None = sqlm.Field(
+        default=None,
+        nullable=True,
+        max_length=50,
+        description="Medical record number for this session",
+    )
+    diagnosis: str | None = sqlm.Field(
+        default=None,
+        nullable=True,
+        max_length=255,
+        description="Preliminary diagnosis for this session",
     )
     status: str = sqlm.Field(
         default=SessionStatus.DRAFT.value,
@@ -66,9 +83,12 @@ class SessionTable(BaseTable[Session], table=True):
             SessionTable instance.
         """
         return cls(
-            uid=entity.id,
+            id=entity.id,
             doctor_id=entity.doctor_id,
             patient_name=entity.patient_name,
+            clinic_number=entity.clinic_number,
+            medical_record_number=entity.medical_record_number,
+            diagnosis=entity.diagnosis,
             status=entity.status.value,
             started_at=entity.started_at,
             ended_at=entity.ended_at,
@@ -84,9 +104,12 @@ class SessionTable(BaseTable[Session], table=True):
             Session entity instance.
         """
         return Session(
-            id=self.uid,
+            id=self.id,
             doctor_id=self.doctor_id,
             patient_name=self.patient_name,
+            clinic_number=self.clinic_number,
+            medical_record_number=self.medical_record_number,
+            diagnosis=self.diagnosis,
             status=SessionStatus.parse(self.status),
             started_at=self.started_at,
             ended_at=self.ended_at,
