@@ -7,7 +7,9 @@ from audex.entity.fields import BoolField
 from audex.entity.fields import StringBackedField
 from audex.entity.fields import StringField
 from audex.valueobj.common.auth import HashedPassword
+from audex.valueobj.common.auth import Password
 from audex.valueobj.common.email import Email
+from audex.valueobj.common.phone import CNPhone
 
 
 class Doctor(BaseEntity):
@@ -63,7 +65,7 @@ class Doctor(BaseEntity):
     department: str | None = StringField(nullable=True)
     title: str | None = StringField(nullable=True)
     hospital: str | None = StringField(nullable=True)
-    phone: str | None = StringField(nullable=True)
+    phone: CNPhone | None = StringField(nullable=True)
     email: Email | None = StringBackedField(Email, nullable=True)
     is_active: bool = BoolField(default=True)
 
@@ -94,3 +96,14 @@ class Doctor(BaseEntity):
             The updated_at timestamp is automatically updated.
         """
         self.is_active = False
+
+    def verify_password(self, password: Password) -> bool:
+        """Verify a password against the doctor's stored password hash.
+
+        Args:
+            password: The plain text password to verify.
+
+        Returns:
+            True if the password matches the stored hash, False otherwise.
+        """
+        return self.password_hash == password.hash()
