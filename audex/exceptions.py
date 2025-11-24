@@ -8,9 +8,9 @@ import pydantic as pyd
 class AudexError(Exception):
     """Base exception for all Audex-related errors.
 
-    This is the root exception class for the Audex library. All custom exceptions
-    in Audex inherit from this class, making it easy to catch any Audex-specific
-    error.
+    This is the root exception class for the Audex library. All custom
+    exceptions in Audex inherit from this class, making it easy to catch any
+    Audex-specific error.
 
     Each exception has an associated error code for programmatic error handling
     and a default message that can be overridden.
@@ -74,12 +74,21 @@ class AudexError(Exception):
         """
         return f"{self.__class__.__name__}(code={self.code}, message={self.message!r})"
 
+    def as_dict(self) -> dict[str, t.Any]:
+        data: dict[str, t.Any] = {}
+
+        for slot in getattr(self, "__slots__", []):
+            data[slot] = getattr(self, slot, None)
+
+        return data
+
 
 class RequiredModuleNotFoundError(AudexError):
     """Exception raised when a required module is not found.
 
     This exception is raised when attempting to use functionality that requires
-    optional dependencies (e.g., torch, torchvision, PIL) that are not installed.
+    optional dependencies (e.g., torch, torchvision, PIL) that are not
+    installed.
 
     Attributes:
         default_message: Template for the default error message.
@@ -153,7 +162,8 @@ class ValidationError(AudexError):
 
         Args:
             reason: Description of what failed validation.
-            message: Custom error message. If None, uses formatted default_message.
+            message: Custom error message. If None, uses formatted
+                default_message.
         """
         self.reason = reason
         full_message = message or self.default_message.format(reason=reason)

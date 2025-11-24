@@ -53,8 +53,8 @@ class Store(LoggingMixin, abc.ABC):
     objects.
     """
 
-    @abc.abstractmethod
     @property
+    @abc.abstractmethod
     def key_builder(self) -> KeyBuilder:
         """Get a KeyBuilder instance for constructing store keys.
 

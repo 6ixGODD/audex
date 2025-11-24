@@ -111,7 +111,7 @@ class ResultGeneratedHeader(BaseServerHeader):
 
 
 class ResultGeneratedPayloadOutputSentence(BaseModel):
-    begin_time: int
+    begin_time: int  # in milliseconds
     end_time: int | None
     text: str
     words: list[dict[str, object]] | None

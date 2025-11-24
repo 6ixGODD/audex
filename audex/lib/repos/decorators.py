@@ -71,4 +71,4 @@ def log_repo_call(func: RepositoryMethodT) -> RepositoryMethodT:
             )
             raise
 
-    return t.cast(RepositoryMethodT, wrapper)
+    return wrapper
