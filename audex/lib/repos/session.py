@@ -154,14 +154,7 @@ class SessionRepository(SQLiteRepository[Session]):
             if session_obj is None:
                 raise ValueError(f"Session with uid {data.id} not found")
 
-            session_obj.doctor_id = data.doctor_id
-            session_obj.patient_name = data.patient_name
-            session_obj.status = data.status.value
-            session_obj.started_at = data.started_at
-            session_obj.ended_at = data.ended_at
-            session_obj.notes = data.notes
-            session_obj.updated_at = data.updated_at
-
+            session_obj.update(data)
             session.add(session_obj)
             await session.commit()
             await session.refresh(session_obj)
@@ -195,13 +188,7 @@ class SessionRepository(SQLiteRepository[Session]):
 
             for data in datas:
                 session_obj = table_objs[data.id]
-                session_obj.doctor_id = data.doctor_id
-                session_obj.patient_name = data.patient_name
-                session_obj.status = data.status.value
-                session_obj.started_at = data.started_at
-                session_obj.ended_at = data.ended_at
-                session_obj.notes = data.notes
-                session_obj.updated_at = data.updated_at
+                session_obj.update(data)
                 session.add(session_obj)
                 updated_ids.append(session_obj.uid)
 

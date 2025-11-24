@@ -62,25 +62,6 @@ class DoctorRepository(SQLiteRepository[Doctor]):
 
             return doctor_obj.to_entity()
 
-    async def read_by_username(self, username: str, /) -> Doctor | None:
-        """Read a doctor by username.
-
-        Args:
-            username: The username of the doctor to retrieve.
-
-        Returns:
-            The doctor entity if found, None otherwise.
-        """
-        async with self.sqlite.session() as session:
-            stmt = sqlm.select(DoctorTable).where(DoctorTable.username == username)
-            result = await session.execute(stmt)
-            doctor_obj = result.scalar_one_or_none()
-
-            if doctor_obj is None:
-                return None
-
-            return doctor_obj.to_entity()
-
     async def first(self, filter: Filter) -> Doctor | None:
         """Retrieve the first doctor matching the filter.
 
@@ -174,14 +155,7 @@ class DoctorRepository(SQLiteRepository[Doctor]):
             if doctor_obj is None:
                 raise ValueError(f"Doctor with uid {data.id} not found")
 
-            doctor_obj.username = data.username
-            doctor_obj.password_hash = data.password_hash
-            doctor_obj.name = data.name
-            doctor_obj.vp_key = data.vp_key
-            doctor_obj.vp_text = data.vp_text
-            doctor_obj.is_active = data.is_active
-            doctor_obj.updated_at = data.updated_at
-
+            doctor_obj.update(data)
             session.add(doctor_obj)
             await session.commit()
             await session.refresh(doctor_obj)
@@ -215,13 +189,7 @@ class DoctorRepository(SQLiteRepository[Doctor]):
 
             for data in datas:
                 doctor_obj = table_objs[data.id]
-                doctor_obj.username = data.username
-                doctor_obj.password_hash = data.password_hash
-                doctor_obj.name = data.name
-                doctor_obj.vp_key = data.vp_key
-                doctor_obj.vp_text = data.vp_text
-                doctor_obj.is_active = data.is_active
-                doctor_obj.updated_at = data.updated_at
+                doctor_obj.update(data)
                 session.add(doctor_obj)
                 updated_ids.append(doctor_obj.uid)
 

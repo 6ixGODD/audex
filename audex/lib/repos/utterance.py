@@ -135,24 +135,6 @@ class UtteranceRepository(SQLiteRepository[Utterance]):
             utterance_objs = result.scalars().all()
             return [obj.to_entity() for obj in utterance_objs]
 
-    async def get_latest_sequence(self, session_id: str) -> int:
-        """Get the latest sequence number for a session.
-
-        Args:
-            session_id: The ID of the session.
-
-        Returns:
-            The highest sequence number, or 0 if no utterances exist.
-        """
-        async with self.sqlite.session() as session:
-            stmt = sqlm.select(sa.func.max(UtteranceTable.sequence)).where(
-                UtteranceTable.session_id == session_id
-            )
-
-            result = await session.execute(stmt)
-            max_seq = result.scalar_one_or_none()
-            return max_seq if max_seq is not None else 0
-
     async def update(self, data: Utterance, /) -> str:
         """Update an existing utterance.
 
@@ -173,17 +155,7 @@ class UtteranceRepository(SQLiteRepository[Utterance]):
             if utterance_obj is None:
                 raise ValueError(f"Utterance with uid {data.id} not found")
 
-            utterance_obj.session_id = data.session_id
-            utterance_obj.segment_id = data.segment_id
-            utterance_obj.sequence = data.sequence
-            utterance_obj.speaker = data.speaker.value
-            utterance_obj.text = data.text
-            utterance_obj.confidence = data.confidence
-            utterance_obj.start_time_ms = data.start_time_ms
-            utterance_obj.end_time_ms = data.end_time_ms
-            utterance_obj.timestamp = data.timestamp
-            utterance_obj.updated_at = data.updated_at
-
+            utterance_obj.update(data)
             session.add(utterance_obj)
             await session.commit()
             await session.refresh(utterance_obj)
@@ -217,16 +189,7 @@ class UtteranceRepository(SQLiteRepository[Utterance]):
 
             for data in datas:
                 utterance_obj = table_objs[data.id]
-                utterance_obj.session_id = data.session_id
-                utterance_obj.segment_id = data.segment_id
-                utterance_obj.sequence = data.sequence
-                utterance_obj.speaker = data.speaker.value
-                utterance_obj.text = data.text
-                utterance_obj.confidence = data.confidence
-                utterance_obj.start_time_ms = data.start_time_ms
-                utterance_obj.end_time_ms = data.end_time_ms
-                utterance_obj.timestamp = data.timestamp
-                utterance_obj.updated_at = data.updated_at
+                utterance_obj.update(data)
                 session.add(utterance_obj)
                 updated_ids.append(utterance_obj.uid)
 

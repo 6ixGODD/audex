@@ -134,24 +134,6 @@ class SegmentRepository(SQLiteRepository[Segment]):
             segment_objs = result.scalars().all()
             return [obj.to_entity() for obj in segment_objs]
 
-    async def get_latest_sequence(self, session_id: str) -> int:
-        """Get the latest sequence number for a session.
-
-        Args:
-            session_id: The ID of the session.
-
-        Returns:
-            The highest sequence number, or 0 if no segments exist.
-        """
-        async with self.sqlite.session() as session:
-            stmt = sqlm.select(sa.func.max(SegmentTable.sequence)).where(
-                SegmentTable.session_id == session_id
-            )
-
-            result = await session.execute(stmt)
-            max_seq = result.scalar_one_or_none()
-            return max_seq if max_seq is not None else 0
-
     async def update(self, data: Segment, /) -> str:
         """Update an existing segment.
 
@@ -172,14 +154,7 @@ class SegmentRepository(SQLiteRepository[Segment]):
             if segment_obj is None:
                 raise ValueError(f"Segment with uid {data.id} not found")
 
-            segment_obj.session_id = data.session_id
-            segment_obj.sequence = data.sequence
-            segment_obj.audio_key = data.audio_key
-            segment_obj.started_at = data.started_at
-            segment_obj.ended_at = data.ended_at
-            segment_obj.duration_ms = data.duration_ms
-            segment_obj.updated_at = data.updated_at
-
+            segment_obj.update(data)
             session.add(segment_obj)
             await session.commit()
             await session.refresh(segment_obj)
@@ -213,13 +188,7 @@ class SegmentRepository(SQLiteRepository[Segment]):
 
             for data in datas:
                 segment_obj = table_objs[data.id]
-                segment_obj.session_id = data.session_id
-                segment_obj.sequence = data.sequence
-                segment_obj.audio_key = data.audio_key
-                segment_obj.started_at = data.started_at
-                segment_obj.ended_at = data.ended_at
-                segment_obj.duration_ms = data.duration_ms
-                segment_obj.updated_at = data.updated_at
+                segment_obj.update(data)
                 session.add(segment_obj)
                 updated_ids.append(segment_obj.uid)
 
