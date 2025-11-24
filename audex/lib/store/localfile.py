@@ -19,7 +19,7 @@ class LocalFileStore(Store):
         base_path: Base directory path for storing files
     """
 
-    __logtag__ = "store.localfile"
+    __logtag__ = "audex.lib.store.localfile"
 
     METADATA_SUFFIX: t.ClassVar[str] = ".metadata.json"
     DEFAULT_CHUNK_SIZE: t.ClassVar[int] = 8192

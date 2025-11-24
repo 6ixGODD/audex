@@ -51,9 +51,11 @@ class SQLite(Database):
     Args:
         uri: SQLite connection URI (must use aiosqlite driver).
             Example: "sqlite+aiosqlite:///./database.db" (relative path)
-            Example: "sqlite+aiosqlite:////absolute/path/database.db" (absolute path)
+            Example: "sqlite+aiosqlite:////absolute/path/database.db" (absolute
+                path)
             Example: "sqlite+aiosqlite:///:memory:" (in-memory database)
-        tables: List of SQLModel classes to manage. Used for create_all/drop_all.
+        tables: List of SQLModel classes to manage. Used for
+            create_all/drop_all.
         echo: Whether to log all SQL statements (useful for debugging).
         pool_size: Number of connections to maintain in the pool.
             Note: SQLite with aiosqlite uses NullPool by default in async mode.

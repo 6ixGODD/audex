@@ -110,7 +110,7 @@ class XFYunAuth(Auth):
 
 
 class XFYunVPR(RESTfulMixin, VPR):
-    __logtag__ = "vpr.xfyun"
+    __logtag__ = "audex.lib.vpr.xfyun"
 
     def __init__(
         self,

@@ -60,7 +60,7 @@ class WebsocketConnection(LoggingMixin, t.Hashable, t.AsyncContextManager):
         drain_condition: Callback to determine if data should be drained.
     """
 
-    __logtag__ = "websocket.connection"
+    __logtag__ = "audex.lib.websocket.connection"
 
     def __init__(
         self,

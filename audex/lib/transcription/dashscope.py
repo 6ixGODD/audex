@@ -168,7 +168,7 @@ def parse_server_message(
 
 
 class DashscopeParaformer(LoggingMixin, Transcription):
-    __logtag__ = "transcript.dashscope"
+    __logtag__ = "audex.lib.transcript.dashscope"
 
     def __init__(
         self,
@@ -290,7 +290,7 @@ class DashscopeParaformer(LoggingMixin, Transcription):
 
 
 class DashscopeParaformerSession(LoggingMixin, TranscriptSession):
-    __logtag__ = "transcript.dashscope.session"
+    __logtag__ = "audex.lib.transcript.dashscope.session"
 
     def __init__(
         self,

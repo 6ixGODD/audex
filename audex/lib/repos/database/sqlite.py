@@ -81,7 +81,7 @@ class SQLiteRepository(LoggingMixin, BaseRepository[E], abc.ABC):
         ```
     """
 
-    __logtag__ = "prototypex.infras.repos.sqlite"
+    __logtag__ = "audex.lib.repos.sqlite"
     __repotype__ = "sqlite"
     __table__: t.ClassVar[type[BaseTable]]
     __tablename__: t.ClassVar[str]

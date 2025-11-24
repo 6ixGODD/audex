@@ -9,6 +9,7 @@ import typing as t
 
 import pyudev  # type: ignore
 
+from audex.helper.mixin import AsyncLifecycleMixin
 from audex.helper.mixin import LoggingMixin
 
 
@@ -48,7 +49,7 @@ class USBExportTask(t.NamedTuple):
     is_directory: bool
 
 
-class USBManager(LoggingMixin):
+class USBManager(LoggingMixin, AsyncLifecycleMixin):
     """USB storage device manager for file export.
 
     This manager monitors USB device connections and provides functionality

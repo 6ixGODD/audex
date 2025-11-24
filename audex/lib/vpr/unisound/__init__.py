@@ -23,7 +23,7 @@ from audex.lib.vpr.unisound.types import UpdateFeatureResponse
 
 
 class UnisoundVPR(RESTfulMixin, VPR):
-    __logtag__ = "vpr.unisound"
+    __logtag__ = "audex.lib.vpr.unisound"
 
     def __init__(
         self,

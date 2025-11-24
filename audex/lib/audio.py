@@ -11,6 +11,7 @@ import wave
 import pyaudio
 
 from audex import utils
+from audex.helper.mixin import AsyncContextMixin
 from audex.helper.mixin import LoggingMixin
 from audex.lib.store import Store
 
@@ -51,7 +52,7 @@ class AudioSegment(t.NamedTuple):
     frames: bytes
 
 
-class AudioRecorder(LoggingMixin):
+class AudioRecorder(LoggingMixin, AsyncContextMixin):
     """Audio recorder using PyAudio for continuous recording.
 
     This recorder captures audio from a microphone and can start/stop
