@@ -36,7 +36,7 @@ class UtteranceRepository(SQLiteRepository[Utterance]):
         Returns:
             The ID of the created utterance.
         """
-        async with self.sqlite.session() as session, session.begin():
+        async with self.sqlite.session() as session:
             utterance_table = UtteranceTable.from_entity(data)
             session.add(utterance_table)
             await session.commit()
@@ -147,7 +147,7 @@ class UtteranceRepository(SQLiteRepository[Utterance]):
         Raises:
             ValueError: If the utterance with the given ID does not exist.
         """
-        async with self.sqlite.session() as session, session.begin():
+        async with self.sqlite.session() as session:
             stmt = sqlm.select(UtteranceTable).where(UtteranceTable.uid == data.id)
             result = await session.execute(stmt)
             utterance_obj = result.scalar_one_or_none()
@@ -177,7 +177,7 @@ class UtteranceRepository(SQLiteRepository[Utterance]):
             return []
 
         updated_ids: builtins.list[str] = []
-        async with self.sqlite.session() as session, session.begin():
+        async with self.sqlite.session() as session:
             ids = [data.id for data in datas]
             stmt = sqlm.select(UtteranceTable).where(sqlm.col(UtteranceTable.uid).in_(ids))
             result = await session.execute(stmt)
@@ -205,7 +205,7 @@ class UtteranceRepository(SQLiteRepository[Utterance]):
         Returns:
             True if the utterance was deleted, False if not found.
         """
-        async with self.sqlite.session() as session, session.begin():
+        async with self.sqlite.session() as session:
             stmt = sqlm.select(UtteranceTable).where(UtteranceTable.uid == id)
             result = await session.execute(stmt)
             utterance_obj = result.scalar_one_or_none()
@@ -230,7 +230,7 @@ class UtteranceRepository(SQLiteRepository[Utterance]):
             If deleting by IDs, returns list of deleted IDs.
             If deleting by filter, returns count of deleted records.
         """
-        async with self.sqlite.session() as session, session.begin():
+        async with self.sqlite.session() as session:
             if isinstance(arg, list):
                 if not arg:
                     return []

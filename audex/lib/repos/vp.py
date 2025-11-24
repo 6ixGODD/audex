@@ -35,7 +35,7 @@ class VPRepository(SQLiteRepository[VP]):
         Returns:
             The ID of the created utterance.
         """
-        async with self.sqlite.session() as session, session.begin():
+        async with self.sqlite.session() as session:
             utterance_table = VPTable.from_entity(data)
             session.add(utterance_table)
             await session.commit()
@@ -146,7 +146,7 @@ class VPRepository(SQLiteRepository[VP]):
         Raises:
             ValueError: If the utterance with the given ID does not exist.
         """
-        async with self.sqlite.session() as session, session.begin():
+        async with self.sqlite.session() as session:
             stmt = sqlm.select(VPTable).where(VPTable.uid == data.id)
             result = await session.execute(stmt)
             utterance_obj = result.scalar_one_or_none()
@@ -176,7 +176,7 @@ class VPRepository(SQLiteRepository[VP]):
             return []
 
         updated_ids: builtins.list[str] = []
-        async with self.sqlite.session() as session, session.begin():
+        async with self.sqlite.session() as session:
             ids = [data.id for data in datas]
             stmt = sqlm.select(VPTable).where(sqlm.col(VPTable.uid).in_(ids))
             result = await session.execute(stmt)
@@ -204,7 +204,7 @@ class VPRepository(SQLiteRepository[VP]):
         Returns:
             True if the utterance was deleted, False if not found.
         """
-        async with self.sqlite.session() as session, session.begin():
+        async with self.sqlite.session() as session:
             stmt = sqlm.select(VPTable).where(VPTable.uid == id)
             result = await session.execute(stmt)
             utterance_obj = result.scalar_one_or_none()
@@ -229,7 +229,7 @@ class VPRepository(SQLiteRepository[VP]):
             If deleting by IDs, returns list of deleted IDs.
             If deleting by filter, returns count of deleted records.
         """
-        async with self.sqlite.session() as session, session.begin():
+        async with self.sqlite.session() as session:
             if isinstance(arg, list):
                 if not arg:
                     return []

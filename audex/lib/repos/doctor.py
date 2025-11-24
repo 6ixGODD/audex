@@ -36,24 +36,24 @@ class DoctorRepository(SQLiteRepository[Doctor]):
         Returns:
             The ID of the created doctor.
         """
-        async with self.sqlite.session() as session, session.begin():
+        async with self.sqlite.session() as session:
             doctor_table = DoctorTable.from_entity(data)
             session.add(doctor_table)
             await session.commit()
             await session.refresh(doctor_table)
-            return doctor_table.uid
+            return doctor_table.id
 
     async def read(self, id: str, /) -> Doctor | None:
         """Read a doctor by ID.
 
         Args:
-            id: The ID (uid) of the doctor to retrieve.
+            id: The ID (id) of the doctor to retrieve.
 
         Returns:
             The doctor entity if found, None otherwise.
         """
         async with self.sqlite.session() as session:
-            stmt = sqlm.select(DoctorTable).where(DoctorTable.uid == id)
+            stmt = sqlm.select(DoctorTable).where(DoctorTable.id == id)
             result = await session.execute(stmt)
             doctor_obj = result.scalar_one_or_none()
 
@@ -115,7 +115,7 @@ class DoctorRepository(SQLiteRepository[Doctor]):
                 if not arg:
                     return []
 
-                stmt = sqlm.select(DoctorTable).where(sqlm.col(DoctorTable.uid).in_(arg))
+                stmt = sqlm.select(DoctorTable).where(sqlm.col(DoctorTable.id).in_(arg))
                 result = await session.execute(stmt)
                 doctor_objs = result.scalars().all()
                 return [obj.to_entity() for obj in doctor_objs]
@@ -147,19 +147,19 @@ class DoctorRepository(SQLiteRepository[Doctor]):
         Raises:
             ValueError: If the doctor with the given ID does not exist.
         """
-        async with self.sqlite.session() as session, session.begin():
-            stmt = sqlm.select(DoctorTable).where(DoctorTable.uid == data.id)
+        async with self.sqlite.session() as session:
+            stmt = sqlm.select(DoctorTable).where(DoctorTable.id == data.id)
             result = await session.execute(stmt)
             doctor_obj = result.scalar_one_or_none()
 
             if doctor_obj is None:
-                raise ValueError(f"Doctor with uid {data.id} not found")
+                raise ValueError(f"Doctor with id {data.id} not found")
 
             doctor_obj.update(data)
             session.add(doctor_obj)
             await session.commit()
             await session.refresh(doctor_obj)
-            return doctor_obj.uid
+            return doctor_obj.id
 
     async def update_many(self, datas: builtins.list[Doctor]) -> builtins.list[str]:
         """Update multiple doctors in the database.
@@ -177,11 +177,11 @@ class DoctorRepository(SQLiteRepository[Doctor]):
             return []
 
         updated_ids: builtins.list[str] = []
-        async with self.sqlite.session() as session, session.begin():
+        async with self.sqlite.session() as session:
             ids = [data.id for data in datas]
-            stmt = sqlm.select(DoctorTable).where(sqlm.col(DoctorTable.uid).in_(ids))
+            stmt = sqlm.select(DoctorTable).where(sqlm.col(DoctorTable.id).in_(ids))
             result = await session.execute(stmt)
-            table_objs = {obj.uid: obj for obj in result.scalars().all()}
+            table_objs = {obj.id: obj for obj in result.scalars().all()}
 
             missing_ids = set(ids) - set(table_objs.keys())
             if missing_ids:
@@ -191,7 +191,7 @@ class DoctorRepository(SQLiteRepository[Doctor]):
                 doctor_obj = table_objs[data.id]
                 doctor_obj.update(data)
                 session.add(doctor_obj)
-                updated_ids.append(doctor_obj.uid)
+                updated_ids.append(doctor_obj.id)
 
             await session.commit()
             return updated_ids
@@ -200,13 +200,13 @@ class DoctorRepository(SQLiteRepository[Doctor]):
         """Delete a doctor by ID.
 
         Args:
-            id: The ID (uid) of the doctor to delete.
+            id: The ID (id) of the doctor to delete.
 
         Returns:
             True if the doctor was deleted, False if not found.
         """
-        async with self.sqlite.session() as session, session.begin():
-            stmt = sqlm.select(DoctorTable).where(DoctorTable.uid == id)
+        async with self.sqlite.session() as session:
+            stmt = sqlm.select(DoctorTable).where(DoctorTable.id == id)
             result = await session.execute(stmt)
             doctor_obj = result.scalar_one_or_none()
 
@@ -230,38 +230,38 @@ class DoctorRepository(SQLiteRepository[Doctor]):
             If deleting by IDs, returns list of deleted IDs.
             If deleting by filter, returns count of deleted records.
         """
-        async with self.sqlite.session() as session, session.begin():
+        async with self.sqlite.session() as session:
             if isinstance(arg, list):
                 if not arg:
                     return []
 
-                stmt = sqlm.select(DoctorTable).where(sqlm.col(DoctorTable.uid).in_(arg))
+                stmt = sqlm.select(DoctorTable).where(sqlm.col(DoctorTable.id).in_(arg))
                 result = await session.execute(stmt)
                 doctor_objs = result.scalars().all()
 
                 if not doctor_objs:
                     return []
 
-                doctor_uids = [obj.uid for obj in doctor_objs]
+                doctor_ids = [obj.id for obj in doctor_objs]
                 for obj in doctor_objs:
                     await session.delete(obj)
 
                 await session.commit()
-                return doctor_uids
+                return doctor_ids
 
             spec = self.build_query_spec(arg)
-            stmt = sqlm.select(DoctorTable.uid)
+            stmt = sqlm.select(DoctorTable.id)
             for clause in spec.where:
                 stmt = stmt.where(clause)
 
             result = await session.execute(stmt)
-            doctor_uids = [row[0] for row in result.all()]
+            doctor_ids = [row[0] for row in result.all()]
 
-            if not doctor_uids:
+            if not doctor_ids:
                 return 0
 
-            count = len(doctor_uids)
-            delete_stmt = sa.delete(DoctorTable).where(sqlm.col(DoctorTable.uid).in_(doctor_uids))
+            count = len(doctor_ids)
+            delete_stmt = sa.delete(DoctorTable).where(sqlm.col(DoctorTable.id).in_(doctor_ids))
             await session.execute(delete_stmt)
             await session.commit()
             return count

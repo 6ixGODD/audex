@@ -92,8 +92,8 @@ class DoctorTable(BaseTable[Doctor], table=True):
             department=entity.department,
             title=entity.title,
             hospital=entity.hospital,
-            phone=entity.phone.value,
-            email=entity.email.value,
+            phone=entity.phone.value if entity.phone else None,
+            email=entity.email.value if entity.email else None,
             is_active=entity.is_active,
         )
 
@@ -111,8 +111,8 @@ class DoctorTable(BaseTable[Doctor], table=True):
             department=self.department,
             title=self.title,
             hospital=self.hospital,
-            phone=CNPhone.parse(self.phone),
-            email=Email.parse(self.email, validate=False),
+            phone=CNPhone.parse(self.phone) if self.phone else None,
+            email=Email.parse(self.email, validate=False) if self.email else None,
             is_active=self.is_active,
         )
 

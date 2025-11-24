@@ -83,6 +83,10 @@ class RepositoryMeta(abc.ABCMeta):
             ):
                 continue
 
+            # Skip if not an async function
+            if not inspect.iscoroutinefunction(attr):
+                continue
+
             # Apply log decorator
             decorated = log_repo_call(attr)
 

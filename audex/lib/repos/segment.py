@@ -35,7 +35,7 @@ class SegmentRepository(SQLiteRepository[Segment]):
         Returns:
             The ID of the created segment.
         """
-        async with self.sqlite.session() as session, session.begin():
+        async with self.sqlite.session() as session:
             segment_table = SegmentTable.from_entity(data)
             session.add(segment_table)
             await session.commit()
@@ -146,7 +146,7 @@ class SegmentRepository(SQLiteRepository[Segment]):
         Raises:
             ValueError: If the segment with the given ID does not exist.
         """
-        async with self.sqlite.session() as session, session.begin():
+        async with self.sqlite.session() as session:
             stmt = sqlm.select(SegmentTable).where(SegmentTable.uid == data.id)
             result = await session.execute(stmt)
             segment_obj = result.scalar_one_or_none()
@@ -176,7 +176,7 @@ class SegmentRepository(SQLiteRepository[Segment]):
             return []
 
         updated_ids: builtins.list[str] = []
-        async with self.sqlite.session() as session, session.begin():
+        async with self.sqlite.session() as session:
             ids = [data.id for data in datas]
             stmt = sqlm.select(SegmentTable).where(sqlm.col(SegmentTable.uid).in_(ids))
             result = await session.execute(stmt)
@@ -204,7 +204,7 @@ class SegmentRepository(SQLiteRepository[Segment]):
         Returns:
             True if the segment was deleted, False if not found.
         """
-        async with self.sqlite.session() as session, session.begin():
+        async with self.sqlite.session() as session:
             stmt = sqlm.select(SegmentTable).where(SegmentTable.uid == id)
             result = await session.execute(stmt)
             segment_obj = result.scalar_one_or_none()
@@ -229,7 +229,7 @@ class SegmentRepository(SQLiteRepository[Segment]):
             If deleting by IDs, returns list of deleted IDs.
             If deleting by filter, returns count of deleted records.
         """
-        async with self.sqlite.session() as session, session.begin():
+        async with self.sqlite.session() as session:
             if isinstance(arg, list):
                 if not arg:
                     return []
