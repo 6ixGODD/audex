@@ -6,6 +6,8 @@ from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
 from audex.config.core import CoreConfig
+from audex.config.infrastructure import InfrastructureConfig
+from audex.config.provider import ProviderConfig
 from audex.helper.mixin import ContextMixin
 from audex.helper.settings import Settings
 
@@ -19,7 +21,18 @@ class Config(ContextMixin, Settings):
         extra="ignore",
     )
 
-    core: CoreConfig = Field(default_factory=CoreConfig)
+    core: CoreConfig = Field(
+        default_factory=CoreConfig,
+        description="Core configuration settings.",
+    )
+    provider: ProviderConfig = Field(
+        default_factory=ProviderConfig,
+        description="Provider configuration settings.",
+    )
+    infrastructure: InfrastructureConfig = Field(
+        default_factory=InfrastructureConfig,
+        description="Infrastructure configuration settings.",
+    )
 
     def init(self) -> None:
         self.core.logging.init()
