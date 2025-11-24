@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from audex import utils
 from audex.entity import BaseEntity
+from audex.entity import touch_after
 from audex.entity.fields import BoolField
 from audex.entity.fields import StringField
 
@@ -16,14 +17,14 @@ class Doctor(BaseEntity):
     Attributes:
         id: The unique identifier of the doctor. Auto-generated with "doctor-"
             prefix for clear categorization.
-        username: The unique username of the doctor for login.
+        eid: Employee/staff ID in the hospital system.
         password_hash: The hashed password for secure authentication.
         name: The doctor's real name for display and records.
-        vp_key: The voiceprint audio file key/path in storage. Used for 1:1
-            speaker verification to distinguish doctor from patient. None if
-            not yet registered.
-        vp_text: The text content that was read during voiceprint registration.
-            Stored for potential re-registration with different VPR systems.
+        department: Department or specialty. Optional.
+        title: Professional title (e.g., "主治医师", "副主任医师"). Optional.
+        hospital: Hospital or clinic name. Optional.
+        phone: Contact phone number. Optional.
+        email: Contact email address. Optional.
         is_active: Indicates whether the doctor account is active. Boolean flag
             controlling login ability, defaults to True.
 
@@ -35,36 +36,58 @@ class Doctor(BaseEntity):
         ```python
         # Create new doctor
         doctor = Doctor(
-            username="dr_zhang",
+            eid="EMP001",
             password_hash="hashed_password_here",
             name="张医生",
+            department="内科",
+            title="主治医师",
+            hospital="XX市人民医院",
+            phone="13800138000",
+            email="zhang@hospital.com",
             is_active=True,
         )
 
-        # Register voiceprint after audio upload
-        doctor.vp_key = "vp/doctor-abc123/voiceprint.wav"
-        doctor.vp_text = "请朗读以下内容进行声纹注册..."
-        doctor.touch()
-
-        # Check if voiceprint is registered
-        if doctor.has_voiceprint:
-            print(f"Doctor {doctor.name} voiceprint registered")
+        # Activate/deactivate account
+        doctor.deactivate()
+        doctor.activate()
         ```
     """
 
     id: str = StringField(immutable=True, default_factory=lambda: utils.gen_id(prefix="doctor-"))
-    username: str = StringField()
+    eid: str = StringField()
     password_hash: str = StringField()
     name: str = StringField()
-    vp_key: str | None = StringField(nullable=True)
-    vp_text: str | None = StringField(nullable=True)
+    department: str | None = StringField(nullable=True)
+    title: str | None = StringField(nullable=True)
+    hospital: str | None = StringField(nullable=True)
+    phone: str | None = StringField(nullable=True)
+    email: str | None = StringField(nullable=True)
     is_active: bool = BoolField(default=True)
 
     @property
-    def has_voiceprint(self) -> bool:
-        """Check if the doctor has registered their voiceprint.
+    def is_authenticated(self) -> bool:
+        """Check if the doctor is authenticated and can access the
+        system.
 
         Returns:
-            True if voiceprint is registered, False otherwise.
+            True if the doctor is active, False otherwise.
         """
-        return self.vp_key is not None
+        return self.is_active
+
+    @touch_after
+    def activate(self) -> None:
+        """Activate the doctor account by setting is_active to True.
+
+        Note:
+            The updated_at timestamp is automatically updated.
+        """
+        self.is_active = True
+
+    @touch_after
+    def deactivate(self) -> None:
+        """Deactivate the doctor account by setting is_active to False.
+
+        Note:
+            The updated_at timestamp is automatically updated.
+        """
+        self.is_active = False

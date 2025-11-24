@@ -27,6 +27,9 @@ class Session(BaseEntity):
             reference to Doctor entity.
         patient_name: The name of the patient in this session. Optional field
             for record keeping.
+        clinic_number: Outpatient clinic number. Optional.
+        medical_record_number: Medical record/case number. Optional.
+        diagnosis: Preliminary or final diagnosis. Optional.
         status: The current status of the session (DRAFT, IN_PROGRESS, COMPLETED,
             CANCELLED). Defaults to DRAFT.
         started_at: Timestamp when the session first started recording. None
@@ -46,30 +49,28 @@ class Session(BaseEntity):
         session = Session(
             doctor_id="doctor-abc123",
             patient_name="李女士",
+            clinic_number="20250123-001",
+            medical_record_number="MR-2025-001",
+            diagnosis="上呼吸道感染",
             notes="初诊",
         )
 
         # Start recording
         session.start()
         print(session.status)  # SessionStatus.IN_PROGRESS
-        print(session.started_at)  # Current timestamp
 
         # Complete session
         session.complete()
         print(session.status)  # SessionStatus.COMPLETED
-        print(session.ended_at)  # Current timestamp
-
-        # Check session state
-        if session.is_active:
-            print("Session is in progress")
-        if session.is_finished:
-            print("Session is completed or cancelled")
         ```
     """
 
     id: str = StringField(immutable=True, default_factory=lambda: utils.gen_id(prefix="session-"))
     doctor_id: str = StringField()
     patient_name: str | None = StringField(nullable=True)
+    clinic_number: str | None = StringField(nullable=True)
+    medical_record_number: str | None = StringField(nullable=True)
+    diagnosis: str | None = StringField(nullable=True)
     status: SessionStatus = StringBackedField(SessionStatus, default=SessionStatus.DRAFT)
     started_at: datetime.datetime | None = DateTimeField(nullable=True)
     ended_at: datetime.datetime | None = DateTimeField(nullable=True)
