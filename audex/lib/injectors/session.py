@@ -1,0 +1,17 @@
+from __future__ import annotations
+
+import typing as t
+
+if t.TYPE_CHECKING:
+    from audex.config import Config
+    from audex.lib.session import SessionManager
+
+
+def make_session_manager(config: Config) -> SessionManager:
+    import datetime
+
+    from audex.lib.session import SessionManager
+
+    return SessionManager(
+        app_name=config.core.app_name, ttl=datetime.timedelta(minutes=config.core.session.tt)
+    )
