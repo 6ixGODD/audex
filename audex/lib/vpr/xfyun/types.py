@@ -53,7 +53,7 @@ class AudioResource(BaseModel):
         default="lame",
         description="Audio encoding format, fixed to lame (MP3)",
     )
-    sample_rate: t.Literal[8000, 16000] = Field(
+    sample_rate: int = Field(
         default=16000,
         description="Audio sample rate in Hz, must be 16000",
     )

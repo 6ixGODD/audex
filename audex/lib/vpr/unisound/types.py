@@ -105,7 +105,7 @@ class CreateFeatureRequest(AuthParams):
         serialization_alias="audioData",
         description="Base64 encoded audio data",
     )
-    audio_sample_rate: t.Literal[8000, 16000] = Field(
+    audio_sample_rate: str = Field(
         ...,
         serialization_alias="audioSampleRate",
         description="Audio sample rate",
@@ -159,7 +159,7 @@ class UpdateFeatureRequest(AuthParams):
         serialization_alias="audioData",
         description="Base64 encoded audio data",
     )
-    audio_sample_rate: t.Literal[8000, 16000] = Field(
+    audio_sample_rate: int = Field(
         ...,
         serialization_alias="audioSampleRate",
         description="Audio sample rate",
@@ -202,7 +202,7 @@ class ConfirmFeatureRequest(AuthParams):
         serialization_alias="audioData",
         description="Base64 encoded audio data",
     )
-    audio_sample_rate: t.Literal[8000, 16000] = Field(
+    audio_sample_rate: str = Field(
         ...,
         serialization_alias="audioSampleRate",
         description="Audio sample rate",

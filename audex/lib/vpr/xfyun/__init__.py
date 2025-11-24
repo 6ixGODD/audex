@@ -170,7 +170,7 @@ class XFYunVPR(RESTfulMixin, VPR):
         self.group_id = obj.group_id
         return self.group_id
 
-    async def enroll(self, data: bytes, sr: t.Literal[8000, 16000], uid: str | None = None) -> str:
+    async def enroll(self, data: bytes, sr: int, uid: str | None = None) -> str:
         if not self.group_id:
             raise VPRError("Group ID is not set. Cannot enroll feature.")
         uid = uid or utils.gen_id()
@@ -202,7 +202,7 @@ class XFYunVPR(RESTfulMixin, VPR):
             raise VPRError("Feature ID mismatch after registration.")
         return obj.feature_id
 
-    async def update(self, uid: str, data: bytes, sr: t.Literal[8000, 16000]) -> None:
+    async def update(self, uid: str, data: bytes, sr: int) -> None:
         if not self.group_id:
             raise VPRError("Group ID is not set. Cannot enroll feature.")
         response = await self.request(
@@ -232,7 +232,7 @@ class XFYunVPR(RESTfulMixin, VPR):
         if not uid == obj.feature_id:
             raise VPRError("Feature ID mismatch after update.")
 
-    async def verify(self, uid: str, data: bytes, sr: t.Literal[8000, 16000]) -> float:
+    async def verify(self, uid: str, data: bytes, sr: int) -> float:
         if not self.group_id:
             raise VPRError("Group ID is not set. Cannot verify feature.")
         response = await self.request(

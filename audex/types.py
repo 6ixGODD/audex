@@ -9,14 +9,14 @@ class SessionState(enum.Enum):
     IDLE, ACTIVE, CLOSED = "IDLE", "ACTIVE", "CLOSED"
 
 
-class Session(abc.ABC):
+class AbstractSession(abc.ABC):
     @abc.abstractmethod
     async def start(self) -> None: ...
 
     @abc.abstractmethod
     async def close(self) -> None: ...
 
-    async def __aenter__(self) -> Session:
+    async def __aenter__(self) -> AbstractSession:
         await self.start()
         return self
 
@@ -33,7 +33,7 @@ S = t.TypeVar("S")
 R = t.TypeVar("R")
 
 
-class DuplexSession(Session, t.Generic[S, R], abc.ABC):
+class DuplexAbstractSession(AbstractSession, t.Generic[S, R], abc.ABC):
     @abc.abstractmethod
     async def finish(self) -> None: ...
 

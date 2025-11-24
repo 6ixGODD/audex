@@ -7,7 +7,7 @@ from audex.exceptions import AudexError
 from audex.lib.transcription.events import Delta
 from audex.lib.transcription.events import Done
 from audex.lib.transcription.events import Start
-from audex.lib.types import DuplexSession
+from audex.types import DuplexAbstractSession
 
 
 class Transcription(abc.ABC):
@@ -26,7 +26,7 @@ class Transcription(abc.ABC):
 ReceiveType: t.TypeAlias = Start | Delta | Done
 
 
-class TranscriptSession(DuplexSession[bytes, ReceiveType], abc.ABC): ...
+class TranscriptSession(DuplexAbstractSession[bytes, ReceiveType], abc.ABC): ...
 
 
 class TranscriptionError(AudexError):
