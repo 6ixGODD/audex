@@ -8,6 +8,7 @@ from audex.entity.doctor import Doctor
 from audex.lib.repos.tables import BaseTable
 from audex.valueobj.common.auth import HashedPassword
 from audex.valueobj.common.email import Email
+from audex.valueobj.common.phone import CNPhone
 
 
 class DoctorTable(BaseTable[Doctor], table=True):
@@ -91,7 +92,7 @@ class DoctorTable(BaseTable[Doctor], table=True):
             department=entity.department,
             title=entity.title,
             hospital=entity.hospital,
-            phone=entity.phone,
+            phone=entity.phone.value,
             email=entity.email.value,
             is_active=entity.is_active,
         )
@@ -110,7 +111,7 @@ class DoctorTable(BaseTable[Doctor], table=True):
             department=self.department,
             title=self.title,
             hospital=self.hospital,
-            phone=self.phone,
+            phone=CNPhone.parse(self.phone),
             email=Email.parse(self.email, validate=False),
             is_active=self.is_active,
         )

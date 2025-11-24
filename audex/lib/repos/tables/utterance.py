@@ -22,13 +22,13 @@ class UtteranceTable(BaseTable[Utterance], table=True):
     __tablename__ = "utterances"
 
     session_id: str = sqlm.Field(
-        foreign_key="sessions.uid",
+        foreign_key="sessions.id",
         index=True,
         max_length=50,
         description="Foreign key to session this utterance belongs to",
     )
     segment_id: str = sqlm.Field(
-        foreign_key="segments.uid",
+        foreign_key="segments.id",
         index=True,
         max_length=50,
         description="Foreign key to segment containing this utterance",
@@ -76,7 +76,7 @@ class UtteranceTable(BaseTable[Utterance], table=True):
             UtteranceTable instance.
         """
         return cls(
-            uid=entity.id,
+            id=entity.id,
             session_id=entity.session_id,
             segment_id=entity.segment_id,
             sequence=entity.sequence,
@@ -97,7 +97,7 @@ class UtteranceTable(BaseTable[Utterance], table=True):
             Utterance entity instance.
         """
         return Utterance(
-            id=self.uid,
+            id=self.id,
             session_id=self.session_id,
             segment_id=self.segment_id,
             sequence=self.sequence,

@@ -21,12 +21,12 @@ class BaseTable(sqlm.SQLModel, abc.ABC, t.Generic[E], table=False):
 
     __tablename__: t.ClassVar[str]
 
-    id: int | None = sqlm.Field(
+    sid: int | None = sqlm.Field(
         default=None,
         primary_key=True,
         description="Auto-increment primary key",
     )
-    uid: str = sqlm.Field(
+    id: str = sqlm.Field(
         index=True,
         unique=True,
         max_length=50,

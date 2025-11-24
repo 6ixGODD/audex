@@ -21,7 +21,7 @@ class SegmentTable(BaseTable[Segment], table=True):
     __tablename__ = "segments"
 
     session_id: str = sqlm.Field(
-        foreign_key="sessions.uid",
+        foreign_key="sessions.id",
         index=True,
         max_length=50,
         description="Foreign key to session this segment belongs to",
@@ -61,7 +61,7 @@ class SegmentTable(BaseTable[Segment], table=True):
             SegmentTable instance.
         """
         return cls(
-            uid=entity.id,
+            id=entity.id,
             session_id=entity.session_id,
             sequence=entity.sequence,
             audio_key=entity.audio_key,
@@ -79,7 +79,7 @@ class SegmentTable(BaseTable[Segment], table=True):
             Segment entity instance.
         """
         return Segment(
-            id=self.uid,
+            id=self.id,
             session_id=self.session_id,
             sequence=self.sequence,
             audio_key=self.audio_key,

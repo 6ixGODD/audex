@@ -49,6 +49,10 @@ class VPTable(BaseTable[VP], table=True):
         max_length=500,
         description="The text content used for voiceprint enrollment.",
     )
+    sample_rate: int = sqlm.Field(
+        ...,
+        description="Sample rate of the voiceprint audio in Hz.",
+    )
     is_active: bool = sqlm.Field(
         default=True,
         description="Indicates whether the voiceprint is active for recognition.",
@@ -64,6 +68,7 @@ class VPTable(BaseTable[VP], table=True):
             vpr_group_id=entity.vpr_group_id,
             audio_key=entity.audio_key,
             text_content=entity.text_content,
+            sample_rate=entity.sample_rate,
             is_active=entity.is_active,
             created_at=entity.created_at,
             updated_at=entity.updated_at,
@@ -78,6 +83,7 @@ class VPTable(BaseTable[VP], table=True):
             audio_key=self.audio_key,
             text_content=self.text_content,
             is_active=self.is_active,
+            sample_rate=self.sample_rate,
             created_at=self.created_at,
             updated_at=self.updated_at,
         )
