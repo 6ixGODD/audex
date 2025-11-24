@@ -21,23 +21,23 @@ class SessionData(t.NamedTuple):
     Attributes:
         doctor_id: Doctor's unique identifier.
         doctor_name: Doctor's display name.
-        username: Doctor's username.
+        eid: Doctor's eid.
         created_at: Session creation timestamp (ISO format).
         expires_at: Session expiration timestamp (ISO format).
     """
 
     doctor_id: str
-    doctor_name: str
-    username: str
+    doctor_name: str | None
+    eid: str
     created_at: str
     expires_at: str
 
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self) -> dict[str, str | None]:
         """Convert to dictionary for JSON serialization."""
         return {
             "doctor_id": self.doctor_id,
             "doctor_name": self.doctor_name,
-            "username": self.username,
+            "eid": self.eid,
             "created_at": self.created_at,
             "expires_at": self.expires_at,
         }
@@ -48,7 +48,7 @@ class SessionData(t.NamedTuple):
         return cls(
             doctor_id=data["doctor_id"],
             doctor_name=data["doctor_name"],
-            username=data["username"],
+            eid=data["eid"],
             created_at=data["created_at"],
             expires_at=data["expires_at"],
         )
@@ -71,7 +71,7 @@ class SessionManager(LoggingMixin):
     Attributes:
         session_dir: Directory for session files (in system temp).
         session_file: Path to the encrypted session file.
-        default_ttl: Default time-to-live for sessions.
+        ttl: Default time-to-live for sessions.
 
     Example:
         ```python
@@ -87,7 +87,7 @@ class SessionManager(LoggingMixin):
         await manager.login(
             doctor_id="doctor-abc123",
             doctor_name="张医生",
-            username="dr_zhang",
+            eid="dr_zhang",
         )
 
         # Check if logged in (no token needed!)
@@ -114,11 +114,11 @@ class SessionManager(LoggingMixin):
         self,
         app_name: str = __title__,
         *,
-        default_ttl: datetime.timedelta = datetime.timedelta(hours=8),
+        ttl: datetime.timedelta = datetime.timedelta(hours=8),
     ) -> None:
         super().__init__()
         self.app_name = app_name
-        self.default_ttl = default_ttl
+        self.ttl = ttl
 
         # Use system temp directory
         self.session_dir = pathlib.Path(tempfile.gettempdir()) / f".{app_name}_session"
@@ -145,7 +145,7 @@ class SessionManager(LoggingMixin):
         self.logger.info(
             "Session manager initialized",
             session_dir=str(self.session_dir),
-            ttl_hours=self.default_ttl.total_seconds() / 3600,
+            ttl_hours=self.ttl.total_seconds() / 3600,
         )
 
     async def close(self) -> None:
@@ -165,9 +165,9 @@ class SessionManager(LoggingMixin):
     async def login(
         self,
         doctor_id: str,
-        doctor_name: str,
-        username: str,
+        eid: str,
         *,
+        doctor_name: str | None = None,
         ttl: datetime.timedelta | None = None,
     ) -> SessionData:
         """Create a login session.
@@ -178,7 +178,7 @@ class SessionManager(LoggingMixin):
         Args:
             doctor_id: Doctor's unique identifier.
             doctor_name: Doctor's display name.
-            username: Doctor's username.
+            eid: Doctor's eid.
             ttl: Time-to-live for the session. If None, uses default.
 
         Returns:
@@ -189,20 +189,20 @@ class SessionManager(LoggingMixin):
             session = await manager.login(
                 doctor_id="doctor-abc123",
                 doctor_name="张医生",
-                username="dr_zhang",
+                eid="dr_zhang",
             )
             print(f"Logged in as: {session.doctor_name}")
             ```
         """
         async with self._lock:
-            ttl = ttl or self.default_ttl
+            ttl = ttl or self.ttl
             now = utils.utcnow()
             expires_at = now + ttl
 
             session_data = SessionData(
                 doctor_id=doctor_id,
                 doctor_name=doctor_name,
-                username=username,
+                eid=eid,
                 created_at=now.isoformat(),
                 expires_at=expires_at.isoformat(),
             )
@@ -210,12 +210,11 @@ class SessionManager(LoggingMixin):
             # Encrypt and write session data
             await self._write_session(session_data)
 
-            self.logger.info(
-                f"Session created for {doctor_name}",
+            self.logger.bind(
                 doctor_id=doctor_id,
-                username=username,
+                eid=eid,
                 expires_at=expires_at.isoformat(),
-            )
+            ).info(f"Session created for {eid}")
 
             return session_data
 
@@ -349,7 +348,7 @@ class SessionManager(LoggingMixin):
             updated_session = SessionData(
                 doctor_id=session.doctor_id,
                 doctor_name=session.doctor_name,
-                username=session.username,
+                eid=session.eid,
                 created_at=session.created_at,
                 expires_at=new_expires.isoformat(),
             )
@@ -434,7 +433,7 @@ class SessionManager(LoggingMixin):
                 with contextlib.suppress(Exception):
                     machine_id = dbus_id_file.read_text().strip()
 
-        # Fallback: use hostname + username
+        # Fallback: use hostname + eid
         if machine_id is None:
             import getpass
             import socket
