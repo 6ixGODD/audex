@@ -17,7 +17,7 @@ def make_transcription(config: Config) -> Transcription:
             idle_timeout=config.provider.transcription.dashscope.websocket.idle_timeout,
             drain_timeout=config.provider.transcription.dashscope.websocket.drain_timeout,
             fmt=config.provider.transcription.dashscope.session.fmt,
-            sample_rate=config.provider.transcription.dashscope.session.sample_rate,
+            sample_rate=config.core.audio.sample_rate,
             silence_duration_ms=config.provider.transcription.dashscope.session.silence_duration_ms,
             vocabulary_id=config.provider.transcription.dashscope.session.vocabulary_id,
             disfluency_removal_enabled=config.provider.transcription.dashscope.session.disfluency_removal_enabled,

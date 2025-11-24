@@ -26,7 +26,7 @@ def make_recorder(config: Config, store: Store) -> AudioRecorder:
         config=AudioConfig(
             format=fmt[config.infrastructure.recorder.format],
             channels=config.infrastructure.recorder.channels,
-            rate=config.infrastructure.recorder.rate,
+            rate=config.core.audio.sample_rate,
             chunk=config.infrastructure.recorder.chunk,
             input_device_index=config.infrastructure.recorder.input_device_index,
         ),
