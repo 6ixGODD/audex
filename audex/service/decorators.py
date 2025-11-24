@@ -25,7 +25,7 @@ def require_auth(func: ServiceMethodT) -> ServiceMethodT:
 
     @ft.wraps(func)
     async def wrapper(self: BaseService, *args: t.Any, **kwargs: t.Any) -> t.Any:
-        if await self.session.is_logged_in():
+        if await self.sm.is_logged_in():
             return await func(self, *args, **kwargs)
         raise PermissionError("Authentication required to access this method.")
 
@@ -49,7 +49,7 @@ def log_call(func: ServiceMethodT) -> ServiceMethodT:
     async def wrapper(self: BaseService, *args: t.Any, **kwargs: t.Any) -> t.Any:
         op = func.__name__
         msg = f"Calling {op} with args={args} kwargs={kwargs}"
-        if doc_id := self.session.get_doctor_id():
+        if doc_id := self.sm.get_doctor_id():
             msg += f" [Doctor ID: {doc_id}]"
 
         self.logger.info(msg)
