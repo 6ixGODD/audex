@@ -40,19 +40,19 @@ class VPRepository(SQLiteRepository[VP]):
             session.add(utterance_table)
             await session.commit()
             await session.refresh(utterance_table)
-            return utterance_table.uid
+            return utterance_table.id
 
     async def read(self, id: str, /) -> VP | None:
         """Read an utterance by ID.
 
         Args:
-            id: The ID (uid) of the utterance to retrieve.
+            id: The ID (id) of the utterance to retrieve.
 
         Returns:
             The utterance entity if found, None otherwise.
         """
         async with self.sqlite.session() as session:
-            stmt = sqlm.select(VPTable).where(VPTable.uid == id)
+            stmt = sqlm.select(VPTable).where(VPTable.id == id)
             result = await session.execute(stmt)
             utterance_obj = result.scalar_one_or_none()
 
@@ -114,7 +114,7 @@ class VPRepository(SQLiteRepository[VP]):
                 if not arg:
                     return []
 
-                stmt = sqlm.select(VPTable).where(sqlm.col(VPTable.uid).in_(arg))
+                stmt = sqlm.select(VPTable).where(sqlm.col(VPTable.id).in_(arg))
                 result = await session.execute(stmt)
                 utterance_objs = result.scalars().all()
                 return [obj.to_entity() for obj in utterance_objs]
@@ -147,18 +147,18 @@ class VPRepository(SQLiteRepository[VP]):
             ValueError: If the utterance with the given ID does not exist.
         """
         async with self.sqlite.session() as session:
-            stmt = sqlm.select(VPTable).where(VPTable.uid == data.id)
+            stmt = sqlm.select(VPTable).where(VPTable.id == data.id)
             result = await session.execute(stmt)
             utterance_obj = result.scalar_one_or_none()
 
             if utterance_obj is None:
-                raise ValueError(f"VP with uid {data.id} not found")
+                raise ValueError(f"VP with id {data.id} not found")
 
             utterance_obj.update(data)
             session.add(utterance_obj)
             await session.commit()
             await session.refresh(utterance_obj)
-            return utterance_obj.uid
+            return utterance_obj.id
 
     async def update_many(self, datas: builtins.list[VP]) -> builtins.list[str]:
         """Update multiple utterances in the database.
@@ -178,9 +178,9 @@ class VPRepository(SQLiteRepository[VP]):
         updated_ids: builtins.list[str] = []
         async with self.sqlite.session() as session:
             ids = [data.id for data in datas]
-            stmt = sqlm.select(VPTable).where(sqlm.col(VPTable.uid).in_(ids))
+            stmt = sqlm.select(VPTable).where(sqlm.col(VPTable.id).in_(ids))
             result = await session.execute(stmt)
-            table_objs = {obj.uid: obj for obj in result.scalars().all()}
+            table_objs = {obj.id: obj for obj in result.scalars().all()}
 
             missing_ids = set(ids) - set(table_objs.keys())
             if missing_ids:
@@ -190,7 +190,7 @@ class VPRepository(SQLiteRepository[VP]):
                 utterance_obj = table_objs[data.id]
                 utterance_obj.update(data)
                 session.add(utterance_obj)
-                updated_ids.append(utterance_obj.uid)
+                updated_ids.append(utterance_obj.id)
 
             await session.commit()
             return updated_ids
@@ -199,13 +199,13 @@ class VPRepository(SQLiteRepository[VP]):
         """Delete an utterance by ID.
 
         Args:
-            id: The ID (uid) of the utterance to delete.
+            id: The ID (id) of the utterance to delete.
 
         Returns:
             True if the utterance was deleted, False if not found.
         """
         async with self.sqlite.session() as session:
-            stmt = sqlm.select(VPTable).where(VPTable.uid == id)
+            stmt = sqlm.select(VPTable).where(VPTable.id == id)
             result = await session.execute(stmt)
             utterance_obj = result.scalar_one_or_none()
 
@@ -234,33 +234,33 @@ class VPRepository(SQLiteRepository[VP]):
                 if not arg:
                     return []
 
-                stmt = sqlm.select(VPTable).where(sqlm.col(VPTable.uid).in_(arg))
+                stmt = sqlm.select(VPTable).where(sqlm.col(VPTable.id).in_(arg))
                 result = await session.execute(stmt)
                 utterance_objs = result.scalars().all()
 
                 if not utterance_objs:
                     return []
 
-                utterance_uids = [obj.uid for obj in utterance_objs]
+                utterance_ids = [obj.id for obj in utterance_objs]
                 for obj in utterance_objs:
                     await session.delete(obj)
 
                 await session.commit()
-                return utterance_uids
+                return utterance_ids
 
             spec = self.build_query_spec(arg)
-            stmt = sqlm.select(VPTable.uid)
+            stmt = sqlm.select(VPTable.id)
             for clause in spec.where:
                 stmt = stmt.where(clause)
 
             result = await session.execute(stmt)
-            utterance_uids = [row[0] for row in result.all()]
+            utterance_ids = [row[0] for row in result.all()]
 
-            if not utterance_uids:
+            if not utterance_ids:
                 return 0
 
-            count = len(utterance_uids)
-            delete_stmt = sa.delete(VPTable).where(sqlm.col(VPTable.uid).in_(utterance_uids))
+            count = len(utterance_ids)
+            delete_stmt = sa.delete(VPTable).where(sqlm.col(VPTable.id).in_(utterance_ids))
             await session.execute(delete_stmt)
             await session.commit()
             return count

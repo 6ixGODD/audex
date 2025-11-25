@@ -40,19 +40,19 @@ class SessionRepository(SQLiteRepository[Session]):
             session.add(session_table)
             await session.commit()
             await session.refresh(session_table)
-            return session_table.uid
+            return session_table.id
 
     async def read(self, id: str, /) -> Session | None:
         """Read a session by ID.
 
         Args:
-            id: The ID (uid) of the session to retrieve.
+            id: The ID (id) of the session to retrieve.
 
         Returns:
             The session entity if found, None otherwise.
         """
         async with self.sqlite.session() as session:
-            stmt = sqlm.select(SessionTable).where(SessionTable.uid == id)
+            stmt = sqlm.select(SessionTable).where(SessionTable.id == id)
             result = await session.execute(stmt)
             session_obj = result.scalar_one_or_none()
 
@@ -114,7 +114,7 @@ class SessionRepository(SQLiteRepository[Session]):
                 if not arg:
                     return []
 
-                stmt = sqlm.select(SessionTable).where(sqlm.col(SessionTable.uid).in_(arg))
+                stmt = sqlm.select(SessionTable).where(sqlm.col(SessionTable.id).in_(arg))
                 result = await session.execute(stmt)
                 session_objs = result.scalars().all()
                 return [obj.to_entity() for obj in session_objs]
@@ -147,18 +147,18 @@ class SessionRepository(SQLiteRepository[Session]):
             ValueError: If the session with the given ID does not exist.
         """
         async with self.sqlite.session() as session:
-            stmt = sqlm.select(SessionTable).where(SessionTable.uid == data.id)
+            stmt = sqlm.select(SessionTable).where(SessionTable.id == data.id)
             result = await session.execute(stmt)
             session_obj = result.scalar_one_or_none()
 
             if session_obj is None:
-                raise ValueError(f"Session with uid {data.id} not found")
+                raise ValueError(f"Session with id {data.id} not found")
 
             session_obj.update(data)
             session.add(session_obj)
             await session.commit()
             await session.refresh(session_obj)
-            return session_obj.uid
+            return session_obj.id
 
     async def update_many(self, datas: builtins.list[Session]) -> builtins.list[str]:
         """Update multiple sessions in the database.
@@ -178,9 +178,9 @@ class SessionRepository(SQLiteRepository[Session]):
         updated_ids: builtins.list[str] = []
         async with self.sqlite.session() as session:
             ids = [data.id for data in datas]
-            stmt = sqlm.select(SessionTable).where(sqlm.col(SessionTable.uid).in_(ids))
+            stmt = sqlm.select(SessionTable).where(sqlm.col(SessionTable.id).in_(ids))
             result = await session.execute(stmt)
-            table_objs = {obj.uid: obj for obj in result.scalars().all()}
+            table_objs = {obj.id: obj for obj in result.scalars().all()}
 
             missing_ids = set(ids) - set(table_objs.keys())
             if missing_ids:
@@ -190,7 +190,7 @@ class SessionRepository(SQLiteRepository[Session]):
                 session_obj = table_objs[data.id]
                 session_obj.update(data)
                 session.add(session_obj)
-                updated_ids.append(session_obj.uid)
+                updated_ids.append(session_obj.id)
 
             await session.commit()
             return updated_ids
@@ -199,13 +199,13 @@ class SessionRepository(SQLiteRepository[Session]):
         """Delete a session by ID.
 
         Args:
-            id: The ID (uid) of the session to delete.
+            id: The ID (id) of the session to delete.
 
         Returns:
             True if the session was deleted, False if not found.
         """
         async with self.sqlite.session() as session:
-            stmt = sqlm.select(SessionTable).where(SessionTable.uid == id)
+            stmt = sqlm.select(SessionTable).where(SessionTable.id == id)
             result = await session.execute(stmt)
             session_obj = result.scalar_one_or_none()
 
@@ -234,35 +234,33 @@ class SessionRepository(SQLiteRepository[Session]):
                 if not arg:
                     return []
 
-                stmt = sqlm.select(SessionTable).where(sqlm.col(SessionTable.uid).in_(arg))
+                stmt = sqlm.select(SessionTable).where(sqlm.col(SessionTable.id).in_(arg))
                 result = await session.execute(stmt)
                 session_objs = result.scalars().all()
 
                 if not session_objs:
                     return []
 
-                session_uids = [obj.uid for obj in session_objs]
+                session_ids = [obj.id for obj in session_objs]
                 for obj in session_objs:
                     await session.delete(obj)
 
                 await session.commit()
-                return session_uids
+                return session_ids
 
             spec = self.build_query_spec(arg)
-            stmt = sqlm.select(SessionTable.uid)
+            stmt = sqlm.select(SessionTable.id)
             for clause in spec.where:
                 stmt = stmt.where(clause)
 
             result = await session.execute(stmt)
-            session_uids = [row[0] for row in result.all()]
+            session_ids = [row[0] for row in result.all()]
 
-            if not session_uids:
+            if not session_ids:
                 return 0
 
-            count = len(session_uids)
-            delete_stmt = sa.delete(SessionTable).where(
-                sqlm.col(SessionTable.uid).in_(session_uids)
-            )
+            count = len(session_ids)
+            delete_stmt = sa.delete(SessionTable).where(sqlm.col(SessionTable.id).in_(session_ids))
             await session.execute(delete_stmt)
             await session.commit()
             return count

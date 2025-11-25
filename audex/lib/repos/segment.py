@@ -40,19 +40,19 @@ class SegmentRepository(SQLiteRepository[Segment]):
             session.add(segment_table)
             await session.commit()
             await session.refresh(segment_table)
-            return segment_table.uid
+            return segment_table.id
 
     async def read(self, id: str, /) -> Segment | None:
         """Read a segment by ID.
 
         Args:
-            id: The ID (uid) of the segment to retrieve.
+            id: The ID (id) of the segment to retrieve.
 
         Returns:
             The segment entity if found, None otherwise.
         """
         async with self.sqlite.session() as session:
-            stmt = sqlm.select(SegmentTable).where(SegmentTable.uid == id)
+            stmt = sqlm.select(SegmentTable).where(SegmentTable.id == id)
             result = await session.execute(stmt)
             segment_obj = result.scalar_one_or_none()
 
@@ -114,7 +114,7 @@ class SegmentRepository(SQLiteRepository[Segment]):
                 if not arg:
                     return []
 
-                stmt = sqlm.select(SegmentTable).where(sqlm.col(SegmentTable.uid).in_(arg))
+                stmt = sqlm.select(SegmentTable).where(sqlm.col(SegmentTable.id).in_(arg))
                 result = await session.execute(stmt)
                 segment_objs = result.scalars().all()
                 return [obj.to_entity() for obj in segment_objs]
@@ -147,18 +147,18 @@ class SegmentRepository(SQLiteRepository[Segment]):
             ValueError: If the segment with the given ID does not exist.
         """
         async with self.sqlite.session() as session:
-            stmt = sqlm.select(SegmentTable).where(SegmentTable.uid == data.id)
+            stmt = sqlm.select(SegmentTable).where(SegmentTable.id == data.id)
             result = await session.execute(stmt)
             segment_obj = result.scalar_one_or_none()
 
             if segment_obj is None:
-                raise ValueError(f"Segment with uid {data.id} not found")
+                raise ValueError(f"Segment with id {data.id} not found")
 
             segment_obj.update(data)
             session.add(segment_obj)
             await session.commit()
             await session.refresh(segment_obj)
-            return segment_obj.uid
+            return segment_obj.id
 
     async def update_many(self, datas: builtins.list[Segment]) -> builtins.list[str]:
         """Update multiple segments in the database.
@@ -178,9 +178,9 @@ class SegmentRepository(SQLiteRepository[Segment]):
         updated_ids: builtins.list[str] = []
         async with self.sqlite.session() as session:
             ids = [data.id for data in datas]
-            stmt = sqlm.select(SegmentTable).where(sqlm.col(SegmentTable.uid).in_(ids))
+            stmt = sqlm.select(SegmentTable).where(sqlm.col(SegmentTable.id).in_(ids))
             result = await session.execute(stmt)
-            table_objs = {obj.uid: obj for obj in result.scalars().all()}
+            table_objs = {obj.id: obj for obj in result.scalars().all()}
 
             missing_ids = set(ids) - set(table_objs.keys())
             if missing_ids:
@@ -190,7 +190,7 @@ class SegmentRepository(SQLiteRepository[Segment]):
                 segment_obj = table_objs[data.id]
                 segment_obj.update(data)
                 session.add(segment_obj)
-                updated_ids.append(segment_obj.uid)
+                updated_ids.append(segment_obj.id)
 
             await session.commit()
             return updated_ids
@@ -199,13 +199,13 @@ class SegmentRepository(SQLiteRepository[Segment]):
         """Delete a segment by ID.
 
         Args:
-            id: The ID (uid) of the segment to delete.
+            id: The ID (id) of the segment to delete.
 
         Returns:
             True if the segment was deleted, False if not found.
         """
         async with self.sqlite.session() as session:
-            stmt = sqlm.select(SegmentTable).where(SegmentTable.uid == id)
+            stmt = sqlm.select(SegmentTable).where(SegmentTable.id == id)
             result = await session.execute(stmt)
             segment_obj = result.scalar_one_or_none()
 
@@ -234,35 +234,33 @@ class SegmentRepository(SQLiteRepository[Segment]):
                 if not arg:
                     return []
 
-                stmt = sqlm.select(SegmentTable).where(sqlm.col(SegmentTable.uid).in_(arg))
+                stmt = sqlm.select(SegmentTable).where(sqlm.col(SegmentTable.id).in_(arg))
                 result = await session.execute(stmt)
                 segment_objs = result.scalars().all()
 
                 if not segment_objs:
                     return []
 
-                segment_uids = [obj.uid for obj in segment_objs]
+                segment_ids = [obj.id for obj in segment_objs]
                 for obj in segment_objs:
                     await session.delete(obj)
 
                 await session.commit()
-                return segment_uids
+                return segment_ids
 
             spec = self.build_query_spec(arg)
-            stmt = sqlm.select(SegmentTable.uid)
+            stmt = sqlm.select(SegmentTable.id)
             for clause in spec.where:
                 stmt = stmt.where(clause)
 
             result = await session.execute(stmt)
-            segment_uids = [row[0] for row in result.all()]
+            segment_ids = [row[0] for row in result.all()]
 
-            if not segment_uids:
+            if not segment_ids:
                 return 0
 
-            count = len(segment_uids)
-            delete_stmt = sa.delete(SegmentTable).where(
-                sqlm.col(SegmentTable.uid).in_(segment_uids)
-            )
+            count = len(segment_ids)
+            delete_stmt = sa.delete(SegmentTable).where(sqlm.col(SegmentTable.id).in_(segment_ids))
             await session.execute(delete_stmt)
             await session.commit()
             return count

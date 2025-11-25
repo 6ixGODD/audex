@@ -12,6 +12,7 @@ import typing as t
 from audex import __title__
 from audex import utils
 from audex.exceptions import AudexError
+from audex.helper.mixin import AsyncContextMixin
 from audex.helper.mixin import LoggingMixin
 
 
@@ -54,7 +55,7 @@ class SessionData(t.NamedTuple):
         )
 
 
-class SessionManager(LoggingMixin):
+class SessionManager(LoggingMixin, AsyncContextMixin):
     """Secure local session manager with automatic state management.
 
     This manager maintains session state automatically - no need to manually
