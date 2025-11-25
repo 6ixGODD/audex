@@ -7,13 +7,14 @@ import typing as t
 
 import cachetools
 
-from audex.lib.cache import CACHE_MISS
 from audex.lib.cache import EMPTY
+from audex.lib.cache import NEGATIVE
 from audex.lib.cache import VT
 from audex.lib.cache import CacheMiss
 from audex.lib.cache import Empty
 from audex.lib.cache import KeyBuilder
 from audex.lib.cache import KVCache
+from audex.lib.cache import Negative
 
 
 class TTLEntry:
@@ -140,13 +141,13 @@ class InmemoryCache(KVCache):
         async with self._lock:
             try:
                 await self._evict_if_needed()
-                entry = TTLEntry(CACHE_MISS, self.negative_ttl)
+                entry = TTLEntry(NEGATIVE, self.negative_ttl)
                 self._cache[key] = entry
                 self.logger.debug(f"Set negative cache for key: {key}")
             except Exception as e:
                 self.logger.warning(f"Failed to set negative cache for key {key}: {e}")
 
-    async def get_item(self, key: str) -> VT | Empty:
+    async def get_item(self, key: str) -> VT | Empty | Negative:
         async with self._lock:
             try:
                 await self._cleanup_expired()
@@ -163,7 +164,11 @@ class InmemoryCache(KVCache):
 
                 if isinstance(entry.value, CacheMiss):
                     self.logger.debug(f"Found negative cache for key: {key}")
-                    return EMPTY
+                    return NEGATIVE
+
+                if isinstance(entry.value, Negative):
+                    self.logger.debug(f"Found negative cache for key: {key}")
+                    return NEGATIVE
 
                 self.logger.debug(f"Cache hit for key: {key}")
                 return entry.value
@@ -236,6 +241,10 @@ class InmemoryCache(KVCache):
                 if entry.is_expired():
                     del self._cache[key]
                     return False
+                if isinstance(entry.value, CacheMiss):
+                    return False
+                if isinstance(entry.value, Negative):
+                    return False
 
                 self.logger.debug(f"Key existence check for {key}: True")
                 return True
@@ -283,7 +292,7 @@ class InmemoryCache(KVCache):
                     return default
 
                 await self._evict_if_needed()
-                neg_entry = TTLEntry(CACHE_MISS, self.negative_ttl)
+                neg_entry = TTLEntry(NEGATIVE, self.negative_ttl)
                 self._cache[key] = neg_entry
                 self.logger.debug(f"Set negative cache for key: {key}")
                 return None

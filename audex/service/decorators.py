@@ -27,8 +27,14 @@ def require_auth(func: ServiceMethodT) -> ServiceMethodT:
 
     @ft.wraps(func)
     async def wrapper(self: BaseService, *args: t.Any, **kwargs: t.Any) -> t.Any:
-        if await self.session_manager.is_logged_in():
-            return await func(self, *args, **kwargs)
+        if doctor_id := await self.session_manager.get_doctor_id():
+            if await self.cache.contains(self.cache.key_builder.build("doctor", doctor_id)):
+                return await func(self, *args, **kwargs)
+            if (await self.doctor_repo.read(doctor_id)) is not None:
+                await self.cache.setx(self.cache.key_builder.build("doctor", doctor_id), True)
+                return await func(self, *args, **kwargs)
+            await self.cache.set_negative(self.cache.key_builder.build("doctor", doctor_id))
+            raise PermissionDeniedError("Authentication required to access this method.")
         raise PermissionDeniedError("Authentication required to access this method.")
 
     return wrapper

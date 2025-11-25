@@ -18,6 +18,7 @@ class ServiceContainer(containers.DeclarativeContainer):
     doctor = providers.Factory(
         make_doctor_service,
         session_manager=infrastructure.session_manager,
+        cache=infrastructure.cache,
         config=config,
         doctor_repo=repository.doctor,
         vp_repo=repository.vp,
@@ -28,7 +29,9 @@ class ServiceContainer(containers.DeclarativeContainer):
     session = providers.Factory(
         make_session_service,
         session_manager=infrastructure.session_manager,
+        cache=infrastructure.cache,
         config=config,
+        doctor_repo=repository.doctor,
         session_repo=repository.session,
         segment_repo=repository.segment,
         utterance_repo=repository.utterance,

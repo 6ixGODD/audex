@@ -16,7 +16,9 @@ from audex.filters.generated import utterance_filter
 from audex.filters.generated import vp_filter
 from audex.helper.mixin import LoggingMixin
 from audex.helper.stream import AsyncStream
+from audex.lib.cache import KVCache
 from audex.lib.recorder import AudioRecorder
+from audex.lib.repos.doctor import DoctorRepository
 from audex.lib.repos.segment import SegmentRepository
 from audex.lib.repos.session import SessionRepository
 from audex.lib.repos.utterance import UtteranceRepository
@@ -66,7 +68,9 @@ class SessionService(BaseService):
     def __init__(
         self,
         session_manager: SessionManager,
+        cache: KVCache,
         config: SessionServiceConfig,
+        doctor_repo: DoctorRepository,
         session_repo: SessionRepository,
         segment_repo: SegmentRepository,
         utterance_repo: UtteranceRepository,
@@ -75,7 +79,7 @@ class SessionService(BaseService):
         transcription: Transcription,
         recorder: AudioRecorder,
     ):
-        super().__init__(session_manager=session_manager)
+        super().__init__(session_manager=session_manager, cache=cache, doctor_repo=doctor_repo)
         self.config = config
         self.session_repo = session_repo
         self.segment_repo = segment_repo

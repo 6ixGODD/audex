@@ -127,7 +127,6 @@ def show_internal_error_dialog(error: InternalError) -> None:
 
 def show_user_error_notification(error: AudexError) -> None:
     """Show a simple notification for user-facing errors."""
-    print("IM HERE!!!! IM HERE!!!! IM HERE!!!! IM HERE!!!! IM HERE!!!! IM HERE!!!!")
     ui.notify(
         error.message,
         type="negative",

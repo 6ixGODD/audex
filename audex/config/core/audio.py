@@ -11,7 +11,7 @@ class AudioConfig(BaseModel):
         description="The sample rate of the audio in Hz.",
     )
 
-    vpr_sample_rate: str = Field(
+    vpr_sample_rate: int = Field(
         default=16000,
         description="The sample rate for voice print recognition in Hz.",
     )

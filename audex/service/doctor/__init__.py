@@ -9,6 +9,7 @@ from audex.filters.generated import doctor_filter
 from audex.filters.generated import vp_filter
 from audex.helper.mixin import AsyncContextMixin
 from audex.helper.mixin import LoggingMixin
+from audex.lib.cache import KVCache
 from audex.lib.recorder import AudioRecorder
 from audex.lib.repos.doctor import DoctorRepository
 from audex.lib.repos.vp import VPRepository
@@ -54,15 +55,15 @@ class DoctorService(BaseService):
     def __init__(
         self,
         session_manager: SessionManager,
+        cache: KVCache,
         config: DoctorServiceConfig,
         doctor_repo: DoctorRepository,
         vp_repo: VPRepository,
         vpr: VPR,
         recorder: AudioRecorder,
     ):
-        super().__init__(session_manager=session_manager)
+        super().__init__(session_manager=session_manager, cache=cache, doctor_repo=doctor_repo)
         self.config = config
-        self.doctor_repo = doctor_repo
         self.vp_repo = vp_repo
         self.vpr = vpr
         self.recorder = recorder

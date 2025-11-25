@@ -33,11 +33,7 @@ async def render(
         ui.label("历史会话记录").classes("text-h4 mb-4")
 
         # Fetch session list
-        sessions = await session_service.list(
-            doctor_id=doctor.id,
-            page_index=0,
-            page_size=50,
-        )
+        sessions = await session_service.list(doctor_id=doctor.id, page_index=0, page_size=50)
 
         if not sessions:
             # Empty state

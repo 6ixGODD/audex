@@ -114,6 +114,39 @@ class CacheMiss:
 CACHE_MISS = CacheMiss()
 
 
+class Negative:
+    """Sentinel type representing a negative cache entry.
+
+    Used to mark keys that are known to be absent, preventing cache
+    penetration. Always evaluates to False in boolean context.
+    """
+
+    __slots__ = ()
+
+    def __repr__(self) -> str:
+        return "<NEGATIVE>"
+
+    __str__ = __repr__
+
+    def __bool__(self) -> bool:
+        return False
+
+    def __eq__(self, other: object) -> bool:
+        return isinstance(other, Negative)
+
+    def __hash__(self) -> int:
+        return hash("<NEGATIVE>")
+
+    def __getstate__(self) -> tuple[()]:
+        return ()
+
+    def __setstate__(self, state: tuple[()]) -> None:
+        pass
+
+
+NEGATIVE = Negative()
+
+
 class KeyBuilder:
     """Utility class for building cache keys with a consistent format.
 
@@ -221,7 +254,7 @@ class KVCache(LoggingMixin, AsyncContextMixin, abc.ABC):
         keys."""
 
     @abc.abstractmethod
-    async def get_item(self, key: str) -> VT | Empty:
+    async def get_item(self, key: str) -> VT | Empty | Negative:
         """Retrieve an item from the cache by key."""
 
     @abc.abstractmethod
@@ -303,6 +336,14 @@ class KVCache(LoggingMixin, AsyncContextMixin, abc.ABC):
         """
 
     @abc.abstractmethod
+    async def set_negative(self, key: str, /) -> None:
+        """Store cache miss marker to prevent cache penetration.
+
+        Args:
+            key: Cache key.
+        """
+
+    @abc.abstractmethod
     async def ttl(self, key: str) -> int | None:
         """Get the time-to-live (TTL) for a specific key in the cache.
 
@@ -345,6 +386,18 @@ class KVCache(LoggingMixin, AsyncContextMixin, abc.ABC):
         Returns:
             The new value after decrementing.
         """
+
+    @abc.abstractmethod
+    async def keys(self) -> list[str]:
+        """Return a list of cache keys."""
+
+    @abc.abstractmethod
+    async def values(self) -> list[VT]:
+        """Return all cache values."""
+
+    @abc.abstractmethod
+    async def items(self) -> list[tuple[str, VT]]:
+        """Return all cache items as (key, value) pairs."""
 
     def __repr__(self) -> str:
         return f"ASYNC KV CACHE <{self.__class__.__name__}>"
