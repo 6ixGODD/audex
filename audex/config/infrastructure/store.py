@@ -14,6 +14,6 @@ class StoreConfig(BaseModel):
     )
 
     base_url: str = Field(
-        default="/store",
+        default="./store",
         description="Store base URL. In case of 'file' type, it is the local directory path. In case of 'obs' type, it is the OBS bucket URL.",
     )

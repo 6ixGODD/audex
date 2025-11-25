@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sys
 import typing as t
 
 from pydantic import Field
@@ -104,7 +105,13 @@ class LoggingConfig(BaseModel):
         logger.remove()
 
         for target in self.targets:
-            sink: str | os.PathLike[str] = target.logname
+            sink: t.IO[str] | os.PathLike[str]
+            if target.logname == "stdout":
+                sink = sys.stdout
+            elif target.logname == "stderr":
+                sink = sys.stderr
+            else:
+                sink = target.logname
             level: str = target.loglevel.upper()
 
             if target.rotation:
@@ -122,4 +129,4 @@ class LoggingConfig(BaseModel):
                 level=level,
                 rotation=rotation_,
                 retention=target.rotation.backup_count if target.rotation else None,
-            )
+            ) if rotation_ else logger.add(sink, level=level)

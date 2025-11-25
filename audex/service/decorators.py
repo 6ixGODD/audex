@@ -3,6 +3,8 @@ from __future__ import annotations
 import functools as ft
 import typing as t
 
+from audex.exceptions import PermissionDeniedError
+
 if t.TYPE_CHECKING:
     from audex.service import BaseService
 
@@ -27,7 +29,7 @@ def require_auth(func: ServiceMethodT) -> ServiceMethodT:
     async def wrapper(self: BaseService, *args: t.Any, **kwargs: t.Any) -> t.Any:
         if await self.session_manager.is_logged_in():
             return await func(self, *args, **kwargs)
-        raise PermissionError("Authentication required to access this method.")
+        raise PermissionDeniedError("Authentication required to access this method.")
 
     return wrapper
 

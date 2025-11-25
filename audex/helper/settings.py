@@ -494,7 +494,7 @@ class BaseModel(pyd.BaseModel):
 
     model_config: t.ClassVar[pyd.ConfigDict] = pyd.ConfigDict(
         validate_assignment=True,
-        extra="forbid",
+        extra="ignore",
         arbitrary_types_allowed=True,
         use_enum_values=True,
         populate_by_name=True,

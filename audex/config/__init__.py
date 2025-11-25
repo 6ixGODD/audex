@@ -6,7 +6,6 @@ from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
 from audex.config.core import CoreConfig
-from audex.config.gui import GUIConfig
 from audex.config.infrastructure import InfrastructureConfig
 from audex.config.provider import ProviderConfig
 from audex.helper.mixin import ContextMixin
@@ -35,11 +34,6 @@ class Config(ContextMixin, Settings):
     infrastructure: InfrastructureConfig = Field(
         default_factory=InfrastructureConfig,
         description="Infrastructure configuration settings.",
-    )
-
-    gui: GUIConfig = Field(
-        default_factory=GUIConfig,
-        description="GUI configuration settings.",
     )
 
     def init(self) -> None:

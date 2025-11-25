@@ -122,3 +122,10 @@ class NoActiveSessionError(AudexError):
 
     default_message = "No active session found. Please re-login to continue."
     code: t.ClassVar[int] = 0x20
+
+
+class PermissionDeniedError(AudexError):
+    """Exception raised for permission denied errors."""
+
+    default_message = "Permission denied. You do not have access to this resource."
+    code: t.ClassVar[int] = 0x21

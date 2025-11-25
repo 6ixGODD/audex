@@ -29,6 +29,7 @@ class Container(containers.DeclarativeContainer):
     lifespan = providers.Singleton(
         lifespan,
         config,
+        infrastructure.session_manager,
         infrastructure.cache,
         infrastructure.sqlite,
         infrastructure.vpr,
