@@ -1,0 +1,112 @@
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+    overflow: hidden !important;
+    height: 100vh;
+    width: 100vw;
+}
+
+.header-glass {
+    backdrop-filter: blur(80px) saturate(200%) !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+}
+
+.bg-white {
+    background: #ffffff;
+}
+
+@keyframes pulse-ring {
+    0% {
+        transform: scale(1);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(1.4);
+        opacity: 0;
+    }
+}
+
+/* Timer - sans-serif bold */
+.timer {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 4rem;
+    font-weight: 600;
+    color: #1f2937;
+    letter-spacing: 0.05em;
+}
+
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* Loading overlay - simple smooth fade */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Smooth spinner */
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: smoothSpin 0.8s linear infinite;
+}
+
+@keyframes smoothSpin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Recording button */
+.record-button {
+    width: 180px !important;
+    height: 180px !important;
+    border-radius: 50% !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.record-button:hover:not(:disabled) {
+    transform: scale(1.05);
+}
+
+.record-button:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.record-button:disabled {
+    opacity: 0.4 !important;
+}
+
+.recording-ring {
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    animation: pulse-ring 2.5s ease-out infinite;
+}

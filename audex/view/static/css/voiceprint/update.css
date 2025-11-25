@@ -1,0 +1,34 @@
+@import "./style.css";
+
+/* Recording button - purple theme */
+.record-button {
+    box-shadow: 0 8px 32px rgba(124, 58, 237, 0.25) !important;
+}
+
+.record-button:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 12px 40px rgba(124, 58, 237, 0.35) !important;
+}
+
+.record-button:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.record-button:disabled {
+    opacity: 0.4 !important;
+}
+
+.recording-ring {
+    position: absolute;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(
+        circle,
+        transparent 50%,
+        rgba(124, 58, 237, 0.4) 50%,
+        transparent 52%
+    );
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+    animation: pulse-ring 2.5s ease-out infinite;
+}

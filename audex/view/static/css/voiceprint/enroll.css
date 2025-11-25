@@ -1,0 +1,21 @@
+@import "./style.css";
+
+
+/* Recording button */
+.record-button {
+    box-shadow: 0 8px 32px rgba(251, 191, 36, 0.25) !important;
+}
+
+.record-button:hover:not(:disabled) {
+    box-shadow: 0 12px 40px rgba(251, 191, 36, 0.35) !important;
+}
+
+.recording-ring {
+    background: radial-gradient(
+        circle,
+        transparent 50%,
+        rgba(251, 191, 36, 0.4) 50%,
+        transparent 52%
+    );
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+}
