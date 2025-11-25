@@ -4,6 +4,7 @@ import typing as t
 
 from audex.entity.doctor import Doctor
 from audex.entity.vp import VP
+from audex.exceptions import NoActiveSessionError
 from audex.filters.generated import doctor_filter
 from audex.filters.generated import vp_filter
 from audex.helper.mixin import AsyncContextMixin
@@ -13,11 +14,15 @@ from audex.lib.repos.doctor import DoctorRepository
 from audex.lib.repos.vp import VPRepository
 from audex.lib.session import SessionManager
 from audex.lib.vpr import VPR
+from audex.lib.vpr import VPRError
 from audex.service import BaseService
 from audex.service.decorators import require_auth
+from audex.service.doctor.const import ErrorMessages
 from audex.service.doctor.const import InvalidCredentialReasons
 from audex.service.doctor.exceptions import DoctorNotFoundError
 from audex.service.doctor.exceptions import DoctorServiceError
+from audex.service.doctor.exceptions import DuplicateEIDError
+from audex.service.doctor.exceptions import InternalDoctorServiceError
 from audex.service.doctor.exceptions import InvalidCredentialsError
 from audex.service.doctor.exceptions import VoiceprintNotFoundError
 from audex.service.doctor.types import LoginCommand
@@ -63,280 +68,372 @@ class DoctorService(BaseService):
         self.recorder = recorder
 
     async def login(self, command: LoginCommand) -> None:
-        """Login a doctor by employee ID and password."""
-        f = doctor_filter().eid.eq(command.eid)
-        doctor = await self.doctor_repo.first(f.build())
-        if not doctor:
-            raise InvalidCredentialsError(
-                "Invalid credentials",
-                reason=InvalidCredentialReasons.DOCTOR_NOT_FOUND,
-            )
-        if not doctor.verify_password(command.password):
-            raise InvalidCredentialsError(
-                "Invalid credentials",
-                reason=InvalidCredentialReasons.INVALID_PASSWORD,
+        """Login a doctor with credentials.
+
+        Args:
+            command: Login command with eid and password.
+
+        Raises:
+            InvalidCredentialsError: If credentials are invalid.
+        """
+        try:
+            f = doctor_filter().eid.eq(command.eid)
+            doctor = await self.doctor_repo.first(f.build())
+
+            if not doctor:
+                raise InvalidCredentialsError(
+                    ErrorMessages.ACCOUNT_NOT_FOUND,
+                    reason=InvalidCredentialReasons.DOCTOR_NOT_FOUND,
+                )
+
+            if not doctor.is_active:
+                raise InvalidCredentialsError(
+                    ErrorMessages.ACCOUNT_INACTIVE,
+                    reason=InvalidCredentialReasons.ACCOUNT_INACTIVE,
+                )
+
+            if not doctor.verify_password(command.password):
+                raise InvalidCredentialsError(
+                    ErrorMessages.INVALID_PASSWORD,
+                    reason=InvalidCredentialReasons.INVALID_PASSWORD,
+                )
+
+            await self.session_manager.login(
+                doctor_id=doctor.id,
+                eid=doctor.eid,
+                doctor_name=doctor.name,
             )
 
-        await self.session_manager.login(
-            doctor_id=doctor.id,
-            eid=doctor.eid,
-            doctor_name=doctor.name,
-        )
+            self.logger.info(f"Doctor {doctor.eid} logged in successfully")
 
-        self.logger.info(f"Doctor {doctor.eid} logged in")
+        except InvalidCredentialsError:
+            raise
+        except Exception as e:
+            self.logger.error(f"Login failed: {e}")
+            raise InternalDoctorServiceError() from e
+
+    async def is_logged_in(self) -> bool:
+        """Check if there is an active session."""
+        try:
+            session = await self.session_manager.get_session()
+            return session is not None
+        except Exception as e:
+            self.logger.error(f"Failed to check login status: {e}")
+            return False
 
     @require_auth
     async def logout(self) -> None:
         """Logout the current doctor."""
-        if not await self.session_manager.logout():
-            raise ValueError("No active session to logout")
-
-        self.logger.info("Doctor logged out")
+        try:
+            if not await self.session_manager.logout():
+                self.logger.warning("Logout called but no active session")
+            else:
+                self.logger.info("Doctor logged out successfully")
+        except Exception as e:
+            self.logger.error(f"Logout failed: {e}")
+            raise InternalDoctorServiceError() from e
 
     async def register(self, command: RegisterCommand) -> Doctor:
-        """Register a new doctor account."""
-        doctor = Doctor(
-            eid=command.eid,
-            password_hash=command.password.hash(),
-            name=command.name,
-            department=command.department,
-            title=command.title,
-            hospital=command.hospital,
-            phone=command.phone,
-            email=command.email,
-            is_active=True,
-        )
+        """Register a new doctor account.
 
-        uid = await self.doctor_repo.create(doctor)
-        doctor.id = uid
+        Args:
+            command: Registration command with doctor information.
 
-        # Auto-login after registration
-        await self.session_manager.login(
-            doctor_id=uid,
-            eid=doctor.eid,
-            doctor_name=doctor.name,
-        )
+        Returns:
+            The created Doctor entity.
 
-        self.logger.info(f"Registered new doctor {doctor.eid}")
-        return doctor
+        Raises:
+            DuplicateEIDError: If EID already exists.
+            InternalDoctorServiceError: For internal errors.
+        """
+        try:
+            # Check if EID already exists
+            f = doctor_filter().eid.eq(command.eid)
+            existing = await self.doctor_repo.first(f.build())
+            if existing:
+                raise DuplicateEIDError(ErrorMessages.DUPLICATE_EID, eid=command.eid)
+
+            doctor = Doctor(
+                eid=command.eid,
+                password_hash=command.password.hash(),
+                name=command.name,
+                department=command.department,
+                title=command.title,
+                hospital=command.hospital,
+                phone=command.phone,
+                email=command.email,
+                is_active=True,
+            )
+
+            uid = await self.doctor_repo.create(doctor)
+            doctor.id = uid
+
+            # Auto-login after registration
+            await self.session_manager.login(
+                doctor_id=uid,
+                eid=doctor.eid,
+                doctor_name=doctor.name,
+            )
+
+            self.logger.info(f"Registered new doctor {doctor.eid}")
+            return doctor
+
+        except DuplicateEIDError:
+            raise
+        except Exception as e:
+            self.logger.error(f"Registration failed: {e}")
+            raise InternalDoctorServiceError(ErrorMessages.REGISTRATION_FAILED) from e
 
     @require_auth
     async def delete_account(self) -> None:
-        """Delete the current doctor's account."""
-        session = await self.session_manager.get_session()
-        if not session:
-            raise DoctorServiceError("No active session")
+        """Delete the current doctor's account and all associated
+        data."""
+        try:
+            session = await self.session_manager.get_session()
+            if not session:
+                raise NoActiveSessionError(ErrorMessages.NO_ACTIVE_SESSION)
 
-        doctor = await self.doctor_repo.read(session.doctor_id)
-        if not doctor:
-            raise DoctorNotFoundError(
-                "Doctor not found",
-                doctor_id=session.doctor_id,
-            )
+            doctor = await self.doctor_repo.read(session.doctor_id)
+            if not doctor:
+                raise DoctorNotFoundError(
+                    ErrorMessages.DOCTOR_NOT_FOUND,
+                    doctor_id=session.doctor_id,
+                )
 
-        # Delete all voiceprint registrations
-        f = vp_filter().doctor_id.eq(doctor.id)
-        await self.vp_repo.delete_many(f.build())
+            # Delete all voiceprint registrations
+            f = vp_filter().doctor_id.eq(doctor.id)
+            await self.vp_repo.delete_many(f.build())
 
-        # Logout first
-        await self.session_manager.logout()
+            # Logout first
+            await self.session_manager.logout()
 
-        # Delete doctor account
-        if not await self.doctor_repo.delete(doctor.id):
-            raise DoctorServiceError("Failed to delete doctor account")
+            # Delete doctor account
+            if not await self.doctor_repo.delete(doctor.id):
+                raise DoctorServiceError(ErrorMessages.DOCTOR_DELETE_FAILED)
 
-        self.logger.info(f"Deleted doctor account {doctor.eid}")
+            self.logger.info(f"Deleted doctor account {doctor.eid}")
+
+        except (NoActiveSessionError, DoctorNotFoundError, DoctorServiceError):
+            raise
+        except Exception as e:
+            self.logger.error(f"Failed to delete account: {e}")
+            raise InternalDoctorServiceError() from e
 
     @require_auth
     async def current_doctor(self) -> Doctor:
-        """Get the current logged-in doctor."""
-        session = await self.session_manager.get_session()
-        if not session:
-            raise DoctorServiceError("No active session")
+        """Get the current logged-in doctor.
 
-        doctor = await self.doctor_repo.read(session.doctor_id)
-        if not doctor:
-            raise DoctorNotFoundError(
-                "Doctor not found",
-                doctor_id=session.doctor_id,
-            )
+        Returns:
+            The current Doctor entity.
 
-        return doctor
+        Raises:
+            NoActiveSessionError: If no active session.
+            DoctorNotFoundError: If doctor not found.
+        """
+        try:
+            session = await self.session_manager.get_session()
+            if not session:
+                raise NoActiveSessionError(ErrorMessages.NO_ACTIVE_SESSION)
+
+            doctor = await self.doctor_repo.read(session.doctor_id)
+            if not doctor:
+                raise DoctorNotFoundError(
+                    ErrorMessages.DOCTOR_NOT_FOUND,
+                    doctor_id=session.doctor_id,
+                )
+
+            return doctor
+
+        except (NoActiveSessionError, DoctorNotFoundError):
+            raise
+        except Exception as e:
+            self.logger.error(f"Failed to get current doctor: {e}")
+            raise InternalDoctorServiceError() from e
 
     @require_auth
     async def enroll_vp(self) -> VPEnrollmentContext:
-        """Start voiceprint enrollment with live recording.
+        """Start voiceprint enrollment for current doctor."""
+        try:
+            session = await self.session_manager.get_session()
+            if not session:
+                raise NoActiveSessionError(ErrorMessages.NO_ACTIVE_SESSION)
 
-        Returns a container that manages the recording process.
+            doctor = await self.doctor_repo.read(session.doctor_id)
+            if not doctor:
+                raise DoctorNotFoundError(
+                    ErrorMessages.DOCTOR_NOT_FOUND,
+                    doctor_id=session.doctor_id,
+                )
 
-        Returns:
-            VPEnrollmentContainer for managing the enrollment process.
-
-        Example:
-            ```python
-            async with await doctor_service.enroll_vp() as container:
-                # Start recording
-                await container.start()
-
-                # Recording in progress...
-                # User speaks the text_content
-
-                # Finish and submit to VPR
-                result = await container.close()
-                print(f"Enrolled! VPR UID: {result.vpr_uid}")
-            ```
-        """
-        session = await self.session_manager.get_session()
-        if not session:
-            raise DoctorServiceError("No active session")
-
-        doctor = await self.doctor_repo.read(session.doctor_id)
-        if not doctor:
-            raise DoctorNotFoundError(
-                "Doctor not found",
-                doctor_id=session.doctor_id,
+            return VPEnrollmentContext(
+                doctor=doctor,
+                vp_repo=self.vp_repo,
+                recorder=self.recorder,
+                vpr=self.vpr,
+                text_content=self.config.vpr_text_content,
+                sample_rate=self.config.vpr_sr,
+                group_id=self.vpr.group_id,
             )
 
-        return VPEnrollmentContext(
-            doctor=doctor,
-            vp_repo=self.vp_repo,
-            recorder=self.recorder,
-            vpr=self.vpr,
-            text_content=self.config.vpr_text_content,
-            sample_rate=self.config.vpr_sr,
-            group_id=self.vpr.group_id,
-        )
+        except (NoActiveSessionError, DoctorNotFoundError):
+            raise
+        except Exception as e:
+            self.logger.error(f"Failed to start VP enrollment: {e}")
+            raise InternalDoctorServiceError() from e
 
     @require_auth
     async def update_vp(self) -> VPUpdateContext:
-        """Start voiceprint update with live recording.
+        """Start voiceprint update for current doctor."""
+        try:
+            session = await self.session_manager.get_session()
+            if not session:
+                raise NoActiveSessionError(ErrorMessages.NO_ACTIVE_SESSION)
 
-        Returns a container that manages the recording process.
+            doctor = await self.doctor_repo.read(session.doctor_id)
+            if not doctor:
+                raise DoctorNotFoundError(
+                    ErrorMessages.DOCTOR_NOT_FOUND,
+                    doctor_id=session.doctor_id,
+                )
 
-        Returns:
-            VPUpdateContainer for managing the update process.
+            # Get active voiceprint
+            f = vp_filter().doctor_id.eq(doctor.id).is_active.eq(True)
+            vp = await self.vp_repo.first(f.build())
 
-        Example:
-            ```python
-            async with await doctor_service.update_vp() as container:
-                await container.start()
+            if not vp:
+                raise VoiceprintNotFoundError(
+                    ErrorMessages.VOICEPRINT_NOT_FOUND,
+                    doctor_id=doctor.id,
+                )
 
-                # Recording...
-
-                result = await container.close()
-                print(f"Updated! VPR UID: {result.vpr_uid}")
-            ```
-        """
-        session = await self.session_manager.get_session()
-        if not session:
-            raise DoctorServiceError("No active session")
-
-        doctor = await self.doctor_repo.read(session.doctor_id)
-        if not doctor:
-            raise DoctorNotFoundError(
-                "Doctor not found",
-                doctor_id=session.doctor_id,
+            return VPUpdateContext(
+                doctor=doctor,
+                vp=vp,
+                vp_repo=self.vp_repo,
+                recorder=self.recorder,
+                vpr=self.vpr,
+                text_content=self.config.vpr_text_content,
+                sample_rate=self.config.vpr_sr,
             )
 
-        # Get active voiceprint
-        f = vp_filter().doctor_id.eq(doctor.id).is_active.eq(True)
-        vp = await self.vp_repo.first(f.build())
-
-        if not vp:
-            raise VoiceprintNotFoundError(
-                "No active voiceprint registration found",
-                doctor_id=doctor.id,
-            )
-
-        return VPUpdateContext(
-            doctor=doctor,
-            vp=vp,
-            vp_repo=self.vp_repo,
-            recorder=self.recorder,
-            vpr=self.vpr,
-            text_content=self.config.vpr_text_content,
-            sample_rate=self.config.vpr_sr,
-        )
+        except (NoActiveSessionError, DoctorNotFoundError, VoiceprintNotFoundError):
+            raise
+        except Exception as e:
+            self.logger.error(f"Failed to start VP update: {e}")
+            raise InternalDoctorServiceError() from e
 
     @require_auth
     async def get_active_vp(self) -> VP | None:
-        """Get the current doctor's active voiceprint."""
-        session = await self.session_manager.get_session()
-        if not session:
-            raise DoctorServiceError("No active session")
+        """Get the active voiceprint for current doctor."""
+        try:
+            session = await self.session_manager.get_session()
+            if not session:
+                raise NoActiveSessionError(ErrorMessages.NO_ACTIVE_SESSION)
 
-        doctor = await self.doctor_repo.read(session.doctor_id)
-        if not doctor:
-            raise DoctorNotFoundError("Doctor not found", doctor_id=session.doctor_id)
+            doctor = await self.doctor_repo.read(session.doctor_id)
+            if not doctor:
+                raise DoctorNotFoundError(
+                    ErrorMessages.DOCTOR_NOT_FOUND,
+                    doctor_id=session.doctor_id,
+                )
 
-        f = vp_filter().doctor_id.eq(doctor.id).is_active.eq(True)
-        return await self.vp_repo.first(f.build())
+            f = vp_filter().doctor_id.eq(doctor.id).is_active.eq(True)
+            return await self.vp_repo.first(f.build())
+
+        except (NoActiveSessionError, DoctorNotFoundError):
+            raise
+        except Exception as e:
+            self.logger.error(f"Failed to get active VP: {e}")
+            raise InternalDoctorServiceError() from e
 
     @require_auth
     async def has_voiceprint(self) -> bool:
-        """Check if the current doctor has an active voiceprint."""
-        vp = await self.get_active_vp()
-        return vp is not None
+        """Check if current doctor has an active voiceprint."""
+        try:
+            vp = await self.get_active_vp()
+            return vp is not None
+        except NoActiveSessionError:
+            raise
+        except DoctorNotFoundError:
+            raise
+        except Exception:
+            return False
 
     @require_auth
     async def deactivate_vp(self) -> None:
         """Deactivate the current doctor's voiceprint."""
-        session = await self.session_manager.get_session()
-        if not session:
-            raise DoctorServiceError("No active session")
+        try:
+            session = await self.session_manager.get_session()
+            if not session:
+                raise NoActiveSessionError(ErrorMessages.NO_ACTIVE_SESSION)
 
-        doctor = await self.doctor_repo.read(session.doctor_id)
-        if not doctor:
-            raise DoctorNotFoundError(
-                "Doctor not found",
-                doctor_id=session.doctor_id,
-            )
+            doctor = await self.doctor_repo.read(session.doctor_id)
+            if not doctor:
+                raise DoctorNotFoundError(
+                    ErrorMessages.DOCTOR_NOT_FOUND,
+                    doctor_id=session.doctor_id,
+                )
 
-        f = vp_filter().doctor_id.eq(doctor.id).is_active.eq(True)
-        vp = await self.vp_repo.first(f.build())
+            f = vp_filter().doctor_id.eq(doctor.id).is_active.eq(True)
+            vp = await self.vp_repo.first(f.build())
 
-        if not vp:
-            raise VoiceprintNotFoundError("No active voiceprint found", doctor_id=doctor.id)
+            if not vp:
+                raise VoiceprintNotFoundError(
+                    ErrorMessages.VOICEPRINT_NOT_FOUND,
+                    doctor_id=doctor.id,
+                )
 
-        vp.is_active = False
-        await self.vp_repo.update(vp)
+            vp.is_active = False
+            await self.vp_repo.update(vp)
 
-        self.logger.info(f"Deactivated voiceprint for doctor {doctor.eid}")
+            self.logger.info(f"Deactivated voiceprint for doctor {doctor.eid}")
+
+        except (NoActiveSessionError, DoctorNotFoundError, VoiceprintNotFoundError):
+            raise
+        except Exception as e:
+            self.logger.error(f"Failed to deactivate VP: {e}")
+            raise InternalDoctorServiceError() from e
 
     @require_auth
     async def update(self, command: UpdateCommand) -> Doctor:
-        """Update the current doctor's profile information."""
-        session = await self.session_manager.get_session()
-        if not session:
-            raise DoctorServiceError("No active session")
+        """Update current doctor's profile information."""
+        try:
+            session = await self.session_manager.get_session()
+            if not session:
+                raise NoActiveSessionError(ErrorMessages.NO_ACTIVE_SESSION)
 
-        doctor = await self.doctor_repo.read(session.doctor_id)
-        if not doctor:
-            raise DoctorNotFoundError(
-                "Doctor not found",
-                doctor_id=session.doctor_id,
-            )
+            doctor = await self.doctor_repo.read(session.doctor_id)
+            if not doctor:
+                raise DoctorNotFoundError(
+                    ErrorMessages.DOCTOR_NOT_FOUND,
+                    doctor_id=session.doctor_id,
+                )
 
-        # Update fields if provided
-        if command.name is not None:
-            doctor.name = command.name
-        if command.department is not None:
-            doctor.department = command.department
-        if command.title is not None:
-            doctor.title = command.title
-        if command.hospital is not None:
-            doctor.hospital = command.hospital
-        if command.phone is not None:
-            doctor.phone = command.phone
-        if command.email is not None:
-            doctor.email = command.email
+            # Update fields if provided
+            if command.name is not None:
+                doctor.name = command.name
+            if command.department is not None:
+                doctor.department = command.department
+            if command.title is not None:
+                doctor.title = command.title
+            if command.hospital is not None:
+                doctor.hospital = command.hospital
+            if command.phone is not None:
+                doctor.phone = command.phone
+            if command.email is not None:
+                doctor.email = command.email
 
-        doctor.touch()
+            doctor.touch()
+            await self.doctor_repo.update(doctor)
 
-        await self.doctor_repo.update(doctor)
+            self.logger.info(f"Updated profile for doctor {doctor.eid}")
+            return doctor
 
-        self.logger.info(f"Updated profile for doctor {doctor.eid}")
-        return doctor
+        except (NoActiveSessionError, DoctorNotFoundError):
+            raise
+        except Exception as e:
+            self.logger.error(f"Failed to update profile: {e}")
+            raise InternalDoctorServiceError() from e
 
     @require_auth
     async def change_password(
@@ -345,29 +442,35 @@ class DoctorService(BaseService):
         new_password: Password,
     ) -> None:
         """Change the current doctor's password."""
-        session = await self.session_manager.get_session()
-        if not session:
-            raise DoctorServiceError("No active session")
+        try:
+            session = await self.session_manager.get_session()
+            if not session:
+                raise NoActiveSessionError(ErrorMessages.NO_ACTIVE_SESSION)
 
-        doctor = await self.doctor_repo.read(session.doctor_id)
-        if not doctor:
-            raise DoctorNotFoundError(
-                "Doctor not found",
-                doctor_id=session.doctor_id,
-            )
+            doctor = await self.doctor_repo.read(session.doctor_id)
+            if not doctor:
+                raise DoctorNotFoundError(
+                    ErrorMessages.DOCTOR_NOT_FOUND,
+                    doctor_id=session.doctor_id,
+                )
 
-        if not doctor.verify_password(old_password):
-            raise InvalidCredentialsError(
-                "Old password is incorrect",
-                reason=InvalidCredentialReasons.INVALID_PASSWORD,
-            )
+            if not doctor.verify_password(old_password):
+                raise InvalidCredentialsError(
+                    ErrorMessages.OLD_PASSWORD_INCORRECT,
+                    reason=InvalidCredentialReasons.INVALID_PASSWORD,
+                )
 
-        doctor.password_hash = new_password.hash()
-        doctor.touch()
+            doctor.password_hash = new_password.hash()
+            doctor.touch()
+            await self.doctor_repo.update(doctor)
 
-        await self.doctor_repo.update(doctor)
+            self.logger.info(f"Changed password for doctor {doctor.eid}")
 
-        self.logger.info(f"Changed password for doctor {doctor.eid}")
+        except (NoActiveSessionError, DoctorNotFoundError, InvalidCredentialsError):
+            raise
+        except Exception as e:
+            self.logger.error(f"Failed to change password: {e}")
+            raise InternalDoctorServiceError() from e
 
 
 class VPEnrollmentContext(LoggingMixin, AsyncContextMixin, AbstractSession):
@@ -397,67 +500,73 @@ class VPEnrollmentContext(LoggingMixin, AsyncContextMixin, AbstractSession):
 
     async def start(self) -> None:
         """Start recording for voiceprint enrollment."""
-        await self.recorder.start(
-            "voiceprints",
-            self.doctor.id,
-            "enrollment",
-        )
-        self.logger.info(f"Started voiceprint enrollment recording for {self.doctor.eid}")
+        try:
+            await self.recorder.start("voiceprints", self.doctor.id, "enrollment")
+            self.logger.info(f"Started VP enrollment for doctor {self.doctor.eid}")
+        except Exception as e:
+            self.logger.error(f"Failed to start recording: {e}")
+            raise InternalDoctorServiceError(ErrorMessages.VOICEPRINT_ENROLL_FAILED) from e
 
     async def close(self) -> VPEnrollResult:
-        """Finish recording and complete enrollment.
+        """Finish recording and complete enrollment."""
+        try:
+            # Stop recording and get audio segment
+            segment = await self.recorder.stop()
 
-        Returns:
-            VPEnrollResult with registration details.
-        """
-        # Stop recording and get audio segment
-        segment = await self.recorder.stop()
+            # Get audio data for VPR (resample if needed)
+            audio_data = await self.recorder.segment(
+                started_at=segment.started_at,
+                ended_at=segment.ended_at,
+                rate=self.sample_rate,
+                channels=1,
+            )
 
-        # Get audio data for VPR (resample if needed)
-        audio_data = await self.recorder.segment(
-            started_at=segment.started_at,
-            ended_at=segment.ended_at,
-            rate=self.sample_rate,
-            channels=1,
-        )
+            # Enroll with VPR
+            try:
+                vpr_uid = await self.vpr.enroll(data=audio_data, sr=self.sample_rate, uid=None)
+                self.logger.info(f"Enrolled with VPR, uid: {vpr_uid}")
+            except VPRError as e:
+                self.logger.error(f"VPR enrollment failed: {e}")
+                raise InternalDoctorServiceError(ErrorMessages.VOICEPRINT_ENROLL_FAILED) from e
 
-        # Enroll with VPR
-        vpr_uid = await self.vpr.enroll(data=audio_data, sr=self.sample_rate, uid=None)
+            # Deactivate existing active VPs
+            f = vp_filter().doctor_id.eq(self.doctor.id).is_active.eq(True)
+            existing = await self.vp_repo.list(f.build())
 
-        self.logger.info(f"Enrolled with VPR, uid: {vpr_uid}")
+            if existing:
+                for vp in existing:
+                    vp.is_active = False
+                await self.vp_repo.update_many(existing)
+                self.logger.debug(f"Deactivated {len(existing)} existing VP(s)")
 
-        # Deactivate existing active VPs
-        f = vp_filter().doctor_id.eq(self.doctor.id).is_active.eq(True)
-        existing = await self.vp_repo.list(f.build())
+            # Create new VP
+            vp = VP(
+                doctor_id=self.doctor.id,
+                vpr_uid=vpr_uid,
+                vpr_group_id=self.group_id,
+                audio_key=segment.key,
+                text_content=self.text_content,
+                sample_rate=self.sample_rate,
+                is_active=True,
+            )
 
-        if existing:
-            for vp in existing:
-                vp.is_active = False
-            await self.vp_repo.update_many(existing)
-            self.logger.debug(f"Deactivated {len(existing)} existing VP(s)")
+            vp_id = await self.vp_repo.create(vp)
+            self.logger.info(f"Created VP {vp_id} for doctor {self.doctor.eid}")
 
-        # Create new VP
-        vp = VP(
-            doctor_id=self.doctor.id,
-            vpr_uid=vpr_uid,
-            vpr_group_id=self.group_id,
-            audio_key=segment.key,
-            text_content=self.text_content,
-            sample_rate=self.sample_rate,
-            is_active=True,
-        )
+            self.recorder.clear_frames()
 
-        vp_id = await self.vp_repo.create(vp)
+            return VPEnrollResult(
+                vp_id=vp_id,
+                vpr_uid=vpr_uid,
+                audio_key=segment.key,
+                duration_ms=segment.duration_ms,
+            )
 
-        self.logger.info(f"Created VP {vp_id} for doctor {self.doctor.eid}")
-        self.recorder.clear_frames()
-
-        return VPEnrollResult(
-            vp_id=vp_id,
-            vpr_uid=vpr_uid,
-            audio_key=segment.key,
-            duration_ms=segment.duration_ms,
-        )
+        except InternalDoctorServiceError:
+            raise
+        except Exception as e:
+            self.logger.error(f"VP enrollment failed: {e}")
+            raise InternalDoctorServiceError(ErrorMessages.VOICEPRINT_ENROLL_FAILED) from e
 
 
 class VPUpdateContext(LoggingMixin, AsyncContextMixin, AbstractSession):
@@ -486,49 +595,55 @@ class VPUpdateContext(LoggingMixin, AsyncContextMixin, AbstractSession):
 
     async def start(self) -> None:
         """Start recording for voiceprint update."""
-        await self.recorder.start("voiceprints", self.doctor.id, "update")
-        self.logger.info(f"Started voiceprint update recording for {self.doctor.eid}")
+        try:
+            await self.recorder.start("voiceprints", self.doctor.id, "update")
+            self.logger.info(f"Started VP update for doctor {self.doctor.eid}")
+        except Exception as e:
+            self.logger.error(f"Failed to start recording: {e}")
+            raise InternalDoctorServiceError(ErrorMessages.VOICEPRINT_UPDATE_FAILED) from e
 
     async def close(self) -> VPEnrollResult:
-        """Finish recording and complete update.
+        """Finish recording and complete update."""
+        try:
+            # Stop recording and get audio segment
+            segment = await self.recorder.stop()
 
-        Returns:
-            VPEnrollResult with updated details.
-        """
-        # Stop recording and get audio segment
-        segment = await self.recorder.stop()
+            # Get audio data for VPR (resample if needed)
+            audio_data = await self.recorder.segment(
+                started_at=segment.started_at,
+                ended_at=segment.ended_at,
+                rate=self.sample_rate,
+                channels=1,
+            )
 
-        # Get audio data for VPR (resample if needed)
-        audio_data = await self.recorder.segment(
-            started_at=segment.started_at,
-            ended_at=segment.ended_at,
-            rate=self.sample_rate,
-            channels=1,
-        )
+            # Update VPR
+            try:
+                await self.vpr.update(uid=self.vp.vpr_uid, data=audio_data, sr=self.sample_rate)
+                self.logger.info(f"Updated VPR uid: {self.vp.vpr_uid}")
+            except VPRError as e:
+                self.logger.error(f"VPR update failed: {e}")
+                raise InternalDoctorServiceError(ErrorMessages.VOICEPRINT_UPDATE_FAILED) from e
 
-        # Update VPR
-        await self.vpr.update(
-            uid=self.vp.vpr_uid,
-            data=audio_data,
-            sr=self.sample_rate,
-        )
+            # Update VP record
+            self.vp.audio_key = segment.key
+            self.vp.text_content = self.text_content
+            self.vp.sample_rate = self.sample_rate
+            self.vp.touch()
 
-        self.logger.info(f"Updated VPR uid: {self.vp.vpr_uid}")
+            await self.vp_repo.update(self.vp)
+            self.logger.info(f"Updated VP {self.vp.id} for doctor {self.doctor.eid}")
 
-        # Update VP record
-        self.vp.audio_key = segment.key
-        self.vp.text_content = self.text_content
-        self.vp.sample_rate = self.sample_rate
-        self.vp.touch()
+            self.recorder.clear_frames()
 
-        await self.vp_repo.update(self.vp)
+            return VPEnrollResult(
+                vp_id=self.vp.id,
+                vpr_uid=self.vp.vpr_uid,
+                audio_key=segment.key,
+                duration_ms=segment.duration_ms,
+            )
 
-        self.logger.info(f"Updated VP {self.vp.id} for doctor {self.doctor.eid}")
-        self.recorder.clear_frames()
-
-        return VPEnrollResult(
-            vp_id=self.vp.id,
-            vpr_uid=self.vp.vpr_uid,
-            audio_key=segment.key,
-            duration_ms=segment.duration_ms,
-        )
+        except InternalDoctorServiceError:
+            raise
+        except Exception as e:
+            self.logger.error(f"VP update failed: {e}")
+            raise InternalDoctorServiceError(ErrorMessages.VOICEPRINT_UPDATE_FAILED) from e

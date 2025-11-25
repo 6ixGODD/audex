@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import builtins
+import contextlib
 import datetime
 import typing as t
 
@@ -8,6 +9,7 @@ from audex import utils
 from audex.entity.segment import Segment
 from audex.entity.session import Session
 from audex.entity.utterance import Utterance
+from audex.exceptions import NoActiveSessionError
 from audex.filters.generated import segment_filter
 from audex.filters.generated import session_filter
 from audex.filters.generated import utterance_filter
@@ -21,10 +23,15 @@ from audex.lib.repos.utterance import UtteranceRepository
 from audex.lib.repos.vp import VPRepository
 from audex.lib.session import SessionManager
 from audex.lib.transcription import Transcription
+from audex.lib.transcription import TranscriptionError
 from audex.lib.transcription import events
 from audex.lib.vpr import VPR
+from audex.lib.vpr import VPRError
 from audex.service import BaseService
 from audex.service.decorators import require_auth
+from audex.service.session.const import ErrorMessages
+from audex.service.session.exceptions import InternalSessionServiceError
+from audex.service.session.exceptions import RecordingError
 from audex.service.session.exceptions import SessionNotFoundError
 from audex.service.session.exceptions import SessionServiceError
 from audex.service.session.types import CreateSessionCommand
@@ -52,11 +59,7 @@ class SessionServiceConfig(t.NamedTuple):
 
 
 class SessionService(BaseService):
-    """Service for managing recording sessions.
-
-    Handles session lifecycle, recording, transcription, and speaker
-    identification.
-    """
+    """Service for managing recording sessions."""
 
     __logtag__ = "audex.service.session"
 
@@ -85,41 +88,62 @@ class SessionService(BaseService):
     @require_auth
     async def create(self, command: CreateSessionCommand) -> Session:
         """Create a new recording session."""
-        session = Session(
-            doctor_id=command.doctor_id,
-            patient_name=command.patient_name,
-            clinic_number=command.clinic_number,
-            medical_record_number=command.medical_record_number,
-            diagnosis=command.diagnosis,
-            notes=command.notes,
-        )
+        try:
+            session = Session(
+                doctor_id=command.doctor_id,
+                patient_name=command.patient_name,
+                clinic_number=command.clinic_number,
+                medical_record_number=command.medical_record_number,
+                diagnosis=command.diagnosis,
+                notes=command.notes,
+            )
 
-        uid = await self.session_repo.create(session)
-        session = await self.session_repo.read(uid)
+            uid = await self.session_repo.create(session)
+            session = await self.session_repo.read(uid)
 
-        if session is None:
-            raise SessionServiceError("Failed to create session")
+            if session is None:
+                raise SessionServiceError(ErrorMessages.SESSION_CREATE_FAILED)
 
-        self.logger.info(f"Created session {uid} for doctor {command.doctor_id}")
-        return session
+            self.logger.info(f"Created session {uid} for doctor {command.doctor_id}")
+            return session
+
+        except SessionServiceError:
+            raise
+        except Exception as e:
+            self.logger.error(f"Failed to create session: {e}")
+            raise InternalSessionServiceError(ErrorMessages.SESSION_CREATE_FAILED) from e
 
     @require_auth
     async def get(self, session_id: str) -> Session | None:
         """Get session by ID."""
-        return await self.session_repo.read(session_id)
+        try:
+            return await self.session_repo.read(session_id)
+        except Exception as e:
+            self.logger.error(f"Failed to get session {session_id}: {e}")
+            raise InternalSessionServiceError() from e
 
     @require_auth
     async def delete(self, session_id: str) -> None:
         """Delete a session and all associated data."""
-        deleted = await self.session_repo.delete(session_id)
-        if not deleted:
-            raise SessionNotFoundError(session_id=session_id)
+        try:
+            deleted = await self.session_repo.delete(session_id)
+            if not deleted:
+                raise SessionNotFoundError(
+                    ErrorMessages.SESSION_NOT_FOUND,
+                    session_id=session_id,
+                )
 
-        # Also delete associated utterances
-        f = utterance_filter().session_id.eq(session_id)
-        await self.utterance_repo.delete_many(f.build())
+            # Also delete associated utterances
+            f = utterance_filter().session_id.eq(session_id)
+            await self.utterance_repo.delete_many(f.build())
 
-        self.logger.info(f"Deleted session {session_id} and associated data")
+            self.logger.info(f"Deleted session {session_id} and associated data")
+
+        except SessionNotFoundError:
+            raise
+        except Exception as e:
+            self.logger.error(f"Failed to delete session {session_id}: {e}")
+            raise InternalSessionServiceError(ErrorMessages.SESSION_DELETE_FAILED) from e
 
     @require_auth
     async def list(
@@ -128,37 +152,63 @@ class SessionService(BaseService):
         page_index: int = 0,
         page_size: int = 20,
     ) -> builtins.list[Session]:
-        f = session_filter().doctor_id.eq(doctor_id).created_at.desc()
-        return await self.session_repo.list(
-            f.build(),
-            page_index=page_index,
-            page_size=page_size,
-        )
+        """List sessions for a doctor."""
+        try:
+            f = session_filter().doctor_id.eq(doctor_id).created_at.desc()
+            return await self.session_repo.list(
+                f.build(),
+                page_index=page_index,
+                page_size=page_size,
+            )
+        except Exception as e:
+            self.logger.error(f"Failed to list sessions for doctor {doctor_id}: {e}")
+            raise InternalSessionServiceError() from e
 
     @require_auth
     async def complete(self, session_id: str) -> Session:
         """Mark session as completed."""
-        session = await self.session_repo.read(session_id)
-        if session is None:
-            raise SessionNotFoundError(session_id=session_id)
+        try:
+            session = await self.session_repo.read(session_id)
+            if session is None:
+                raise SessionNotFoundError(
+                    ErrorMessages.SESSION_NOT_FOUND,
+                    session_id=session_id,
+                )
 
-        session.complete()
-        await self.session_repo.update(session)
+            session.complete()
+            await self.session_repo.update(session)
 
-        self.logger.info(f"Completed session {session_id}")
-        return session
+            self.logger.info(f"Completed session {session_id}")
+            return session
+
+        except SessionNotFoundError:
+            raise
+        except Exception as e:
+            self.logger.error(f"Failed to complete session {session_id}: {e}")
+            raise InternalSessionServiceError(ErrorMessages.SESSION_UPDATE_FAILED) from e
 
     @require_auth
     async def cancel(self, session_id: str) -> Session:
-        session = await self.session_repo.read(session_id)
-        if session is None:
-            raise SessionNotFoundError(session_id=session_id)
+        """Cancel a session."""
+        try:
+            session = await self.session_repo.read(session_id)
+            if session is None:
+                raise SessionNotFoundError(
+                    ErrorMessages.SESSION_NOT_FOUND,
+                    session_id=session_id,
+                )
 
-        session.cancel()
-        await self.session_repo.update(session)
+            session.cancel()
+            await self.session_repo.update(session)
 
-        self.logger.info(f"Cancelled session {session_id}")
-        return session
+            self.logger.info(f"Cancelled session {session_id}")
+            return session
+
+        except SessionNotFoundError:
+            raise
+        except Exception as e:
+            self.logger.error(f"Failed to cancel session {session_id}: {e}")
+            raise InternalSessionServiceError(ErrorMessages.SESSION_UPDATE_FAILED) from e
 
     @require_auth
     async def get_utterances(
@@ -167,49 +217,78 @@ class SessionService(BaseService):
         page_index: int = 0,
         page_size: int = 100,
     ) -> builtins.list[Utterance]:
-        f = utterance_filter().session_id.eq(session_id).sequence.asc()
-        return await self.utterance_repo.list(
-            f.build(),
-            page_index=page_index,
-            page_size=page_size,
-        )
+        """Get utterances for a session."""
+        try:
+            f = utterance_filter().session_id.eq(session_id).sequence.asc()
+            return await self.utterance_repo.list(
+                f.build(),
+                page_index=page_index,
+                page_size=page_size,
+            )
+        except Exception as e:
+            self.logger.error(f"Failed to get utterances for session {session_id}: {e}")
+            raise InternalSessionServiceError() from e
 
     @require_auth
     async def session(self, session_id: str) -> SessionContext:
-        s = await self.session_manager.get_session()
-        if not s:
-            raise SessionServiceError("No active session found")
-        f = vp_filter().doctor_id.eq(s.doctor_id)
-        vp = await self.vp_repo.first(f.build())
-        if not vp:
-            raise SessionServiceError(f"No VP found for doctor {s.doctor_id}")
-        session = await self.session_repo.read(session_id)
-        if session is None:
-            raise SessionNotFoundError(session_id=session_id)
+        """Create a session context for recording.
 
-        # Update session status to IN_PROGRESS
-        session.start()
-        await self.session_repo.update(session)
+        Args:
+            session_id: ID of the session to start recording.
 
-        return SessionContext(
-            config=self.config,
-            session=session,
-            session_repo=self.session_repo,
-            segment_repo=self.segment_repo,
-            utterance_repo=self.utterance_repo,
-            vpr=self.vpr,
-            transcription=self.transcription,
-            recorder=self.recorder,
-            vpr_uid=vp.vpr_uid,
-        )
+        Returns:
+            SessionContext for managing the recording.
+
+        Raises:
+            NoActiveSessionError: If no active user session.
+            SessionNotFoundError: If session not found.
+            SessionServiceError: If no voiceprint found.
+        """
+        try:
+            # Get current user session
+            user_session = await self.session_manager.get_session()
+            if not user_session:
+                raise NoActiveSessionError(ErrorMessages.NO_ACTIVE_SESSION)
+
+            # Get doctor's voiceprint
+            f = vp_filter().doctor_id.eq(user_session.doctor_id).is_active.eq(True)
+            vp = await self.vp_repo.first(f.build())
+            if not vp:
+                raise SessionServiceError(ErrorMessages.NO_VOICEPRINT_FOUND)
+
+            # Get recording session
+            session = await self.session_repo.read(session_id)
+            if session is None:
+                raise SessionNotFoundError(
+                    ErrorMessages.SESSION_NOT_FOUND,
+                    session_id=session_id,
+                )
+
+            # Update session status to IN_PROGRESS
+            session.start()
+            await self.session_repo.update(session)
+
+            return SessionContext(
+                config=self.config,
+                session=session,
+                session_repo=self.session_repo,
+                segment_repo=self.segment_repo,
+                utterance_repo=self.utterance_repo,
+                vpr=self.vpr,
+                transcription=self.transcription,
+                recorder=self.recorder,
+                vpr_uid=vp.vpr_uid,
+            )
+
+        except (NoActiveSessionError, SessionNotFoundError, SessionServiceError):
+            raise
+        except Exception as e:
+            self.logger.error(f"Failed to create session context: {e}")
+            raise InternalSessionServiceError() from e
 
 
 class SessionContext(LoggingMixin, DuplexAbstractSession[bytes, Start | Delta | Done]):
-    """Context for managing an active recording session.
-
-    Handles audio recording, transcription, speaker identification, and
-    utterance storage.
-    """
+    """Context for managing an active recording session."""
 
     __logtag__ = "audex.service.session:SessionContext"
 
@@ -240,67 +319,109 @@ class SessionContext(LoggingMixin, DuplexAbstractSession[bytes, Start | Delta | 
         self._utterance_sequence = 0
 
         # Track utterance info for Done event
-        # Delta is cumulative, so we only need to track the latest
         self._current_utterance_start: float | None = None
         self._current_utterance_end: float | None = None
-        self._current_full_text: str = ""  # Latest full text from Delta
+        self._current_full_text: str = ""
 
     async def start(self) -> None:
         """Start the recording session."""
-        # Start transcription session
-        await self.transcription_session.start()
+        try:
+            # Start transcription session
+            try:
+                await self.transcription_session.start()
+            except TranscriptionError as e:
+                self.logger.error(f"Failed to start transcription: {e}")
+                raise RecordingError(ErrorMessages.TRANSCRIPTION_START_FAILED) from e
 
-        # Start audio recording
-        await self.recorder.start(self.config.audio_key_prefix, self.session.id)
+            # Start audio recording
+            try:
+                await self.recorder.start(self.config.audio_key_prefix, self.session.id)
+            except Exception as e:
+                self.logger.error(f"Failed to start recording: {e}")
+                # Try to clean up transcription
+                with contextlib.suppress(BaseException):
+                    await self.transcription_session.close()
+                raise RecordingError(ErrorMessages.RECORDING_START_FAILED) from e
 
-        # Get current utterance sequence
-        f = utterance_filter().session_id.eq(self.session.id)
-        last_utterance = await self.utterance_repo.first(f.sequence.desc().build())
-        self._utterance_sequence = 0 if last_utterance is None else last_utterance.sequence
+            # Get current utterance sequence
+            f = utterance_filter().session_id.eq(self.session.id)
+            last_utterance = await self.utterance_repo.first(f.sequence.desc().build())
+            self._utterance_sequence = 0 if last_utterance is None else last_utterance.sequence
 
-        self.logger.info(f"Started session container for {self.session.id}")
+            self.logger.info(f"Started session context for {self.session.id}")
+
+        except RecordingError:
+            raise
+        except Exception as e:
+            self.logger.error(f"Failed to start session: {e}")
+            raise InternalSessionServiceError(ErrorMessages.RECORDING_START_FAILED) from e
 
     async def finish(self) -> None:
         """Finish the transcription session."""
-        await self.transcription_session.finish()
-        self.logger.info(f"Finished transcription for session {self.session.id}")
+        try:
+            await self.transcription_session.finish()
+            self.logger.info(f"Finished transcription for session {self.session.id}")
+        except Exception as e:
+            self.logger.error(f"Failed to finish transcription: {e}")
+            # Don't raise, just log
 
     async def close(self) -> None:
-        """Close the session container."""
-        # Close transcription session
-        await self.transcription_session.close()
+        """Close the session context."""
+        try:
+            # Close transcription session
+            try:
+                await self.transcription_session.close()
+            except Exception as e:
+                self.logger.warning(f"Failed to close transcription: {e}")
 
-        # Stop recorder and get segment info
-        segment_data = await self.recorder.stop()
+            # Stop recorder and get segment info
+            try:
+                segment_data = await self.recorder.stop()
+            except Exception as e:
+                self.logger.error(f"Failed to stop recording: {e}")
+                raise RecordingError(ErrorMessages.RECORDING_STOP_FAILED) from e
 
-        # Determine segment sequence
-        f = segment_filter().session_id.eq(self.session.id)
-        last_segment = await self.segment_repo.first(f.sequence.desc().build())
-        seq = 1 if last_segment is None else last_segment.sequence + 1
+            # Determine segment sequence
+            f = segment_filter().session_id.eq(self.session.id)
+            last_segment = await self.segment_repo.first(f.sequence.desc().build())
+            seq = 1 if last_segment is None else last_segment.sequence + 1
 
-        # Store segment info in repository
-        segment = Segment(
-            session_id=self.session.id,
-            audio_key=segment_data.key,
-            duration_ms=segment_data.duration_ms,
-            started_at=segment_data.started_at,
-            ended_at=segment_data.ended_at,
-            sequence=seq,
-        )
+            # Store segment info
+            segment = Segment(
+                session_id=self.session.id,
+                audio_key=segment_data.key,
+                duration_ms=segment_data.duration_ms,
+                started_at=segment_data.started_at,
+                ended_at=segment_data.ended_at,
+                sequence=seq,
+            )
 
-        seg_id = await self.segment_repo.create(segment)
+            try:
+                seg_id = await self.segment_repo.create(segment)
+                self.logger.info(
+                    f"Stored segment {seg_id} (seq={seq}) for session {self.session.id}, "
+                    f"duration={segment_data.duration_ms}ms"
+                )
+            except Exception as e:
+                self.logger.error(f"Failed to store segment: {e}")
+                # Don't raise, segment data is already saved in storage
 
-        self.logger.info(
-            f"Stored segment {seg_id} (seq={seq}) for session {self.session.id}, "
-            f"duration={segment_data.duration_ms}ms"
-        )
+            # Clear audio frames
+            self.recorder.clear_frames()
 
-        # Clear audio frames to free memory
-        self.recorder.clear_frames()
+        except RecordingError:
+            raise
+        except Exception as e:
+            self.logger.error(f"Failed to close session: {e}")
+            raise InternalSessionServiceError() from e
 
     async def send(self, message: bytes) -> None:
         """Send audio data to transcription service."""
-        await self.transcription_session.send(message)
+        try:
+            await self.transcription_session.send(message)
+        except Exception as e:
+            self.logger.error(f"Failed to send audio data: {e}")
+            raise InternalSessionServiceError(ErrorMessages.TRANSCRIPTION_FAILED) from e
 
     def receive(self) -> AsyncStream[Start | Delta | Done]:
         """Receive transcription events."""
@@ -325,11 +446,10 @@ class SessionContext(LoggingMixin, DuplexAbstractSession[bytes, Start | Delta | 
 
                 self._current_utterance_end = event.to_at
 
-                # Delta is cumulative - just keep the latest full text
+                # Delta is cumulative
                 if not event.interim:
                     self._current_full_text = event.text
 
-                # Just pass through Delta events without speaker identification
                 yield Delta(
                     session_id=self.session.id,
                     from_at=event.from_at,
@@ -339,7 +459,7 @@ class SessionContext(LoggingMixin, DuplexAbstractSession[bytes, Start | Delta | 
                 )
 
             elif isinstance(event, events.Done):
-                # Now do speaker identification once for the complete utterance
+                # Speaker identification
                 is_doctor = False
                 full_text = self._current_full_text
                 vpr_score: float | None = None
@@ -347,12 +467,11 @@ class SessionContext(LoggingMixin, DuplexAbstractSession[bytes, Start | Delta | 
                 if (
                     self._current_utterance_start is not None
                     and self._current_utterance_end is not None
-                    and full_text  # Only do VPR if we have text
+                    and full_text
                 ):
                     try:
-                        # Add buffer before/after for better VPR accuracy
+                        # Extract audio segment
                         buffer_seconds = self.config.segment_buffer_ms / 1000.0
-
                         utterance_start = datetime.datetime.fromtimestamp(
                             self._current_utterance_start - buffer_seconds,
                             tz=datetime.UTC,
@@ -362,45 +481,38 @@ class SessionContext(LoggingMixin, DuplexAbstractSession[bytes, Start | Delta | 
                             tz=datetime.UTC,
                         )
 
-                        # Get audio segment and resample for VPR
                         audio_segment = await self.recorder.segment(
                             started_at=utterance_start,
                             ended_at=utterance_end,
                             rate=self.config.vpr_sr,
-                            channels=1,  # VPR usually needs mono
+                            channels=1,
                         )
 
-                        # Verify speaker with VPR (only once!)
-                        vpr_score = await self.vpr.verify(
-                            uid=self.vpr_uid,
-                            data=audio_segment,
-                            sr=self.config.vpr_sr,
-                        )
+                        # VPR verification
+                        try:
+                            vpr_score = await self.vpr.verify(
+                                uid=self.vpr_uid,
+                                data=audio_segment,
+                                sr=self.config.vpr_sr,
+                            )
+                            is_doctor = vpr_score >= self.config.vpr_threshold
 
-                        # Determine speaker based on threshold
-                        is_doctor = vpr_score >= self.config.vpr_threshold
-
-                        self.logger.debug(
-                            f"VPR score: {vpr_score:.3f}, "
-                            f"is_doctor: {is_doctor}, "
-                            f"text: {full_text[:50]}..."
-                        )
+                            self.logger.debug(
+                                f"VPR score: {vpr_score:.3f}, is_doctor: {is_doctor}, "
+                                f"text: {full_text[:50]}..."
+                            )
+                        except VPRError as e:
+                            self.logger.warning(f"VPR verification failed: {e}")
 
                     except Exception as e:
-                        self.logger.warning(
-                            f"Failed to verify speaker for utterance: {e}",
-                            exc_info=True,
-                        )
-                        # Keep default (is_doctor=False, i.e., patient)
+                        self.logger.warning(f"Failed to verify speaker: {e}")
 
-                    # Store utterance in database
+                    # Store utterance
                     try:
                         self._utterance_sequence += 1
 
-                        # Get current segment
                         f = segment_filter().session_id.eq(self.session.id)
                         current_segment = await self.segment_repo.first(f.sequence.desc().build())
-
                         segment_id = current_segment.id if current_segment else "unknown"
 
                         speaker = Speaker.DOCTOR if is_doctor else Speaker.PATIENT
@@ -421,24 +533,20 @@ class SessionContext(LoggingMixin, DuplexAbstractSession[bytes, Start | Delta | 
 
                         self.logger.debug(
                             f"Stored utterance {utterance.id} "
-                            f"(seq={self._utterance_sequence}, "
-                            f"speaker={speaker.value})"
+                            f"(seq={self._utterance_sequence}, speaker={speaker.value})"
                         )
 
                     except Exception as e:
-                        self.logger.error(
-                            f"Failed to store utterance: {e}",
-                            exc_info=True,
-                        )
+                        self.logger.error(f"Failed to store utterance: {e}")
 
-                # Yield Done event with speaker info
+                # Yield Done event
                 yield Done(
                     session_id=self.session.id,
                     is_doctor=is_doctor,
                     full_text=full_text,
                 )
 
-                # Reset tracking for next utterance
+                # Reset tracking
                 self._current_utterance_start = None
                 self._current_utterance_end = None
                 self._current_full_text = ""
