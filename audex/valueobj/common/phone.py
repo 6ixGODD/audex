@@ -5,6 +5,7 @@ import typing as t
 
 import pydantic as pyd
 
+from audex.exceptions import ValidationError
 from audex.valueobj import BaseValueObject
 
 
@@ -53,7 +54,7 @@ class Phone(BaseValueObject):
             A Telephone object.
         """
         if not re.match(r"^\+\d+ \d+$", phone_str):
-            raise ValueError(
+            raise ValidationError(
                 "Invalid phone string format. Expected format: '+<country_code> <number>'"
             )
         country_code, number = phone_str[1:].split(" ", 1)
@@ -64,7 +65,7 @@ class CNPhone(Phone):
     @pyd.model_validator(mode="after")
     def validate_chinese_phone(self) -> t.Self:
         if self.country_code != "86":
-            raise ValueError("Country code must be '86' for Chinese telephone numbers")
+            raise ValidationError("Country code must be '86' for Chinese telephone numbers")
         if len(self.number) != 11 or not self.number.startswith((
             "13",
             "14",
@@ -73,5 +74,5 @@ class CNPhone(Phone):
             "18",
             "19",
         )):
-            raise ValueError("Invalid Chinese telephone number format")
+            raise ValidationError("Invalid Chinese telephone number format")
         return self

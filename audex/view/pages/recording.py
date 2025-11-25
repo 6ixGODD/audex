@@ -6,6 +6,7 @@ import typing as t
 from dependency_injector.wiring import Provide
 from dependency_injector.wiring import inject
 from fastapi import Depends
+from fastapi import Query
 from nicegui import ui
 
 from audex.container import Container
@@ -24,6 +25,7 @@ from audex.view.decorators import handle_errors
 async def render(
     doctor_service: DoctorService = Depends(Provide[Container.service.doctor]),
     session_service: SessionService = Depends(Provide[Container.service.session]),
+    session_id: str | None = Query(default=None),
 ) -> None:
     """Render recording session page with lyrics-style scrolling."""
 
@@ -426,7 +428,7 @@ async def render(
     asyncio_tasks: dict[str, asyncio.Task] = {}
 
     # State variables
-    session_id: dict[str, str | None] = {"value": None}
+    session_id_state: dict[str, str | None] = {"value": session_id}
     is_recording = {"value": False}
     session_context: dict[str, t.Any] = {"value": None}
     is_session_completed = {"value": False}
@@ -470,11 +472,11 @@ async def render(
 
     async def load_existing_utterances():
         """Load existing conversation history."""
-        if not session_id["value"]:
+        if not session_id_state["value"]:
             return
 
         try:
-            utterances = await session_service.get_utterances(session_id["value"])
+            utterances = await session_service.get_utterances(session_id_state["value"])
 
             for utterance in utterances:
                 with lyrics_column:
@@ -592,11 +594,11 @@ async def render(
     async def toggle_recording():
         """Toggle recording state."""
         if not is_recording["value"]:
-            if is_session_completed["value"] and session_id["value"]:
+            if is_session_completed["value"] and session_id_state["value"]:
                 # Continue existing session
                 loading_overlay.visible = True
                 try:
-                    ctx = await session_service.session(session_id["value"])
+                    ctx = await session_service.session(session_id_state["value"])
                     session_context["value"] = ctx
                     await ctx.start()
 
@@ -672,10 +674,10 @@ async def render(
                                 )
                             )
 
-                            session_id["value"] = session.id
+                            session_id_state["value"] = session.id
                             is_session_completed["value"] = False
 
-                            ctx = await session_service.session(session_id["value"])
+                            ctx = await session_service.session(session_id_state["value"])
                             session_context["value"] = ctx
                             await ctx.start()
 
@@ -710,7 +712,7 @@ async def render(
                 ctx = session_context["value"]
                 await ctx.close()
 
-                await session_service.complete(session_id["value"])
+                await session_service.complete(session_id_state["value"])
 
                 is_recording["value"] = False
                 is_session_completed["value"] = True

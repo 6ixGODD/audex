@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import sys
 import typing as t
@@ -89,10 +90,15 @@ class LoggingTarget(ContextMixin, BaseModel):
         description="Configuration for log rotation",
     )
 
+    serl: bool = Field(
+        default=False,
+        description="Whether to serialize logs in JSON format",
+    )
+
 
 class LoggingConfig(BaseModel):
     targets: list[LoggingTarget] = Field(
-        default=[
+        default_factory=lambda: [
             LoggingTarget(logname="stdout", loglevel="debug"),
             LoggingTarget(logname="stderr", loglevel="error"),
         ],
@@ -102,9 +108,25 @@ class LoggingConfig(BaseModel):
     def init(self) -> None:
         from loguru import logger
 
+        if t.TYPE_CHECKING:
+            from loguru import Record
+
+        # Clear existing handlers
         logger.remove()
 
+        def serializer(record: Record) -> str:
+            rec = record.copy()
+            out = {
+                "message": rec["message"],
+                "extra": rec["extra"],
+                "time": rec["time"].isoformat(),
+                "level": rec["level"].name,
+            }
+            return json.dumps(out, ensure_ascii=False)
+
+        # Set up each logging target
         for target in self.targets:
+            # Set up stream or file sink
             sink: t.IO[str] | os.PathLike[str]
             if target.logname == "stdout":
                 sink = sys.stdout
@@ -112,21 +134,23 @@ class LoggingConfig(BaseModel):
                 sink = sys.stderr
             else:
                 sink = target.logname
+
+            # Determine log level
             level: str = target.loglevel.upper()
 
+            # Configure rotation if specified
             if target.rotation:
+                rot = None
                 if target.rotation.size_based:
-                    rotation_ = f"{target.rotation.size_based.max_size} MB"
+                    rot = f"{target.rotation.size_based.max_size} MB"
                 elif target.rotation.time_based:
-                    rotation_ = f"{target.rotation.time_based.interval} hours"
-                else:
-                    rotation_ = None
+                    rot = f"{target.rotation.time_based.interval} hours"
+                logger.add(
+                    sink,
+                    retention=target.rotation.backup_count,
+                    level=level,
+                    rotation=rot,
+                    format=serializer if target.serl else None,
+                )
             else:
-                rotation_ = None
-
-            logger.add(
-                sink,
-                level=level,
-                rotation=rotation_,
-                retention=target.rotation.backup_count if target.rotation else None,
-            ) if rotation_ else logger.add(sink, level=level)
+                logger.add(sink, level=level, serialize=target.serl)

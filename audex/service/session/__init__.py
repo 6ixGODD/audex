@@ -41,7 +41,9 @@ from audex.service.session.exceptions import SessionServiceError
 from audex.service.session.types import CreateSessionCommand
 from audex.service.session.types import Delta
 from audex.service.session.types import Done
+from audex.service.session.types import SessionStats
 from audex.service.session.types import Start
+from audex.service.session.types import UpdateSessionCommand
 from audex.types import AbstractSession
 from audex.valueobj.utterance import Speaker
 
@@ -161,6 +163,92 @@ class SessionService(BaseService):
             )
         except Exception as e:
             self.logger.error(f"Failed to list sessions for doctor {doctor_id}: {e}")
+            raise InternalSessionServiceError() from e
+
+    @require_auth
+    async def update(self, command: UpdateSessionCommand) -> Session:
+        """Update session details."""
+        try:
+            session = await self.session_repo.read(command.session_id)
+            if session is None:
+                raise SessionNotFoundError(
+                    ErrorMessages.SESSION_NOT_FOUND,
+                    session_id=command.session_id,
+                )
+
+            if command.patient_name is not None:
+                session.patient_name = command.patient_name
+            if command.clinic_number is not None:
+                session.clinic_number = command.clinic_number
+            if command.medical_record_number is not None:
+                session.medical_record_number = command.medical_record_number
+            if command.diagnosis is not None:
+                session.diagnosis = command.diagnosis
+            if command.notes is not None:
+                session.notes = command.notes
+
+            await self.session_repo.update(session)
+
+            self.logger.info(f"Updated session {command.session_id}")
+            return session
+
+        except SessionNotFoundError:
+            raise
+        except Exception as e:
+            self.logger.error(f"Failed to update session {command.session_id}: {e}")
+            raise InternalSessionServiceError(ErrorMessages.SESSION_UPDATE_FAILED) from e
+
+    @require_auth
+    async def stats(self) -> SessionStats:
+        """Get session statistics for the current doctor."""
+        try:
+            doctor_id = await self.session_manager.get_doctor_id()
+
+            # Check cache first
+            cache_key = self.cache.key_builder.build("session_stats", doctor_id)
+            if await self.cache.contains(cache_key):
+                self.logger.debug(f"Session stats for doctor {doctor_id} fetched from cache")
+                return await self.cache.get(cache_key)
+
+            # Calculate total sessions
+            f_total = session_filter().doctor_id.eq(doctor_id)
+            total_sessions = await self.session_repo.count(f_total.build())
+
+            # Fetch all session IDs in pages of 100
+            session_ids = []
+            for page in range((total_sessions + 99) // 100):
+                sessions = await self.session_repo.list(
+                    f_total.build(),
+                    page_index=page,
+                    page_size=100,
+                )
+                session_ids.extend([s.id for s in sessions])
+
+            # Calculate total duration across all sessions
+            total_duration_ms = 0
+            for sid in session_ids:
+                total_duration_ms += await self.segment_repo.sum_duration_by_session(sid)
+            total_duration_in_minutes = total_duration_ms // 60000
+
+            # Calculate sessions in the current month
+            now = utils.utcnow()
+            month_start = datetime.datetime(now.year, now.month, 1, tzinfo=datetime.UTC)
+            f_month = session_filter().doctor_id.eq(doctor_id).created_at.gte(month_start)
+            sessions_count_in_this_month = await self.session_repo.count(f_month.build())
+
+            stats = SessionStats(
+                sessions_count_in_this_month=sessions_count_in_this_month,
+                total_sessions_count=total_sessions,
+                total_duration_in_minutes=total_duration_in_minutes,
+            )
+
+            # Cache the stats
+            await self.cache.setx(cache_key, stats, ttl=60)  # Cache for 1 minutes
+            self.logger.info(f"Calculated session stats for doctor {doctor_id}")
+            return stats
+
+        except Exception as e:
+            self.logger.error(f"Failed to get session stats: {e}")
             raise InternalSessionServiceError() from e
 
     @require_auth

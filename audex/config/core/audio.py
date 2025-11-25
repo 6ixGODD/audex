@@ -6,7 +6,7 @@ from audex.helper.settings import BaseModel
 
 
 class AudioConfig(BaseModel):
-    sample_rate: str = Field(
+    sample_rate: int = Field(
         default=16000,
         description="The sample rate of the audio in Hz.",
     )
@@ -17,14 +17,14 @@ class AudioConfig(BaseModel):
     )
 
     vpr_text_content: str = Field(
-        default="请朗读: 您好，请问您今天需要什么帮助？",
+        default="您好，请问您今天需要什么帮助？",
         min_length=10,
         max_length=100,
         description="The text content used for voice print recognition.",
     )
 
     vpr_threshold: float = Field(
-        default=0.6,
+        default=0.4,
         gt=0.0,
         lt=1.0,
         description="The threshold for voice print recognition similarity.",
@@ -38,7 +38,7 @@ class AudioConfig(BaseModel):
     )
 
     segment_buffer: int = Field(
-        default=200,
+        default=2000,
         gt=0,
         lt=5000,
         description="The buffer time in milliseconds for audio segmentation.",

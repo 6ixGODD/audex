@@ -464,7 +464,7 @@ class XFYunVPR(RESTfulMixin, VPR):
 
         obj_json = json.loads(obj_str)
         obj = SearchScoreFeaResult.model_validate(obj_json)
-        self.logger.debug(
+        self.logger.bind(feature_id=uid, score=obj.score).debug(
             f"Parsed SearchScoreFeaResult: feature_id={obj.feature_id}, score={obj.score}"
         )
 
@@ -472,8 +472,10 @@ class XFYunVPR(RESTfulMixin, VPR):
             error_msg = (
                 f"Feature ID mismatch after verification: expected={uid}, got={obj.feature_id}"
             )
-            self.logger.error(error_msg)
+            self.logger.bind(expected=uid, got=obj.feature_id).error(error_msg)
             raise VPRError(error_msg)
 
-        self.logger.info(f"Feature verified successfully: feature_id={uid}, score={obj.score}")
+        self.logger.bind(feature_id=uid, score=obj.score).info(
+            f"Feature verified successfully: feature_id={uid}, score={obj.score}"
+        )
         return obj.score

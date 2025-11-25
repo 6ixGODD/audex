@@ -284,3 +284,20 @@ class SegmentRepository(SQLiteRepository[Segment]):
 
             result = await session.execute(stmt)
             return result.scalar_one()
+
+    async def sum_duration_by_session(self, session_id: str) -> int:
+        """Sum the duration of all segments in a given session.
+
+        Args:
+            session_id: The ID of the session to sum durations for.
+
+        Returns:
+            The total duration of segments in the session (in milliseconds).
+        """
+        async with self.sqlite.session() as session:
+            stmt = sqlm.select(sa.func.sum(SegmentTable.duration_ms)).where(
+                SegmentTable.session_id == session_id
+            )
+            result = await session.execute(stmt)
+            total_duration = result.scalar_one()
+            return total_duration if total_duration is not None else 0

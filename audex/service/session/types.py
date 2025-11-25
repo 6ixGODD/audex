@@ -14,6 +14,23 @@ class CreateSessionCommand(t.NamedTuple):
     notes: str | None = None
 
 
+class UpdateSessionCommand(t.NamedTuple):
+    """Command for updating an existing session."""
+
+    session_id: str
+    patient_name: str | None = None
+    clinic_number: str | None = None
+    medical_record_number: str | None = None
+    diagnosis: str | None = None
+    notes: str | None = None
+
+
+class SessionStats(t.TypedDict):
+    sessions_count_in_this_month: int
+    total_sessions_count: int
+    total_duration_in_minutes: int
+
+
 class Start:
     """Transcription started event."""
 
