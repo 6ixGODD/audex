@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>会话导出系统</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="page-header">
+            <div class="header-left">
+                <h1>会话导出系统</h1>
+            </div>
+            <div class="header-right">
+                <span class="doctor-name">{{ doctor_name }}</span>
+                <button id="logoutBtn" class="btn btn-secondary">退出</button>
+            </div>
+        </header>
+
+        <div class="actions-bar">
+            <button id="exportSelected" class="btn btn-primary" disabled>
+                导出选中 (<span id="selectedCount">0</span>)
+            </button>
+            <button id="selectAll" class="btn btn-secondary">全选</button>
+            <button id="deselectAll" class="btn btn-secondary">取消全选</button>
+        </div>
+
+        <div id="sessionsGrid" class="sessions-grid">
+            <div class="loading">加载中...</div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+    <script>
+        let sessions = [];
+        let selectedSessions = new Set();
+
+        // Load sessions on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSessions();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('exportSelected').addEventListener('click', exportMultiple);
+            document.getElementById('selectAll').addEventListener('click', selectAll);
+            document.getElementById('deselectAll').addEventListener('click', deselectAll);
+            document.getElementById('logoutBtn').addEventListener('click', logout);
+        }
+
+        async function loadSessions() {
+            try {
+                const response = await fetch('/api/sessions? page_size=100');
+
+                if (response.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                const data = await response.json();
+                sessions = data.sessions;
+                renderSessions();
+            } catch (error) {
+                console.error('Failed to load sessions:', error);
+                document.getElementById('sessionsGrid').innerHTML =
+                    '<div class="error-state">加载失败</div>';
+            }
+        }
+
+        function renderSessions() {
+            const grid = document.getElementById('sessionsGrid');
+
+            if (sessions.length === 0) {
+                grid.innerHTML = '<div class="empty-state">暂无会话记录</div>';
+                return;
+            }
+
+            grid.innerHTML = sessions.map(session => `
+                <div class="session-card">
+                    <div class="session-header">
+                        <input type="checkbox"
+                               class="checkbox session-checkbox"
+                               data-session-id="${session.id}"
+                               onchange="toggleSession('${session.id}')">
+                        <div class="session-info">
+                            <h3>${escapeHtml(session.patient_name || '未知患者')}</h3>
+                            ${session.clinic_number ?  `<div class="session-meta">门诊号: ${escapeHtml(session.clinic_number)}</div>` : ''}
+                            ${session.medical_record_number ? `<div class="session-meta">病历号: ${escapeHtml(session.medical_record_number)}</div>` : ''}
+                            ${session.diagnosis ? `<div class="session-meta">诊断: ${escapeHtml(session.diagnosis)}</div>` : ''}
+                            <div class="session-meta">创建时间: ${formatDate(session.created_at)}</div>
+                            <span class="status-badge status-${session.status.toLowerCase().replace('_', '-')}">
+                                ${getStatusText(session.status)}
+                            </span>
+                        </div>
+                    </div>
+                    <button class="export-btn" onclick="exportSingle('${session.id}')">
+                        导出此会话
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function toggleSession(sessionId) {
+            if (selectedSessions.has(sessionId)) {
+                selectedSessions.delete(sessionId);
+            } else {
+                selectedSessions.add(sessionId);
+            }
+            updateSelectedCount();
+        }
+
+        function selectAll() {
+            sessions.forEach(session => selectedSessions.add(session.id));
+            document.querySelectorAll('.session-checkbox').forEach(cb => cb.checked = true);
+            updateSelectedCount();
+        }
+
+        function deselectAll() {
+            selectedSessions.clear();
+            document.querySelectorAll('.session-checkbox').forEach(cb => cb.checked = false);
+            updateSelectedCount();
+        }
+
+        function updateSelectedCount() {
+            const count = selectedSessions.size;
+            document.getElementById('selectedCount').textContent = count;
+            document.getElementById('exportSelected').disabled = count === 0;
+        }
+
+        async function exportSingle(sessionId) {
+            window.location.href = `/api/sessions/${sessionId}/export`;
+        }
+
+        async function exportMultiple() {
+            if (selectedSessions.size === 0) return;
+
+            try {
+                const response = await fetch('/api/sessions/export-multiple', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        session_ids: Array.from(selectedSessions)
+                    })
+                });
+
+                if (! response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Export failed');
+                }
+
+                // Download file
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `sessions_export_${selectedSessions.size}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                // Clear selection
+                deselectAll();
+            } catch (error) {
+                console.error('Export failed:', error);
+                alert('导出失败: ' + error.message);
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                window.location.href = '/login';
+            } catch (error) {
+                console.error('Logout failed:', error);
+                window.location.href = '/login';
+            }
+        }
+
+        function getStatusText(status) {
+            const map = {
+                'COMPLETED': '已完成',
+                'IN_PROGRESS': '进行中',
+                'DRAFT': '草稿',
+                'CANCELLED': '已取消'
+            };
+            return map[status] || status;
+        }
+
+        function formatDate(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
