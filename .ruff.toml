@@ -70,6 +70,7 @@ ignore = [
     "PLR2004", # Magic value used in comparison
     "RUF001",
     "RUF002",
+    "B008",
 ]
 
 [lint.isort]
