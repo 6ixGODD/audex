@@ -34,6 +34,7 @@ def make_session_service(
         config=SessionServiceConfig(
             audio_key_prefix=config.core.audio.key_prefix,
             segment_buffer_ms=config.core.audio.segment_buffer,
+            sr=config.core.audio.sample_rate,
             vpr_sr=config.core.audio.vpr_sample_rate,
             vpr_threshold=config.core.audio.vpr_threshold,
         ),

@@ -33,6 +33,7 @@ def require_auth(func: ServiceMethodT) -> ServiceMethodT:
             if (await self.doctor_repo.read(doctor_id)) is not None:
                 await self.cache.setx(self.cache.key_builder.build("doctor", doctor_id), True)
                 return await func(self, *args, **kwargs)
+            await self.session_manager.logout()
             await self.cache.set_negative(self.cache.key_builder.build("doctor", doctor_id))
             raise PermissionDeniedError("Authentication required to access this method.")
         raise PermissionDeniedError("Authentication required to access this method.")
