@@ -33,6 +33,7 @@ dependencies = [
   "pyaudio>=0.2.14,<0.3",
   "pydantic>=2.12.4,<3",
   "pydantic-settings>=2.12,<3",
+  "pydub>=0.25.1,<0.26",
   "pywebview>=6.1,<7",
   "sqlalchemy>=2.0.44,<3",
   "sqlmodel>=0.0.27,<0.0.28",
@@ -50,4 +51,10 @@ optional-dependencies.docs = [
   "mkdocstrings[python]>=0.30.1,<0.31",
   "pymdown-extensions>=10.17.1,<11",
 ]
-optional-dependencies.test = [ "mypy>=1.18.2,<2", "pylint>=4.0.3,<5", "pytest>=9.0.1,<10", "pytest-cov>=7,<8" ]
+optional-dependencies.test = [
+  "mypy>=1.18.2,<2",
+  "pylint>=4.0.3,<5",
+  "pytest>=9.0.1,<10",
+  "pytest-asyncio>=1.3,<2",
+  "pytest-cov>=7,<8",
+]
