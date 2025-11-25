@@ -15,6 +15,7 @@ from httpx import Auth
 from httpx import HTTPStatusError
 from httpx import Request
 from httpx import Response
+from tenacity import RetryError
 
 from audex import utils
 from audex.helper.mixin import LoggingMixin
@@ -226,6 +227,10 @@ class XFYunVPR(RESTfulMixin, VPR):
             error_msg = f"HTTP error during create_group request: {e}"
             self.logger.bind(request=e.request.content, response=e.response.text).error(error_msg)
             raise VPRError(error_msg) from e
+        except RetryError as e:
+            error_msg = f"Retry error during verify request: {e}"
+            self.logger.error(error_msg)
+            raise VPRError(error_msg) from e
 
         self.logger.debug(
             f"Received response with code={response.header.code}, message='{response.header.message}'"
@@ -296,6 +301,10 @@ class XFYunVPR(RESTfulMixin, VPR):
             error_msg = f"HTTP error during enroll request: {e}"
             self.logger.bind(request=e.request.content, response=e.response.text).error(error_msg)
             raise VPRError(error_msg) from e
+        except RetryError as e:
+            error_msg = f"Retry error during verify request: {e}"
+            self.logger.error(error_msg)
+            raise VPRError(error_msg) from e
 
         self.logger.debug(
             f"Received response with code={response.header.code}, message='{response.header.message}'"
@@ -349,12 +358,7 @@ class XFYunVPR(RESTfulMixin, VPR):
             parameter=UpdateFeatureParams(
                 s782b4996=S782b4996UpdateFeatureParams(groupId=self.group_id, featureId=uid)
             ),
-            payload=AudioPayload(
-                resource=AudioResource(
-                    audio=audio_b64,
-                    sample_rate=sr,
-                )
-            ),
+            payload=AudioPayload(resource=AudioResource(audio=audio_b64, sample_rate=sr)),
         ).model_dump(exclude_none=True)
 
         self.logger.debug(f"Sending update request to {self.endpoint}")
@@ -369,6 +373,10 @@ class XFYunVPR(RESTfulMixin, VPR):
         except HTTPStatusError as e:
             error_msg = f"HTTP error during update request: {e}"
             self.logger.bind(request=e.request.content, response=e.response.text).error(error_msg)
+            raise VPRError(error_msg) from e
+        except RetryError as e:
+            error_msg = f"Retry error during verify request: {e}"
+            self.logger.error(error_msg)
             raise VPRError(error_msg) from e
 
         self.logger.debug(
@@ -391,13 +399,7 @@ class XFYunVPR(RESTfulMixin, VPR):
 
         obj_json = json.loads(obj_str)
         obj = UpdateFeatureResult.model_validate(obj_json)
-        self.logger.debug(f"Parsed UpdateFeatureResult: feature_id={obj.feature_id}")
-
-        if uid != obj.feature_id:
-            error_msg = f"Feature ID mismatch after update: expected={uid}, got={obj.feature_id}"
-            self.logger.error(error_msg)
-            raise VPRError(error_msg)
-
+        self.logger.debug(f"Parsed UpdateFeatureResult: msg={obj.msg}")
         self.logger.info(
             f"Feature updated successfully: feature_id={uid}, group_id={self.group_id}"
         )
@@ -421,12 +423,7 @@ class XFYunVPR(RESTfulMixin, VPR):
             parameter=SearchScoreFeaParams(
                 s782b4996=S782b4996SearchScoreFeaParams(groupId=self.group_id, dstFeatureId=uid)
             ),
-            payload=AudioPayload(
-                resource=AudioResource(
-                    audio=audio_b64,
-                    sample_rate=sr,
-                )
-            ),
+            payload=AudioPayload(resource=AudioResource(audio=audio_b64, sample_rate=sr)),
         ).model_dump(exclude_none=True)
 
         self.logger.debug(f"Sending verify request to {self.endpoint}")
@@ -441,6 +438,10 @@ class XFYunVPR(RESTfulMixin, VPR):
         except HTTPStatusError as e:
             error_msg = f"HTTP error during verify request: {e}"
             self.logger.bind(request=e.request.content, response=e.response.text).error(error_msg)
+            raise VPRError(error_msg) from e
+        except RetryError as e:
+            error_msg = f"Retry error during verify request: {e}"
+            self.logger.error(error_msg)
             raise VPRError(error_msg) from e
 
         self.logger.debug(

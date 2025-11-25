@@ -181,7 +181,6 @@ class DashscopeParaformer(LoggingMixin, Transcription):
         max_connections: int = 1000,
         idle_timeout: int = 60,
         drain_timeout: float = 5.0,
-        # Runtime parameters
         fmt: t.Literal["pcm", "wav", "mp3", "opus", "speex", "aac", "amr"] = "pcm",
         sample_rate: int = 8000,
         silence_duration_ms: int | None = None,
@@ -348,6 +347,9 @@ class DashscopeParaformerSession(LoggingMixin, TranscriptSession):
         self.connection: WebsocketConnection | None = None
         self.lock = asyncio.Lock()
 
+        # Track utterances to prevent memory leaks
+        self._utterance_start_times: dict[str, float] = {}
+
     async def start(self) -> None:
         async with self.lock:
             self.logger.debug("Starting DashscopeParaformerSession")
@@ -414,6 +416,7 @@ class DashscopeParaformerSession(LoggingMixin, TranscriptSession):
                 await self.pool.release(self.connection)
                 self.connection = None
             self.task_id = None
+            self._utterance_start_times.clear()
 
     async def send(self, message: bytes) -> None:
         if not self.connection or not self.task_id:
@@ -431,8 +434,7 @@ class DashscopeParaformerSession(LoggingMixin, TranscriptSession):
         if not self.connection or not self.task_id:
             raise TranscriptionError("Session not started")
 
-        started = False
-        total_duration = 0.0
+        current_utterance_id: str | None = None
 
         while True:
             self.logger.debug("Waiting for server message")
@@ -446,32 +448,57 @@ class DashscopeParaformerSession(LoggingMixin, TranscriptSession):
                 )
 
             if isinstance(msg, ResultGenerated):
-                if not started:
-                    self.logger.debug("Transcription started")
-                    started = True
-                    yield Start(at=utils.utcnow().timestamp())
-
                 sentence = msg.payload.output.sentence
                 interim = sentence.end_time is None
 
+                # New utterance started
+                if current_utterance_id is None:
+                    current_utterance_id = utils.gen_id(prefix="utt")
+                    started_at = utils.utcnow().timestamp()
+                    self._utterance_start_times[current_utterance_id] = started_at
+
+                    self.logger.debug(
+                        f"New utterance started: id={current_utterance_id}, started_at={started_at}"
+                    )
+                    yield Start(utterance_id=current_utterance_id, started_at=started_at)
+
+                # Convert relative offsets (ms) to seconds
+                offset_begin = sentence.begin_time / 1000.0
+                offset_end = (sentence.end_time / 1000.0) if sentence.end_time else None
+
                 self.logger.debug(
-                    f"Transcription result received: "
+                    f"Transcription delta: "
+                    f"utterance_id={current_utterance_id}, "
                     f"text='{sentence.text}', "
-                    f"begin_time={sentence.begin_time}, "
-                    f"end_time={sentence.end_time}, "
+                    f"offset_begin={offset_begin}s, "
+                    f"offset_end={offset_end if offset_end else 'None'}s, "
                     f"interim={interim}",
                 )
+
                 yield Delta(
-                    from_at=sentence.begin_time / 1000.0,
-                    to_at=(sentence.end_time / 1000.0) if sentence.end_time else None,
+                    utterance_id=current_utterance_id,
+                    offset_begin=offset_begin,
+                    offset_end=offset_end,
                     text=sentence.text,
                     interim=interim,
                 )
 
+                # Final result for this utterance
                 if not interim:
-                    self.logger.debug("Final transcription received, continuing to listen")
-                    total_duration += (sentence.end_time - sentence.begin_time) / 1000.0
-                    yield Done()
+                    ended_at = utils.utcnow().timestamp()
+
+                    self.logger.debug(
+                        f"Utterance completed: id={current_utterance_id}, ended_at={ended_at}"
+                    )
+
+                    yield Done(utterance_id=current_utterance_id, ended_at=ended_at)
+
+                    # Clean up to prevent memory leak
+                    if current_utterance_id in self._utterance_start_times:
+                        del self._utterance_start_times[current_utterance_id]
+
+                    # Reset for next utterance
+                    current_utterance_id = None
 
             elif isinstance(msg, TaskFinished):
                 if msg.header.task_id != self.task_id:

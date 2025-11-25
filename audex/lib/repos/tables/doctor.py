@@ -128,8 +128,8 @@ class DoctorTable(BaseTable[Doctor], table=True):
         self.department = entity.department
         self.title = entity.title
         self.hospital = entity.hospital
-        self.phone = entity.phone.value
-        self.email = entity.email.value
+        self.phone = entity.phone.value if entity.phone else None
+        self.email = entity.email.value if entity.email else None
         self.is_active = entity.is_active
 
 

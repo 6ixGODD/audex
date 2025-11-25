@@ -137,11 +137,7 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
         pyaudio.paFloat32: (np.float32, 4),
     }
 
-    def __init__(
-        self,
-        store: Store,
-        config: AudioConfig | None = None,
-    ) -> None:
+    def __init__(self, store: Store, config: AudioConfig | None = None):
         super().__init__()
         self.store = store
         self.config = config or AudioConfig()

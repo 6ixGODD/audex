@@ -20,7 +20,6 @@ class VPTable(BaseTable[VP], table=True):
     doctor_id: str = sqlm.Field(
         ...,
         index=True,
-        foreign_key="doctors.id",
         max_length=50,
         description="The ID of the doctor associated with this voiceprint.",
     )

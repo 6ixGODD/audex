@@ -21,29 +21,33 @@ class SegmentTable(BaseTable[Segment], table=True):
     __tablename__ = "segments"
 
     session_id: str = sqlm.Field(
-        foreign_key="sessions.id",
         index=True,
         max_length=50,
         description="Foreign key to session this segment belongs to",
     )
+
     sequence: int = sqlm.Field(
         nullable=False,
         description="Sequence number within session",
     )
+
     audio_key: str = sqlm.Field(
         max_length=500,
         nullable=False,
         description="Audio file key/path in storage",
     )
+
     started_at: datetime.datetime = sqlm.Field(
         nullable=False,
         description="Timestamp when segment started recording",
     )
+
     ended_at: datetime.datetime | None = sqlm.Field(
         default=None,
         nullable=True,
         description="Timestamp when segment stopped recording",
     )
+
     duration_ms: int | None = sqlm.Field(
         default=None,
         nullable=True,

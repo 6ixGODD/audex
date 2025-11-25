@@ -22,13 +22,11 @@ class UtteranceTable(BaseTable[Utterance], table=True):
     __tablename__ = "utterances"
 
     session_id: str = sqlm.Field(
-        foreign_key="sessions.id",
         index=True,
         max_length=50,
         description="Foreign key to session this utterance belongs to",
     )
     segment_id: str = sqlm.Field(
-        foreign_key="segments.id",
         index=True,
         max_length=50,
         description="Foreign key to segment containing this utterance",
