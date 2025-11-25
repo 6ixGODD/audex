@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-import pathlib as pl
+import pathlib
 import typing as t
 
 import pydantic as pyd
@@ -14,11 +14,11 @@ from audex.exceptions import RequiredModuleNotFoundError
 
 class Settings(ps.BaseSettings):
     @classmethod
-    def from_yaml(cls, fpath: t.AnyStr | os.PathLike[t.AnyStr]) -> t.Self:
+    def from_yaml(cls, path: str | pathlib.Path | os.PathLike[str]) -> t.Self:
         try:
             import yaml
 
-            data = yaml.safe_load(pl.Path(fpath).read_text(encoding="utf-8"))
+            data = yaml.safe_load(pathlib.Path(path).read_text(encoding="utf-8"))
             return cls.model_validate(data, strict=True)
         except ImportError as e:
             raise RequiredModuleNotFoundError(
@@ -27,17 +27,17 @@ class Settings(ps.BaseSettings):
             ) from e
 
     @classmethod
-    def from_json(cls, fpath: t.AnyStr | os.PathLike[t.AnyStr]) -> t.Self:
+    def from_json(cls, fpath: str | pathlib.Path | os.PathLike[str]) -> t.Self:
         try:
             import json5
 
-            data = json5.loads(pl.Path(fpath).read_text(encoding="utf-8"))
+            data = json5.loads(pathlib.Path(fpath).read_text(encoding="utf-8"))
             return cls.model_validate(data, strict=True)
         except ImportError:
             import json
 
             try:
-                data = json.loads(pl.Path(fpath).read_text(encoding="utf-8"))
+                data = json.loads(pathlib.Path(fpath).read_text(encoding="utf-8"))
             except json.JSONDecodeError as e:
                 raise RequiredModuleNotFoundError(
                     "If you need to load configuration from JSON5 files, please install the "
@@ -201,7 +201,7 @@ class Settings(ps.BaseSettings):
             return value
         return str(value)
 
-    def to_yaml(self, fpath: t.AnyStr | os.PathLike[t.AnyStr]) -> None:
+    def to_yaml(self, fpath: str | pathlib.Path | os.PathLike[str]) -> None:
         """Export configuration to YAML file with field descriptions as
         comments.
 
@@ -211,86 +211,99 @@ class Settings(ps.BaseSettings):
         descriptions = self._collect_field_desc()
         data = self.serl(include_none=True)
 
-        def add_comments(
-            obj: t.Any, prefix: str = "", indent: int = 0, is_top_level: bool = False
-        ) -> list[str]:
+        def add_comments(obj: t.Any, prefix: str = "", indent: int = 0) -> list[str]:
             """Recursively add comments to YAML structure."""
             lines = []
             indent_str = "  " * indent
 
             if isinstance(obj, dict):
-                for idx, (key, value) in enumerate(obj.items()):
+                for key, value in obj.items():
                     field_path = f"{prefix}.{key}" if prefix else key
 
-                    # Add separator between top-level keys
-                    if idx > 0 and is_top_level:
-                        lines.append("\n")
+                    # Get description if available
+                    desc = descriptions.get(field_path, "")
+                    comment = f"  # {desc}" if desc else ""
 
-                    if is_top_level:
-                        lines.append(f"# {'=' * 70}")
-
-                    # Add description comment if available
-                    if field_path in descriptions:
-                        desc = descriptions[field_path]
-                        lines.append(f"{indent_str}# {desc}")
-
-                    if is_top_level:
-                        lines.append(f"# {'=' * 70}")
-
-                    # Handle None values - comment out the line
+                    # Handle None values - use ~ to represent None
                     if value is None:
-                        lines.append(f"{indent_str}# {key}:")
+                        lines.append(f"{indent_str}{key}: ~{comment}")
                     elif isinstance(value, dict):
-                        lines.append(f"{indent_str}{key}:")
-                        nested = add_comments(
-                            value, prefix=field_path, indent=indent + 1, is_top_level=False
-                        )
+                        lines.append(f"{indent_str}{key}:{comment}")
+                        nested = add_comments(value, prefix=field_path, indent=indent + 1)
                         lines.extend(nested)
                     elif isinstance(value, list):
-                        lines.append(f"{indent_str}{key}:")
+                        lines.append(f"{indent_str}{key}:{comment}")
                         for item in value:
                             if isinstance(item, dict):
-                                lines.append(f"{indent_str}  -")
-                                for sub_key, sub_value in item.items():
-                                    sub_field_path = f"{field_path}.{sub_key}"
+                                # Get first key-value pair for inline format
+                                items_list = list(item.items())
+                                if items_list:
+                                    first_key, first_value = items_list[0]
+                                    first_field_path = f"{field_path}.{first_key}"
+                                    first_desc = descriptions.get(first_field_path, "")
+                                    first_comment = f"  # {first_desc}" if first_desc else ""
 
-                                    # Add description for nested list items
-                                    if sub_field_path in descriptions:
+                                    if first_value is None:
                                         lines.append(
-                                            f"{indent_str}    # {descriptions[sub_field_path]}"
+                                            f"{indent_str}  - {first_key}: ~{first_comment}"
                                         )
-
-                                    if sub_value is None:
-                                        lines.append(f"{indent_str}    # {sub_key}:")
-                                    elif isinstance(sub_value, str) and (
-                                        "\n" in sub_value or len(sub_value) > 80
+                                    elif isinstance(first_value, str) and (
+                                        "\n" in first_value or len(first_value) > 80
                                     ):
-                                        lines.append(f"{indent_str}    {sub_key}: |-")
-                                        for line in sub_value.split("\n"):
+                                        lines.append(
+                                            f"{indent_str}  - {first_key}: |-{first_comment}"
+                                        )
+                                        for line in first_value.split("\n"):
                                             lines.append(f"{indent_str}      {line}")
                                     else:
-                                        yaml_val = self._yaml_repr(sub_value)
-                                        lines.append(f"{indent_str}    {sub_key}: {yaml_val}")
+                                        yaml_val = self._yaml_repr(first_value)
+                                        lines.append(
+                                            f"{indent_str}  - {first_key}: {yaml_val}{first_comment}"
+                                        )
+
+                                    # Add remaining key-value pairs
+                                    for sub_key, sub_value in items_list[1:]:
+                                        sub_field_path = f"{field_path}.{sub_key}"
+                                        sub_desc = descriptions.get(sub_field_path, "")
+                                        sub_comment = f"  # {sub_desc}" if sub_desc else ""
+
+                                        if sub_value is None:
+                                            lines.append(
+                                                f"{indent_str}    {sub_key}: ~{sub_comment}"
+                                            )
+                                        elif isinstance(sub_value, str) and (
+                                            "\n" in sub_value or len(sub_value) > 80
+                                        ):
+                                            lines.append(
+                                                f"{indent_str}    {sub_key}: |-{sub_comment}"
+                                            )
+                                            for line in sub_value.split("\n"):
+                                                lines.append(f"{indent_str}      {line}")
+                                        else:
+                                            yaml_val = self._yaml_repr(sub_value)
+                                            lines.append(
+                                                f"{indent_str}    {sub_key}: {yaml_val}{sub_comment}"
+                                            )
                             else:
                                 yaml_item = self._yaml_repr(item)
                                 lines.append(f"{indent_str}  - {yaml_item}")
                     # Handle multiline strings
                     elif isinstance(value, str) and ("\n" in value or len(value) > 80):
-                        lines.append(f"{indent_str}{key}: |-")
+                        lines.append(f"{indent_str}{key}: |-{comment}")
                         for line in value.split("\n"):
                             lines.append(f"{indent_str}  {line}")
                     else:
                         yaml_value = self._yaml_repr(value)
-                        lines.append(f"{indent_str}{key}: {yaml_value}")
+                        lines.append(f"{indent_str}{key}: {yaml_value}{comment}")
 
             return lines
 
-        with pl.Path(fpath).open("w", encoding="utf-8") as f:
-            lines = add_comments(data, is_top_level=True)
+        with pathlib.Path(fpath).open("w", encoding="utf-8") as f:
+            lines = add_comments(data)
             f.write("\n".join(lines))
             f.write("\n")
 
-    def to_json(self, fpath: t.AnyStr | os.PathLike[t.AnyStr], jsonc: bool = True) -> None:
+    def to_json(self, fpath: str | pathlib.Path | os.PathLike[str], jsonc: bool = True) -> None:
         """Export configuration to JSON or JSONC file.
 
         Args:
@@ -307,11 +320,11 @@ class Settings(ps.BaseSettings):
         fpath_str = str(fpath)
         if jsonc and not fpath_str.endswith(".jsonc"):
             # Change extension to .jsonc if comments are enabled
-            base = pl.Path(fpath_str).stem
+            base = pathlib.Path(fpath_str).stem
             path = f"{base}.jsonc"
         elif not jsonc and fpath_str.endswith(".jsonc"):
             # Change extension to .json if comments are disabled
-            base = pl.Path(fpath_str).stem
+            base = pathlib.Path(fpath_str).stem
             path = f"{base}.json"
         else:
             path = fpath_str
@@ -357,13 +370,13 @@ class Settings(ps.BaseSettings):
                     return "\n".join(lines)
                 return json.dumps(obj, indent=2, ensure_ascii=False)
 
-            with pl.Path(path).open("w", encoding="utf-8") as f:
+            with pathlib.Path(path).open("w", encoding="utf-8") as f:
                 f.write(add_json_comments(data))
                 f.write("\n")
         else:
             # Plain JSON without comments - remove None values for valid JSON
             data_without_none = self.serl(include_none=False)
-            with pl.Path(path).open("w", encoding="utf-8") as f:
+            with pathlib.Path(path).open("w", encoding="utf-8") as f:
                 json.dump(data_without_none, f, indent=2, ensure_ascii=False)
                 f.write("\n")
 
@@ -425,7 +438,7 @@ class Settings(ps.BaseSettings):
             return f'"{escaped}"'
         return str_value
 
-    def to_dotenv(self, fpath: t.AnyStr | os.PathLike[t.AnyStr]) -> None:
+    def to_dotenv(self, fpath: str | pathlib.Path | os.PathLike[str]) -> None:
         """Export configuration to .env file with field descriptions as
         comments.
 
@@ -453,7 +466,7 @@ class Settings(ps.BaseSettings):
             flattened = utils.flatten_dict(section_data, sep=sep)
             grouped_keys[top_level_key] = flattened
 
-        with pl.Path(fpath).open("w", encoding="utf-8") as f:
+        with pathlib.Path(fpath).open("w", encoding="utf-8") as f:
             for top_key, flattened in grouped_keys.items():
                 # Add separator between top-level sections
                 f.write(f"# {'=' * 70}\n")
