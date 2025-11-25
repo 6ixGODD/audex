@@ -7,25 +7,22 @@ from nicegui import ui
 
 from audex.container import Container
 from audex.service.doctor import DoctorService
+from audex.view.decorators import handle_errors
 
 
 @ui.page("/settings")
+@handle_errors
 @inject
 async def render(
     doctor_service: DoctorService = Depends(Provide[Container.service.doctor]),
 ) -> None:
     # Check authentication
-    try:
-        await doctor_service.current_doctor()
-    except PermissionError:
-        ui.notify("请先登录", type="warning")
-        ui.navigate.to("/login")
-        return
+    await doctor_service.current_doctor()
 
     # Header navigation
     with ui.header().classes("items-center justify-between px-4"):
         ui.label("个人设置").classes("text-h6")
-        ui.button(icon="arrow_back", on_click=lambda: ui.navigate.to("/dashboard")).props(
+        ui.button(icon="arrow_back", on_click=lambda: ui.navigate.to("/")).props(
             "flat round"
         ).tooltip("返回主面板")
 

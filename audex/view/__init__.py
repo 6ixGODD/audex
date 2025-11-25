@@ -31,4 +31,9 @@ class View(LoggingMixin):
         from audex.view.pages import settings  # noqa: F401
         from audex.view.pages import voiceprint  # noqa: F401
 
-        ui.run(title=self.config.core.app_name, native=True)
+        ui.run(
+            title=self.config.core.app.app_name,
+            native=self.config.core.app.native,
+            language="zh-CN",
+            reload=self.config.core.app.debug,
+        )

@@ -8,37 +8,32 @@ from nicegui import ui
 from audex.config import Config
 from audex.container import Container
 from audex.service.doctor import DoctorService
+from audex.view.decorators import handle_errors
 
 
 @ui.page("/")
+@handle_errors
 @inject
 async def render(
     doctor_service: DoctorService = Depends(Provide[Container.service.doctor]),
     config: Config = Depends(Provide[Container.config]),
 ) -> None:
     # Get current doctor (service will check auth)
-    try:
-        doctor = await doctor_service.current_doctor()
-        has_vp = await doctor_service.has_voiceprint()
-    except PermissionError:
-        ui.notify("请先登录", type="warning")
-        ui.navigate.to("/login")
-        return
+    doctor = await doctor_service.current_doctor()
+    has_vp = await doctor_service.has_voiceprint()
 
     # Header navigation
     with ui.header().classes("items-center justify-between px-4"):
-        ui.label(config.core.app_name).classes("text-h6")
+        ui.label(config.core.app.app_name).classes("text-h6")
         with ui.row().classes("items-center gap-4"):
             ui.label(f"{doctor.name} 医生").classes("text-subtitle1")
 
+            @handle_errors
             async def do_logout() -> None:
                 """Handle logout action."""
-                try:
-                    await doctor_service.logout()
-                    ui.notify("已退出登录", type="info")
-                    ui.navigate.to("/login")
-                except Exception as e:
-                    ui.notify(f"退出失败: {e}", type="negative")
+                await doctor_service.logout()
+                ui.notify("已退出登录", type="info")
+                ui.navigate.to("/login")
 
             ui.button(icon="logout", on_click=do_logout).props("flat round").tooltip("退出登录")
 

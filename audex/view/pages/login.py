@@ -7,13 +7,16 @@ from nicegui import ui
 
 from audex.config import Config
 from audex.container import Container
+from audex.exceptions import PermissionDeniedError
 from audex.service.doctor import DoctorService
 from audex.service.doctor.exceptions import InvalidCredentialsError
 from audex.service.doctor.types import LoginCommand
 from audex.valueobj.common.auth import Password
+from audex.view.decorators import handle_errors
 
 
 @ui.page("/login")
+@handle_errors
 @inject
 async def render(
     doctor_service: DoctorService = Depends(Provide[Container.service.doctor]),
@@ -22,17 +25,17 @@ async def render(
     # Check if already logged in
     try:
         await doctor_service.current_doctor()
-        ui.navigate.to("/dashboard")
+        ui.navigate.to("/")
         return
-    except PermissionError:
+    except PermissionDeniedError:
         pass  # Not logged in, continue to render login page
 
     with ui.card().classes("absolute-center w-96"):
         # Logo
-        ui.image("assets/logo.png").classes("w-32 h-32 mx-auto mb-4")
+        ui.image("../../../assets/assets/logo.png").classes("w-32 h-32 mx-auto mb-4")
 
         # Title
-        ui.label(f"{config.core.app_name} 登录").classes("text-h4 text-center w-full mb-4")
+        ui.label(f"{config.core.app.app_name} 登录").classes("text-h4 text-center w-full mb-4")
 
         # Input fields
         eid_input = ui.input("工号", placeholder="请输入工号").classes("w-full")
@@ -47,6 +50,7 @@ async def render(
         error_label = ui.label("").classes("text-negative text-sm")
         error_label.visible = False
 
+        @handle_errors
         async def do_login() -> None:
             """Handle login action."""
             error_label.visible = False
@@ -63,13 +67,10 @@ async def render(
                 await doctor_service.login(LoginCommand(eid=eid, password=Password.parse(pwd)))
 
                 ui.notify("登录成功", type="positive")
-                ui.navigate.to("/dashboard")
+                ui.navigate.to("/")
 
             except InvalidCredentialsError as e:
-                error_label.text = e.reason or "工号或密码错误"
-                error_label.visible = True
-            except Exception as e:
-                error_label.text = f"登录失败: {e}"
+                error_label.text = e.message
                 error_label.visible = True
 
         # Enter key to login

@@ -11,26 +11,23 @@ from audex.container import Container
 from audex.service.doctor import DoctorService
 from audex.service.session import SessionService
 from audex.service.session.types import CreateSessionCommand
+from audex.view.decorators import handle_errors
 
 
 @ui.page("/recording")
+@handle_errors
 @inject
 async def render(
     doctor_service: DoctorService = Depends(Provide[Container.service.doctor]),
     session_service: SessionService = Depends(Provide[Container.service.session]),
 ) -> None:
     # Get current doctor (service will check auth)
-    try:
-        doctor = await doctor_service.current_doctor()
-    except PermissionError:
-        ui.notify("请先登录", type="warning")
-        ui.navigate.to("/login")
-        return
+    doctor = await doctor_service.current_doctor()
 
     # Header navigation
     with ui.header().classes("items-center justify-between px-4"):
         ui.label("录音会话").classes("text-h6")
-        ui.button(icon="arrow_back", on_click=lambda: ui.navigate.to("/dashboard")).props(
+        ui.button(icon="arrow_back", on_click=lambda: ui.navigate.to("/")).props(
             "flat round"
         ).tooltip("返回主面板")
 
@@ -58,73 +55,61 @@ async def render(
             is_recording = {"value": False}
             session_id: dict[str, str | None] = {"value": None}
 
+            @handle_errors
             async def start_recording() -> None:
                 """Handle start recording action."""
                 if is_recording["value"]:
                     return
 
-                try:
-                    # Create session
-                    session = await session_service.create(
-                        CreateSessionCommand(
-                            doctor_id=doctor.id,
-                            patient_name=patient_name.value.strip() or None,
-                            clinic_number=clinic_number.value.strip() or None,
-                            medical_record_number=medical_record.value.strip() or None,
-                            diagnosis=diagnosis.value.strip() or None,
-                            notes=notes.value.strip() or None,
-                        )
+                # Create session
+                session = await session_service.create(
+                    CreateSessionCommand(
+                        doctor_id=doctor.id,
+                        patient_name=patient_name.value.strip() or None,
+                        clinic_number=clinic_number.value.strip() or None,
+                        medical_record_number=medical_record.value.strip() or None,
+                        diagnosis=diagnosis.value.strip() or None,
+                        notes=notes.value.strip() or None,
                     )
+                )
 
-                    session_id["value"] = session.id
-                    is_recording["value"] = True
+                session_id["value"] = session.id
+                is_recording["value"] = True
 
-                    status_label.text = "状态：录音中..."
-                    status_label.classes("text-positive", remove="text-negative")
-                    start_btn.disable()
-                    stop_btn.enable()
+                status_label.text = "状态：录音中..."
+                status_label.classes("text-positive", remove="text-negative")
+                start_btn.disable()
+                stop_btn.enable()
 
-                    # Disable form inputs
-                    patient_name.disable()
-                    clinic_number.disable()
-                    medical_record.disable()
-                    diagnosis.disable()
-                    notes.disable()
+                # Disable form inputs
+                patient_name.disable()
+                clinic_number.disable()
+                medical_record.disable()
+                diagnosis.disable()
+                notes.disable()
 
-                    ui.notify("开始录音", type="positive")
+                ui.notify("开始录音", type="positive")
 
-                except PermissionError:
-                    ui.notify("请先登录", type="warning")
-                    ui.navigate.to("/login")
-                except Exception as e:
-                    ui.notify(f"启动录音失败: {e}", type="negative")
-
+            @handle_errors
             async def stop_recording() -> None:
                 """Handle stop recording action."""
                 if not is_recording["value"]:
                     return
 
-                try:
-                    # Complete session
-                    await session_service.complete(session_id["value"])
+                # Complete session
+                await session_service.complete(session_id["value"])
 
-                    is_recording["value"] = False
-                    status_label.text = "状态：已完成"
-                    status_label.classes("text-info", remove="text-positive")
-                    start_btn.enable()
-                    stop_btn.disable()
+                is_recording["value"] = False
+                status_label.text = "状态：已完成"
+                status_label.classes("text-info", remove="text-positive")
+                start_btn.enable()
+                stop_btn.disable()
 
-                    ui.notify("录音已保存", type="positive")
+                ui.notify("录音已保存", type="positive")
 
-                    # Navigate back after 3 seconds
-                    await asyncio.sleep(3)
-                    ui.navigate.to("/dashboard")
-
-                except PermissionError:
-                    ui.notify("请先登录", type="warning")
-                    ui.navigate.to("/login")
-                except Exception as e:
-                    ui.notify(f"停止录音失败: {e}", type="negative")
+                # Navigate back after 3 seconds
+                await asyncio.sleep(3)
+                ui.navigate.to("/")
 
             # Control buttons
             with ui.row().classes("gap-4 mb-4"):

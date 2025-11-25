@@ -6,14 +6,18 @@ from fastapi import Depends
 from nicegui import ui
 
 from audex.container import Container
+from audex.exceptions import PermissionDeniedError
+from audex.exceptions import ValidationError
 from audex.service.doctor import DoctorService
 from audex.service.doctor.types import RegisterCommand
 from audex.valueobj.common.auth import Password
 from audex.valueobj.common.email import Email
 from audex.valueobj.common.phone import CNPhone
+from audex.view.decorators import handle_errors
 
 
 @ui.page("/register")
+@handle_errors
 @inject
 async def render(
     doctor_service: DoctorService = Depends(Provide[Container.service.doctor]),
@@ -21,14 +25,14 @@ async def render(
     # Check if already logged in
     try:
         await doctor_service.current_doctor()
-        ui.navigate.to("/dashboard")
+        ui.navigate.to("/")
         return
-    except PermissionError:
+    except PermissionDeniedError:
         pass  # Not logged in, continue to render registration page
 
     with ui.card().classes("absolute-center w-96 max-h-screen overflow-auto"):
         # Logo
-        ui.image("assets/logo.png").classes("w-32 h-32 mx-auto mb-4")
+        ui.image("../../../assets/assets/logo.png").classes("w-32 h-32 mx-auto mb-4")
 
         # Title
         ui.label("医生注册").classes("text-h4 text-center w-full mb-4")
@@ -62,6 +66,7 @@ async def render(
         error_label = ui.label("").classes("text-negative text-sm")
         error_label.visible = False
 
+        @handle_errors
         async def do_register() -> None:
             """Handle registration action."""
             error_label.visible = False
@@ -87,46 +92,41 @@ async def render(
                 error_label.visible = True
                 return
 
-            try:
-                # Parse optional fields
-                phone = None
-                if phone_input.value.strip():
-                    try:
-                        phone = CNPhone.parse(phone_input.value.strip())
-                    except Exception:
-                        error_label.text = "手机号格式不正确"
-                        error_label.visible = True
-                        return
+            # Parse optional fields
+            phone = None
+            if phone_input.value.strip():
+                try:
+                    phone = CNPhone.parse(phone_input.value.strip())
+                except ValidationError:
+                    error_label.text = "手机号格式不正确"
+                    error_label.visible = True
+                    return
 
-                email = None
-                if email_input.value.strip():
-                    try:
-                        email = Email.parse(email_input.value.strip())
-                    except Exception:
-                        error_label.text = "邮箱格式不正确"
-                        error_label.visible = True
-                        return
+            email = None
+            if email_input.value.strip():
+                try:
+                    email = Email.parse(email_input.value.strip())
+                except ValidationError:
+                    error_label.text = "邮箱格式不正确"
+                    error_label.visible = True
+                    return
 
-                # Call service to register
-                await doctor_service.register(
-                    RegisterCommand(
-                        eid=eid_input.value.strip(),
-                        password=Password.parse(password_input.value),
-                        name=name_input.value.strip(),
-                        department=department_input.value.strip() or None,
-                        title=title_input.value.strip() or None,
-                        hospital=hospital_input.value.strip() or None,
-                        phone=phone,
-                        email=email,
-                    )
+            # Call service to register
+            await doctor_service.register(
+                RegisterCommand(
+                    eid=eid_input.value.strip(),
+                    password=Password.parse(password_input.value),
+                    name=name_input.value.strip(),
+                    department=department_input.value.strip() or None,
+                    title=title_input.value.strip() or None,
+                    hospital=hospital_input.value.strip() or None,
+                    phone=phone,
+                    email=email,
                 )
+            )
 
-                ui.notify("注册成功，自动登录", type="positive")
-                ui.navigate.to("/dashboard")
-
-            except Exception as e:
-                error_label.text = f"注册失败: {e}"
-                error_label.visible = True
+            ui.notify("注册成功，自动登录", type="positive")
+            ui.navigate.to("/")
 
         # Action buttons
         with ui.row().classes("w-full justify-between mt-4"):
