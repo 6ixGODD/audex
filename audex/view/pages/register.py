@@ -290,7 +290,10 @@ async def render(
             phone = None
             if phone_input.value.strip():
                 try:
-                    phone = CNPhone.parse(phone_input.value.strip())
+                    phone_str: str = phone_input.value.strip()
+                    if not phone_str.startswith("+86 "):
+                        phone_str = "+86 " + phone_str
+                    phone = CNPhone.parse(phone_str)
                 except ValidationError:
                     ui.notify("手机号格式不正确", type="warning", position="top")
                     return
