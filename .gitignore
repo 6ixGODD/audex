@@ -92,3 +92,4 @@ pyrightconfig.json
 .config.yml
 
 !audex/lib/
+!/tests/lib/
