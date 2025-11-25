@@ -1,0 +1,85 @@
+/* Smooth rendering */
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Gradient text animation */
+@keyframes gradient-shift {
+    0% {
+        background-position: 0 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0 50%;
+    }
+}
+
+.gradient-text {
+    background: linear-gradient(
+        -45deg,
+        #ee7752, #e73c7e, #23a6d5, #23d5ab, #f093fb, #4facfe
+    );
+    background-size: 400% 400%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradient-shift 8s ease infinite;
+    font-weight: 700;
+}
+
+/* Card with hover and active states ONLY */
+.super-card {
+    border-radius: 28px !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(20px) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.super-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12), 0 6px 14px rgba(0, 0, 0, 0.08) !important;
+}
+
+.super-card:active {
+    transform: translateY(-3px) scale(1.01);
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Transparent overview card */
+.glass-card {
+    border-radius: 24px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Header glass effect */
+.header-glass {
+    backdrop-filter: blur(80px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(80px) saturate(200%) !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+}
+
+/* Button press */
+.press-button:active {
+    transform: scale(0.95);
+}
+
+/* Icon rotate on hover */
+.rotate-icon {
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.super-card:hover .rotate-icon {
+    transform: rotate(8deg) scale(1.15);
+}
+
+/* Pure white background */
+.bg-white {
+    background: #ffffff;
+}
