@@ -1,13 +1,13 @@
 from __future__ import annotations
 
+import abc
 import asyncio
 import contextlib
 import os
 import pathlib
+import platform
 import shutil
 import typing as t
-
-import pyudev  # type: ignore
 
 from audex.helper.mixin import AsyncLifecycleMixin
 from audex.helper.mixin import LoggingMixin
@@ -17,8 +17,8 @@ class USBDevice(t.NamedTuple):
     """Represents a USB storage device.
 
     Attributes:
-        device_node: Device node path (e.g., /dev/sdb1).
-        mount_point: Where the device is mounted (e.g., /media/usb).
+        device_node: Device node path (e.g., /dev/sdb1 on Linux, E: on Windows).
+        mount_point: Where the device is mounted (e.g., /media/usb or E:\\).
         label: Volume label of the device.
         fs_type: Filesystem type (e.g., vfat, exfat, ntfs).
         size_bytes: Total size in bytes.
@@ -49,12 +49,257 @@ class USBExportTask(t.NamedTuple):
     is_directory: bool
 
 
+class USBBackend(abc.ABC):
+    """Abstract base class for USB device backends."""
+
+    def __init__(self, logger: t.Any) -> None:
+        self.logger = logger
+
+    @abc.abstractmethod
+    def list_devices(self) -> list[USBDevice]:
+        """List all currently connected USB storage devices."""
+
+    @abc.abstractmethod
+    async def start_monitoring(self, callback: t.Callable[[str, t.Any], None]) -> None:
+        """Start monitoring for USB device events."""
+
+    @abc.abstractmethod
+    async def stop_monitoring(self) -> None:
+        """Stop monitoring for USB device events."""
+
+
+class LinuxUSBBackend(USBBackend):
+    """Linux USB backend using pyudev."""
+
+    def __init__(self, logger: t.Any) -> None:
+        super().__init__(logger)
+        try:
+            import pyudev
+
+            self._pyudev = pyudev
+            self._context = pyudev.Context()
+            self._monitor: pyudev.Monitor | None = None
+            self._observer: pyudev.MonitorObserver | None = None
+        except ImportError as e:
+            raise RuntimeError(
+                "pyudev is required for Linux USB support. Install it with: pip install pyudev"
+            ) from e
+
+    def list_devices(self) -> list[USBDevice]:
+        """List all currently connected USB storage devices."""
+        devices: list[USBDevice] = []
+
+        for device in self._context.list_devices(subsystem="block", DEVTYPE="partition"):
+            if device.find_parent("usb") is None:
+                continue
+
+            mount_point = self._get_mount_point(device.device_node)
+            if not mount_point:
+                continue
+
+            id_vendor = device.get("ID_VENDOR", "Unknown")
+            id_model = device.get("ID_MODEL", "Unknown")
+            id_fs_type = device.get("ID_FS_TYPE")
+            id_fs_label = device.get("ID_FS_LABEL")
+
+            size_bytes = None
+            size_file = pathlib.Path(f"/sys/class/block/{device.sys_name}/size")
+            if size_file.exists():
+                try:
+                    sectors = int(size_file.read_text().strip())
+                    size_bytes = sectors * 512
+                except (ValueError, OSError):
+                    pass
+
+            usb_device = USBDevice(
+                device_node=device.device_node,
+                mount_point=mount_point,
+                label=id_fs_label,
+                fs_type=id_fs_type,
+                size_bytes=size_bytes,
+                vendor=id_vendor,
+                model=id_model,
+            )
+            devices.append(usb_device)
+            self.logger.debug(f"Found USB device: {usb_device}")
+
+        return devices
+
+    def _get_mount_point(self, device_node: str) -> str | None:
+        """Get the mount point for a device node."""
+        try:
+            with pathlib.Path("/proc/mounts").open("r") as f:
+                for line in f:
+                    parts = line.split()
+                    if len(parts) >= 2 and parts[0] == device_node:
+                        return parts[1]
+        except OSError as e:
+            self.logger.warning(f"Failed to read /proc/mounts: {e}")
+
+        return None
+
+    async def start_monitoring(self, callback: t.Callable[[str, t.Any], None]) -> None:
+        """Start monitoring for USB device events."""
+        self._monitor = self._pyudev.Monitor.from_netlink(self._context)
+        self._monitor.filter_by(subsystem="block")
+
+        self._observer = self._pyudev.MonitorObserver(self._monitor, callback)
+        self._observer.start()
+        self.logger.debug("Started Linux USB monitoring")
+
+    async def stop_monitoring(self) -> None:
+        """Stop monitoring for USB device events."""
+        if self._observer:
+            self._observer.stop()
+            self._observer = None
+
+        self._monitor = None
+        self.logger.debug("Stopped Linux USB monitoring")
+
+
+class WindowsUSBBackend(USBBackend):
+    """Windows USB backend using win32api and WMI."""
+
+    def __init__(self, logger: t.Any) -> None:
+        super().__init__(logger)
+        try:
+            import win32api
+            import win32file
+            import wmi
+
+            self._win32api = win32api
+            self._win32file = win32file
+            self._wmi = wmi
+            self._wmi_connection = wmi.WMI()
+            self._monitoring = False
+            self._monitor_task: asyncio.Task[None] | None = None
+        except ImportError as e:
+            raise RuntimeError(
+                "pywin32 and WMI are required for Windows USB support. "
+                "Install them with: pip install pywin32 wmi"
+            ) from e
+
+    def list_devices(self) -> list[USBDevice]:
+        """List all currently connected USB storage devices."""
+        devices: list[USBDevice] = []
+
+        # Get all removable drives
+        drive_types = self._win32api.GetLogicalDriveStrings()
+        drives = [d for d in drive_types.split("\x00") if d]
+
+        for drive in drives:
+            try:
+                drive_type = self._win32file.GetDriveType(drive)
+                # DRIVE_REMOVABLE = 2
+                if drive_type != 2:
+                    continue
+
+                # Get drive information
+                try:
+                    volume_info = self._win32api.GetVolumeInformation(drive)
+                    label = volume_info[0]
+                    fs_type = volume_info[4]
+                except Exception:
+                    label = None
+                    fs_type = None
+
+                # Get drive size
+                size_bytes = None
+                try:
+                    _, total_bytes, _ = self._win32api.GetDiskFreeSpaceEx(drive)
+                    size_bytes = total_bytes
+                except Exception:
+                    pass
+
+                # Try to get vendor and model from WMI
+                vendor = None
+                model = None
+                try:
+                    for disk in self._wmi_connection.Win32_DiskDrive():
+                        if disk.MediaType == "Removable Media":
+                            for partition in disk.associators("Win32_DiskDriveToDiskPartition"):
+                                for logical_disk in partition.associators(
+                                    "Win32_LogicalDiskToPartition"
+                                ):
+                                    if logical_disk.DeviceID == drive.rstrip("\\"):
+                                        vendor = disk.Manufacturer
+                                        model = disk.Model
+                                        break
+                except Exception:
+                    pass
+
+                device_node = drive.rstrip("\\")
+                mount_point = drive
+
+                usb_device = USBDevice(
+                    device_node=device_node,
+                    mount_point=mount_point,
+                    label=label,
+                    fs_type=fs_type,
+                    size_bytes=size_bytes,
+                    vendor=vendor,
+                    model=model,
+                )
+                devices.append(usb_device)
+                self.logger.debug(f"Found USB device: {usb_device}")
+
+            except Exception as e:
+                self.logger.warning(f"Error checking drive {drive}: {e}")
+                continue
+
+        return devices
+
+    async def start_monitoring(self, callback: t.Callable[[str, t.Any], None]) -> None:
+        """Start monitoring for USB device events using WMI."""
+        self._monitoring = True
+        self._monitor_task = asyncio.create_task(self._monitor_loop(callback))
+        self.logger.debug("Started Windows USB monitoring")
+
+    async def stop_monitoring(self) -> None:
+        """Stop monitoring for USB device events."""
+        self._monitoring = False
+        if self._monitor_task:
+            self._monitor_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._monitor_task
+            self._monitor_task = None
+        self.logger.debug("Stopped Windows USB monitoring")
+
+    async def _monitor_loop(self, callback: t.Callable[[str, t.Any], None]) -> None:
+        """Monitor loop for Windows USB events."""
+        # Watch for Win32_VolumeChangeEvent
+        watcher = self._wmi_connection.Win32_VolumeChangeEvent.watch_for(
+            notification_type="Creation",
+            delay_secs=1,
+        )
+
+        while self._monitoring:
+            try:
+                # Check for events (non-blocking with timeout)
+                await asyncio.sleep(1)
+
+                # Poll for new devices
+                try:
+                    event = watcher(timeout_ms=100)
+                    if event and event.EventType == 2:  # Event types: 2=inserted, 3=removed
+                        self.logger.info("USB device connected (Windows)")
+                        # Create a simple device object for callback
+                        callback("add", {"device_type": "volume"})
+                except Exception:
+                    # Timeout or no event
+                    pass
+
+            except Exception as e:
+                self.logger.error(f"Error in Windows USB monitor loop: {e}")
+                await asyncio.sleep(5)
+
+
 class USBManager(LoggingMixin, AsyncLifecycleMixin):
-    """USB storage device manager for file export.
+    """Cross-platform USB storage device manager for file export.
 
     This manager monitors USB device connections and provides functionality
-    to export files and directories to connected USB drives. It uses pyudev
-    to detect device connections and mount points.
+    to export files and directories to connected USB drives. It automatically
+    selects the appropriate backend (Linux/Windows) based on the platform.
 
     Example:
         ```python
@@ -78,7 +323,7 @@ class USBManager(LoggingMixin, AsyncLifecycleMixin):
         # Export to specific device manually
         devices = manager.list_devices()
         if devices:
-            await manager.export_to_device(devices[0])
+            await manager.export(devices[0])
 
         # Stop monitoring
         await manager.stop()
@@ -91,9 +336,17 @@ class USBManager(LoggingMixin, AsyncLifecycleMixin):
         super().__init__()
         self.export_tasks: list[USBExportTask] = []
 
-        self._context = pyudev.Context()
-        self._monitor: pyudev.Monitor | None = None  # type: ignore
-        self._monitor_task: asyncio.Task[None] | None = None
+        # Initialize platform-specific backend
+        system = platform.system()
+        if system == "Linux":
+            self._backend: USBBackend = LinuxUSBBackend(self.logger)
+            self.logger.info("Initialized Linux USB backend")
+        elif system == "Windows":
+            self._backend = WindowsUSBBackend(self.logger)
+            self.logger.info("Initialized Windows USB backend")
+        else:
+            raise RuntimeError(f"Unsupported platform: {system}")
+
         self._running = False
 
     def add_export_task(
@@ -176,70 +429,7 @@ class USBManager(LoggingMixin, AsyncLifecycleMixin):
                 )
             ```
         """
-        devices: list[USBDevice] = []
-
-        # Enumerate USB storage devices
-        for device in self._context.list_devices(subsystem="block", DEVTYPE="partition"):
-            # Check if it's a USB device
-            if "usb" not in device.device_path.lower():
-                continue
-
-            # Try to get mount point
-            mount_point = self._get_mount_point(device.device_node)
-            if not mount_point:
-                continue
-
-            # Get device properties
-            id_vendor = device.get("ID_VENDOR", "Unknown")
-            id_model = device.get("ID_MODEL", "Unknown")
-            id_fs_type = device.get("ID_FS_TYPE")
-            id_fs_label = device.get("ID_FS_LABEL")
-
-            # Try to get size
-            size_bytes = None
-            size_file = pathlib.Path(f"/sys/class/block/{device.sys_name}/size")
-            if size_file.exists():
-                try:
-                    # Size is in 512-byte sectors
-                    sectors = int(size_file.read_text().strip())
-                    size_bytes = sectors * 512
-                except (ValueError, OSError):
-                    pass
-
-            usb_device = USBDevice(
-                device_node=device.device_node,
-                mount_point=mount_point,
-                label=id_fs_label,
-                fs_type=id_fs_type,
-                size_bytes=size_bytes,
-                vendor=id_vendor,
-                model=id_model,
-            )
-            devices.append(usb_device)
-
-            self.logger.debug(f"Found USB device: {usb_device}")
-
-        return devices
-
-    def _get_mount_point(self, device_node: str) -> str | None:
-        """Get the mount point for a device node.
-
-        Args:
-            device_node: Device node path (e.g., /dev/sdb1).
-
-        Returns:
-            Mount point path, or None if not mounted.
-        """
-        try:
-            with pathlib.Path("/proc/mounts").open("r") as f:
-                for line in f:
-                    parts = line.split()
-                    if len(parts) >= 2 and parts[0] == device_node:
-                        return parts[1]
-        except OSError as e:
-            self.logger.warning(f"Failed to read /proc/mounts: {e}")
-
-        return None
+        return self._backend.list_devices()
 
     async def export(
         self,
@@ -260,7 +450,7 @@ class USBManager(LoggingMixin, AsyncLifecycleMixin):
             ```python
             devices = manager.list_devices()
             if devices:
-                results = await manager.export_to_device(devices[0])
+                results = await manager.export(devices[0])
                 for dest, success in results.items():
                     if success:
                         print(f"Exported {dest}")
@@ -315,28 +505,24 @@ class USBManager(LoggingMixin, AsyncLifecycleMixin):
     async def start(self) -> None:
         """Start monitoring for USB device connections.
 
-        If auto_export is enabled, will automatically export when a USB
-        device is connected.
+        Will automatically detect when USB devices are connected.
 
         Example:
             ```python
-            manager = USBManager(auto_export=True)
+            manager = USBManager()
             manager.add_export_task(
                 "/data/logs", "logs", is_directory=True
             )
             await manager.start()
-            # Will automatically export when USB is connected
+            # Will monitor for USB connections
             ```
         """
         if self._running:
             self.logger.warning("USB monitor already running")
             return
 
-        self._monitor = pyudev.Monitor.from_netlink(self._context)
-        self._monitor.filter_by(subsystem="block")
         self._running = True
-
-        self._monitor_task = asyncio.create_task(self._monitor_loop())
+        await self._backend.start_monitoring(self._handle_device_event)
         self.logger.info("Started USB device monitoring")
 
     async def stop(self) -> None:
@@ -345,31 +531,10 @@ class USBManager(LoggingMixin, AsyncLifecycleMixin):
             return
 
         self._running = False
-
-        if self._monitor_task:
-            self._monitor_task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await self._monitor_task
-            self._monitor_task = None
-
-        self._monitor = None
+        await self._backend.stop_monitoring()
         self.logger.info("Stopped USB device monitoring")
 
-    async def _monitor_loop(self) -> None:
-        """Main monitoring loop for USB events."""
-        if self._monitor is None:
-            return
-
-        observer = pyudev.MonitorObserver(self._monitor, self._handle_device_event)
-        observer.start()
-
-        try:
-            while self._running:
-                await asyncio.sleep(1)
-        finally:
-            observer.stop()
-
-    def _handle_device_event(self, action: str, device: pyudev.Device) -> None:
+    def _handle_device_event(self, action: str, device: t.Any) -> None:
         """Handle USB device events.
 
         Args:
@@ -379,11 +544,11 @@ class USBManager(LoggingMixin, AsyncLifecycleMixin):
         if action != "add":
             return
 
-        # Check if it's a USB storage device
-        if device.device_type != "partition":
-            return
+        # For Linux, check device type
+        if hasattr(device, "device_type"):
+            if device.device_type != "partition":
+                return
+            if "usb" not in device.device_path.lower():
+                return
 
-        if "usb" not in device.device_path.lower():
-            return
-
-        self.logger.info(f"USB device connected: {device.device_node}")
+        self.logger.info("USB device connected")
