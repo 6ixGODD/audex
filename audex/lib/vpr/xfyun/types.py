@@ -12,6 +12,7 @@ class RequestHeader(BaseModel):
         ...,
         description="Application ID obtained from XFYun platform",
     )
+
     status: t.Literal[3] = Field(
         default=3,
         description="Request status, value must be 3 (one-time transmission)",
@@ -23,10 +24,12 @@ class XFYunResponseHeader(BaseModel):
         ...,
         description="Response code, 0 indicates success",
     )
+
     message: str = Field(
         ...,
         description="Response message description",
     )
+
     sid: str = Field(
         ...,
         description="Unique session identifier for this request",
@@ -38,10 +41,12 @@ class ResFormat(BaseModel):
         default="utf8",
         description="Encoding format, fixed to utf8",
     )
+
     compress: t.Literal["raw"] = Field(
         default="raw",
         description="Compression format, fixed to raw",
     )
+
     format: t.Literal["json"] = Field(
         default="json",
         description="Text format, fixed to json",
@@ -53,22 +58,27 @@ class AudioResource(BaseModel):
         default="lame",
         description="Audio encoding format, fixed to lame (MP3)",
     )
+
     sample_rate: int = Field(
         default=16000,
         description="Audio sample rate in Hz, must be 16000",
     )
+
     channels: t.Literal[1] = Field(
         default=1,
         description="Audio channel count, fixed to 1 (mono)",
     )
+
     bit_depth: t.Literal[16] = Field(
         default=16,
         description="Audio bit depth, fixed to 16",
     )
+
     status: t.Literal[3] = Field(
         default=3,
         description="Audio data status, value must be 3 (one-time transmission)",
     )
+
     audio: str = Field(
         ...,
         description="Base64 encoded audio data, max size 4M after encoding",
@@ -90,6 +100,7 @@ class XFYunResponse(BaseModel, t.Generic[PayloadT]):
         ...,
         description="Response header with platform parameters",
     )
+
     payload: PayloadT = Field(
         ...,
         description="Response payload data",
@@ -109,24 +120,28 @@ class S782b4996CreateGroupParams(BaseModel):
         default="createGroup",
         description="Function identifier for creating voiceprint group",
     )
+
     group_id: str = Field(
         ...,
         alias="groupId",
         serialization_alias="groupId",
         description="Unique identifier for the group, supports letters, numbers and underscores, max length 32",
     )
+
     group_name: str | None = Field(
         default=None,
         alias="groupName",
         serialization_alias="groupName",
         description="Name of the group, optional, length range 0-256",
     )
+
     group_info: str | None = Field(
         default=None,
         alias="groupInfo",
         serialization_alias="groupInfo",
         description="Description information for the group, optional, length range 0-256",
     )
+
     create_group_res: ResFormat = Field(
         default_factory=ResFormat,
         alias="createGroupRes",
@@ -147,6 +162,7 @@ class CreateGroupRequest(BaseModel):
         ...,
         description="Request header with platform parameters",
     )
+
     parameter: CreateGroupParams = Field(
         ...,
         description="Service feature parameters",
@@ -160,12 +176,14 @@ class CreateGroupResult(BaseModel):
         serialization_alias="groupId",
         description="Created group unique identifier",
     )
+
     group_name: str | None = Field(
         default=None,
         alias="groupName",
         serialization_alias="groupName",
         description="Created group name",
     )
+
     group_info: str | None = Field(
         default=None,
         alias="groupInfo",
@@ -192,24 +210,28 @@ class S782b4996CreateFeatureParams(BaseModel):
         default="createFeature",
         description="Function identifier for creating voiceprint feature",
     )
+
     group_id: str = Field(
         ...,
         alias="groupId",
         serialization_alias="groupId",
         description="Group ID where the feature will be stored, max length 32",
     )
+
     feature_id: str = Field(
         ...,
         alias="featureId",
         serialization_alias="featureId",
         description="Unique identifier for the feature, length range 0-32",
     )
+
     feature_info: str | None = Field(
         default=None,
         alias="featureInfo",
         serialization_alias="featureInfo",
         description="Feature description, recommended to include timestamp, length range 0-256",
     )
+
     create_feature_res: ResFormat = Field(
         default_factory=ResFormat,
         alias="createFeatureRes",
@@ -230,10 +252,12 @@ class CreateFeatureRequest(BaseModel):
         ...,
         description="Request header with platform parameters",
     )
+
     parameter: CreateFeatureParams = Field(
         ...,
         description="Service feature parameters",
     )
+
     payload: AudioPayload = Field(
         ...,
         description="Audio data payload",
@@ -267,6 +291,7 @@ class S782b4996UpdateFeatureParams(BaseModel):
         default="updateFeature",
         description="Function identifier for updating voiceprint feature",
     )
+
     group_id: str = Field(
         ...,
         alias="groupId",
@@ -274,22 +299,26 @@ class S782b4996UpdateFeatureParams(BaseModel):
         pattern=r"^[a-zA-Z0-9_]+$",
         description="Group ID where the feature is stored, max length 32",
     )
+
     feature_id: str | None = Field(
         default=None,
         alias="featureId",
         serialization_alias="featureId",
         description="Feature ID to update, length range 0-32",
     )
+
     feature_info: str | None = Field(
         default=None,
         alias="featureInfo",
         serialization_alias="featureInfo",
         description="Updated feature description, recommended to include timestamp, length range 0-256",
     )
+
     cover: bool = Field(
         default=True,
         description="Update mode: True to overwrite existing feature, False to merge with existing feature",
     )
+
     update_feature_res: ResFormat = Field(
         default_factory=ResFormat,
         alias="updateFeatureRes",
@@ -310,10 +339,12 @@ class UpdateFeatureRequest(BaseModel):
         ...,
         description="Request header with platform parameters",
     )
+
     parameter: UpdateFeatureParams = Field(
         ...,
         description="Service feature parameters",
     )
+
     payload: AudioPayload = Field(
         ...,
         description="Audio data payload",
@@ -345,12 +376,14 @@ class S782b4996SearchScoreFeaParams(BaseModel):
         default="searchScoreFea",
         description="Function identifier for 1:1 feature verification",
     )
+
     group_id: str = Field(
         ...,
         alias="groupId",
         serialization_alias="groupId",
         description="Group ID where the target feature is stored, max length 32",
     )
+
     dst_feature_id: str = Field(
         ...,
         alias="dstFeatureId",
@@ -358,6 +391,7 @@ class S782b4996SearchScoreFeaParams(BaseModel):
         max_length=32,
         description="Target feature ID to compare against, length range 0-32",
     )
+
     search_score_fea_res: ResFormat = Field(
         default_factory=ResFormat,
         alias="searchScoreFeaRes",
@@ -378,10 +412,12 @@ class SearchScoreFeaRequest(BaseModel):
         ...,
         description="Request header with platform parameters",
     )
+
     parameter: SearchScoreFeaParams = Field(
         ...,
         description="Service feature parameters",
     )
+
     payload: AudioPayload = Field(
         ...,
         description="Audio data payload for comparison",
@@ -393,12 +429,14 @@ class SearchScoreFeaResult(BaseModel):
         ...,
         description="Similarity score, normal range 0-1 (precise to 2 decimal places), full range -1 to 1. Score 0.6-1 recommended for verification pass",
     )
+
     feature_id: str = Field(
         ...,
         alias="featureId",
         serialization_alias="featureId",
         description="Target feature unique identifier",
     )
+
     feature_info: str | None = Field(
         None,
         alias="featureInfo",
@@ -425,18 +463,21 @@ class S782b4996SearchFeaParams(BaseModel):
         default="searchFea",
         description="Function identifier for 1:N feature identification",
     )
+
     group_id: str = Field(
         ...,
         alias="groupId",
         serialization_alias="groupId",
         description="Group ID to search features in, max length 32",
     )
+
     top_k: int = Field(
         ...,
         alias="topK",
         serialization_alias="topK",
         description="Number of top matching features to return, max 10 (requires sufficient features in the group)",
     )
+
     search_fea_res: ResFormat = Field(
         default_factory=ResFormat,
         alias="searchFeaRes",
@@ -457,10 +498,12 @@ class SearchFeaRequest(BaseModel):
         ...,
         description="Request header with platform parameters",
     )
+
     parameter: SearchFeaParams = Field(
         ...,
         description="Service feature parameters",
     )
+
     payload: AudioPayload = Field(
         ...,
         description="Audio data payload for identification",
@@ -472,12 +515,14 @@ class ScoreItem(BaseModel):
         ...,
         description="Similarity score, normal range 0-1 (precise to 2 decimal places), full range -1 to 1",
     )
+
     feature_id: str = Field(
         ...,
         alias="featureId",
         serialization_alias="featureId",
         description="Matched feature unique identifier",
     )
+
     feature_info: str | None = Field(
         None,
         alias="featureInfo",
@@ -513,18 +558,21 @@ class S782b4996DeleteFeatureParams(BaseModel):
         default="deleteFeature",
         description="Function identifier for deleting voiceprint feature",
     )
+
     group_id: str = Field(
         ...,
         alias="groupId",
         serialization_alias="groupId",
         description="Group ID where the feature is stored, max length 32",
     )
+
     feature_id: str = Field(
         ...,
         alias="featureId",
         serialization_alias="featureId",
         description="Feature ID to delete, length range 1-32",
     )
+
     delete_feature_res: ResFormat = Field(
         default_factory=ResFormat,
         alias="deleteFeatureRes",
@@ -545,6 +593,7 @@ class DeleteFeatureRequest(BaseModel):
         ...,
         description="Request header with platform parameters",
     )
+
     parameter: DeleteFeatureParams = Field(
         ...,
         description="Service feature parameters",
@@ -576,12 +625,14 @@ class S782b4996DeleteGroupParams(BaseModel):
         default="deleteGroup",
         description="Function identifier for deleting voiceprint group",
     )
+
     group_id: str = Field(
         ...,
         alias="groupId",
         serialization_alias="groupId",
         description="Group ID to delete, max length 32",
     )
+
     delete_group_res: ResFormat = Field(
         default_factory=ResFormat,
         alias="deleteGroupRes",
@@ -602,6 +653,7 @@ class DeleteGroupRequest(BaseModel):
         ...,
         description="Request header with platform parameters",
     )
+
     parameter: DeleteGroupParams = Field(
         ...,
         description="Service feature parameters",

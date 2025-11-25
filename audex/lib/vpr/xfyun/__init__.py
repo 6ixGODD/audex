@@ -12,6 +12,7 @@ import urllib.parse as urlparse
 from httpx import URL
 from httpx import AsyncClient
 from httpx import Auth
+from httpx import HTTPStatusError
 from httpx import Request
 from httpx import Response
 
@@ -212,14 +213,19 @@ class XFYunVPR(RESTfulMixin, VPR):
         self.logger.debug(json.dumps(request, indent=2, ensure_ascii=False))
 
         self.logger.debug(f"Sending create_group request to {self.endpoint}")
-        response = await self.request(
-            endpoint=self.endpoint,
-            method="POST",
-            json=request,
-            cast_to=CreateGroupResponse,
-            raise_for_status=True,
-            strict=False,
-        )
+
+        try:
+            response = await self.request(
+                endpoint=self.endpoint,
+                method="POST",
+                json=request,
+                cast_to=CreateGroupResponse,
+                strict=False,
+            )
+        except HTTPStatusError as e:
+            error_msg = f"HTTP error during create_group request: {e}"
+            self.logger.bind(request=e.request.content, response=e.response.text).error(error_msg)
+            raise VPRError(error_msg) from e
 
         self.logger.debug(
             f"Received response with code={response.header.code}, message='{response.header.message}'"
@@ -274,28 +280,22 @@ class XFYunVPR(RESTfulMixin, VPR):
             parameter=CreateFeatureParams(
                 s782b4996=S782b4996CreateFeatureParams(groupId=self.group_id, featureId=uid)
             ),
-            payload=AudioPayload(
-                resource=AudioResource(
-                    audio=audio_b64,
-                    sample_rate=sr,
-                )
-            ),
+            payload=AudioPayload(resource=AudioResource(audio=audio_b64, sample_rate=sr)),
         ).model_dump(exclude_none=True)
 
-        self.logger.debug("Request payload (JSON, audio truncated):")
-        debug_payload = request_payload.copy()
-        if "payload" in debug_payload and "resource" in debug_payload["payload"]:
-            debug_payload["payload"]["resource"]["audio"] = f"{audio_b64[:50]}... (truncated)"
-        self.logger.debug(json.dumps(debug_payload, indent=2, ensure_ascii=False))
-
         self.logger.debug(f"Sending enroll request to {self.endpoint}")
-        response = await self.request(
-            endpoint=self.endpoint,
-            method="POST",
-            json=request_payload,
-            cast_to=CreateFeatureResponse,
-            raise_for_status=False,
-        )
+
+        try:
+            response = await self.request(
+                endpoint=self.endpoint,
+                method="POST",
+                json=request_payload,
+                cast_to=CreateFeatureResponse,
+            )
+        except HTTPStatusError as e:
+            error_msg = f"HTTP error during enroll request: {e}"
+            self.logger.bind(request=e.request.content, response=e.response.text).error(error_msg)
+            raise VPRError(error_msg) from e
 
         self.logger.debug(
             f"Received response with code={response.header.code}, message='{response.header.message}'"
@@ -357,20 +357,19 @@ class XFYunVPR(RESTfulMixin, VPR):
             ),
         ).model_dump(exclude_none=True)
 
-        self.logger.debug("Request payload (JSON, audio truncated):")
-        debug_payload = request_payload.copy()
-        if "payload" in debug_payload and "resource" in debug_payload["payload"]:
-            debug_payload["payload"]["resource"]["audio"] = f"{audio_b64[:50]}... (truncated)"
-        self.logger.debug(json.dumps(debug_payload, indent=2, ensure_ascii=False))
-
         self.logger.debug(f"Sending update request to {self.endpoint}")
-        response = await self.request(
-            endpoint=self.endpoint,
-            method="POST",
-            json=request_payload,
-            cast_to=UpdateFeatureResponse,
-            raise_for_status=False,
-        )
+
+        try:
+            response = await self.request(
+                endpoint=self.endpoint,
+                method="POST",
+                json=request_payload,
+                cast_to=UpdateFeatureResponse,
+            )
+        except HTTPStatusError as e:
+            error_msg = f"HTTP error during update request: {e}"
+            self.logger.bind(request=e.request.content, response=e.response.text).error(error_msg)
+            raise VPRError(error_msg) from e
 
         self.logger.debug(
             f"Received response with code={response.header.code}, message='{response.header.message}'"
@@ -430,20 +429,19 @@ class XFYunVPR(RESTfulMixin, VPR):
             ),
         ).model_dump(exclude_none=True)
 
-        self.logger.debug("Request payload (JSON, audio truncated):")
-        debug_payload = request_payload.copy()
-        if "payload" in debug_payload and "resource" in debug_payload["payload"]:
-            debug_payload["payload"]["resource"]["audio"] = f"{audio_b64[:50]}... (truncated)"
-        self.logger.debug(json.dumps(debug_payload, indent=2, ensure_ascii=False))
-
         self.logger.debug(f"Sending verify request to {self.endpoint}")
-        response = await self.request(
-            endpoint=self.endpoint,
-            method="POST",
-            json=request_payload,
-            cast_to=SearchScoreFeaResponse,
-            raise_for_status=False,
-        )
+
+        try:
+            response = await self.request(
+                endpoint=self.endpoint,
+                method="POST",
+                json=request_payload,
+                cast_to=SearchScoreFeaResponse,
+            )
+        except HTTPStatusError as e:
+            error_msg = f"HTTP error during verify request: {e}"
+            self.logger.bind(request=e.request.content, response=e.response.text).error(error_msg)
+            raise VPRError(error_msg) from e
 
         self.logger.debug(
             f"Received response with code={response.header.code}, message='{response.header.message}'"

@@ -188,7 +188,7 @@ class RESTfulMixin(AsyncContextMixin):
             wait=tenacity.wait_fixed(retry_wait),
             reraise=True,
         )
-        async def _make_request(
+        async def _do_request(
             method: str,
             endpoint: str,
             headers: t.Mapping[str, str] | None,
@@ -206,7 +206,7 @@ class RESTfulMixin(AsyncContextMixin):
                 response.raise_for_status()
             return response
 
-        response = await _make_request(method, endpoint, headers, params, json)
+        response = await _do_request(method, endpoint, headers, params, json)
         if validate:
             return cast_to.model_validate(response.json(), strict=strict)
         return cast_to.model_construct(**response.json())
