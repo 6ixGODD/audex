@@ -1,0 +1,244 @@
+# ======================================================================
+# Core configuration settings.
+# ======================================================================
+core:
+  # Application specific configuration
+  app:
+    # The name of the application.
+    app_name: Audex
+    # The version of the application.
+
+    app_version: 1.0.0
+    # Enable or disable debug mode.
+
+    debug: false
+    # Indicates if the application is running in native mode.
+
+    native: false
+  # Logging configuration
+
+  logging:
+    # List of logging targets
+    targets:
+      - logname: stdout
+        loglevel: debug
+        # rotation:
+
+        serl: false
+      - logname: logs/audex.jsonl
+        loglevel: debug
+        # rotation:
+
+        serl: true
+  # Server configuration
+
+  # server:
+  # Audio processing configuration
+  audio:
+    # The sample rate of the audio in Hz.
+    sample_rate: 16000
+    # The sample rate for voice print recognition in Hz.
+
+    vpr_sample_rate: 16000
+    # The text content used for voice print recognition.
+
+    vpr_text_content: 您好，请问您今天需要什么帮助？
+    # The threshold for voice print recognition similarity.
+
+    vpr_threshold: 0.6
+    # The prefix for storing audio files in cloud storage.
+
+    key_prefix: audex
+    # The buffer time in milliseconds for audio segmentation.
+
+    segment_buffer: 200
+  # Session management configuration
+
+  session:
+    # Time to live for a session in hours.
+    ttl_hours: 168.0
+# ======================================================================
+
+# Provider configuration settings.
+# ======================================================================
+provider:
+  # Transcription provider configuration
+  transcription:
+    # The transcription service provider.
+    provider: dashscope
+    # Configuration for Dashscope transcription service.
+
+    dashscope:
+      # Credentials for Dashscope API access.
+      credential:
+        # Dashscope API key for authentication.
+        api_key: sk-51e2c09e6aa244c5acc6c39907c3356a
+      # Dashscope transcription model to use.
+
+      model: paraformer-realtime-v2
+      # Custom User-Agent header for API requests.
+
+      # user_agent:
+      # Workspace identifier for Dashscope service.
+      # workspace:
+      # WebSocket client configuration for Dashscope.
+      websocket:
+        # Maximum concurrent connections to Dashscope API.
+        max_connections: 10
+        # Idle timeout in seconds for websocket connections.
+
+        idle_timeout: 60
+        # Timeout in seconds to drain connections on shutdown.
+
+        drain_timeout: 5.0
+      # Session configuration for Dashscope transcription.
+
+      session:
+        # Audio format for transcription session.
+        fmt: pcm
+        # Duration of silence in milliseconds to consider as end of speech.
+  # silence_duration_ms:
+  # Custom vocabulary ID for transcription.
+  # vocabulary_id:
+  # Enable disfluency removal in transcription.
+  # disfluency_removal_enabled:
+  # Language hints for transcription.
+  # lang_hints:
+  # Enable semantic punctuation in transcription.
+  # semantic_punctuation:
+  # Enable multi-threshold mode for transcription.
+  # multi_thres_mode:
+  # Enable punctuation prediction in transcription.
+  # punctuation_pred:
+  # Enable heartbeat messages during transcription.
+  # heartbeat:
+  # Enable inverse text normalization in transcription.
+  # itn:
+  # List of resource identifiers for transcription.
+  # resources:
+  # VPR provider configuration
+  vpr:
+    # The VPR service provider to use.
+    provider: xfyun
+    # Configuration for the XFYun VPR service.
+
+    xfyun:
+      # Credentials for XFYun VPR service.
+      credential:
+        # XFYun Application ID. Must be provided for authentication.
+        app_id: 00185e73
+        # XFYun API Key. Must be provided for authentication.
+
+        api_key: 4ba8e3819022266c564857fa5e869dd2
+        # XFYun API Secret. Must be provided for authentication.
+
+        api_secret: ZGViYjZkOTBhZjczYTY5ZDRlZDExMjg3
+      # The group ID for voiceprint recognition.
+
+      group_id: 56995294eb8f4091a35ae52dc3b18f0f
+      # HTTP client configuration for XFYun VPR service.
+
+      http:
+        # Proxy URL to route HTTP requests through. Example: 'http://localhost:8080'
+        # proxy:
+        # Timeout in seconds for HTTP requests.
+        timeout: 10.0
+        # Default headers to include in every HTTP request.
+    # default_headers:
+    # Default query parameters to include in every HTTP request.
+    # default_params:
+    # Configuration for the Unisound VPR service.
+    unisound:
+      # Credentials for Unisound VPR service.
+      credential:
+        # Unisound App Key
+        appkey: <UNSET>
+        # Unisound Secret
+
+        secret: <UNSET>
+      # The group ID for voiceprint recognition.
+
+      # group_id:
+      # HTTP client configuration for Unisound VPR service.
+      http:
+        # Proxy URL to route HTTP requests through. Example: 'http://localhost:8080'
+        # proxy:
+        # Timeout in seconds for HTTP requests.
+        timeout: 10.0
+        # Default headers to include in every HTTP request.
+# default_headers:
+# Default query parameters to include in every HTTP request.
+# default_params:
+# ======================================================================
+# Infrastructure configuration settings.
+# ======================================================================
+infrastructure:
+  # SQLite configuration.
+  sqlite:
+    # SQLite database URI.
+    uri: "sqlite+aiosqlite:///./audex.db"
+    # Enable SQL query logging for debugging purposes.
+
+    echo: false
+    # The size of the database connection pool.
+
+    pool_size: 20
+    # The maximum overflow size of the connection pool.
+
+    max_overflow: 10
+    # The timeout in seconds to wait for a connection from the pool.
+
+    pool_timeout: 30.0
+    # The number of seconds after which a connection is automatically recycled.
+
+    pool_recycle: 3600
+    # Enable connection health checks before using a connection from the pool.
+
+    pool_pre_ping: true
+  # Cache configuration.
+
+  cache:
+    # Type of cache backend to use.
+    provider: inmemory
+    # Character used to split cache keys.
+
+    split_char: ":"
+    # Prefix for all cache keys.
+
+    prefix: audex
+    # Configuration for in-memory cache backend.
+
+    inmemory:
+      # Type of in-memory cache algorithm to use.
+      cache_type: ttl
+      # Maximum number of items to store in the cache.
+
+      max_size: 1024
+      # Default time-to-live (TTL) for cache items in seconds.
+
+      default_ttl: 300
+      # TTL for negative cache entries in seconds.
+
+      negative_ttl: 60
+  # Store configuration.
+
+  store:
+    # Type of the store.
+    type: localfile
+    # Store base URL. In case of 'file' type, it is the local directory path. In case of 'obs' type, it is the OBS bucket URL.
+
+    base_url: ./store
+  # Recorder configuration.
+
+  recorder:
+    # Audio sample format.
+    format: int16
+    # Number of audio channels.
+
+    channels: 1
+    # Number of frames per buffer.
+
+    chunk: 1024
+    # Index of the input audio device. If None, the default device is used.
+
+# input_device_index:
