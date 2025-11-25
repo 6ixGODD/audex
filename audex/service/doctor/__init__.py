@@ -10,6 +10,7 @@ from audex.filters.generated import vp_filter
 from audex.helper.mixin import AsyncContextMixin
 from audex.helper.mixin import LoggingMixin
 from audex.lib.cache import KVCache
+from audex.lib.recorder import AudioFormat
 from audex.lib.recorder import AudioRecorder
 from audex.lib.repos.doctor import DoctorRepository
 from audex.lib.repos.vp import VPRepository
@@ -518,8 +519,9 @@ class VPEnrollmentContext(LoggingMixin, AsyncContextMixin, AbstractSession):
             audio_data = await self.recorder.segment(
                 started_at=segment.started_at,
                 ended_at=segment.ended_at,
-                rate=self.sample_rate,
                 channels=1,
+                rate=self.sample_rate,
+                format=AudioFormat.MP3,
             )
 
             # Enroll with VPR
@@ -613,8 +615,9 @@ class VPUpdateContext(LoggingMixin, AsyncContextMixin, AbstractSession):
             audio_data = await self.recorder.segment(
                 started_at=segment.started_at,
                 ended_at=segment.ended_at,
-                rate=self.sample_rate,
                 channels=1,
+                rate=self.sample_rate,
+                format=AudioFormat.MP3,
             )
 
             # Update VPR
