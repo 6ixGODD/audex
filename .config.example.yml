@@ -8,13 +8,11 @@ core: # Core configuration settings.
     targets: # List of logging targets
       - logname: stdout
         loglevel: debug
-        # rotation:
-
+        rotation: ~
         serl: false
       - logname: stderr
         loglevel: error
-        # rotation:
-
+        rotation: ~
         serl: false
   server: # Server configuration
   audio: # Audio processing configuration
@@ -33,25 +31,24 @@ provider: # Provider configuration settings.
       credential: # Credentials for Dashscope API access.
         api_key: <UNSET> # Dashscope API key for authentication.
       model: paraformer-realtime-v2 # Dashscope transcription model to use.
-      # user_agent:  # Custom User-Agent header for API requests.
-
-      # workspace:  # Workspace identifier for Dashscope service.
+      user_agent: ~ # Custom User-Agent header for API requests.
+      workspace: ~ # Workspace identifier for Dashscope service.
       websocket: # WebSocket client configuration for Dashscope.
         max_connections: 10 # Maximum concurrent connections to Dashscope API.
         idle_timeout: 60 # Idle timeout in seconds for websocket connections.
         drain_timeout: 5.0 # Timeout in seconds to drain connections on shutdown.
       session: # Session configuration for Dashscope transcription.
         fmt: pcm # Audio format for transcription session.
-        # silence_duration_ms:  # Duration of silence in milliseconds to consider as end of speech.
-  # vocabulary_id:  # Custom vocabulary ID for transcription.
-  # disfluency_removal_enabled:  # Enable disfluency removal in transcription.
-  # lang_hints:  # Language hints for transcription.
-  # semantic_punctuation:  # Enable semantic punctuation in transcription.
-  # multi_thres_mode:  # Enable multi-threshold mode for transcription.
-  # punctuation_pred:  # Enable punctuation prediction in transcription.
-  # heartbeat:  # Enable heartbeat messages during transcription.
-  # itn:  # Enable inverse text normalization in transcription.
-  # resources:  # List of resource identifiers for transcription.
+        silence_duration_ms: ~ # Duration of silence in milliseconds to consider as end of speech.
+        vocabulary_id: ~ # Custom vocabulary ID for transcription.
+        disfluency_removal_enabled: ~ # Enable disfluency removal in transcription.
+        lang_hints: ~ # Language hints for transcription.
+        semantic_punctuation: ~ # Enable semantic punctuation in transcription.
+        multi_thres_mode: ~ # Enable multi-threshold mode for transcription.
+        punctuation_pred: ~ # Enable punctuation prediction in transcription.
+        heartbeat: ~ # Enable heartbeat messages during transcription.
+        itn: ~ # Enable inverse text normalization in transcription.
+        resources: ~ # List of resource identifiers for transcription.
   vpr: # VPR provider configuration
     provider: xfyun # The VPR service provider to use.
     xfyun: # Configuration for the XFYun VPR service.
@@ -59,24 +56,22 @@ provider: # Provider configuration settings.
         app_id: <UNSET> # XFYun Application ID. Must be provided for authentication.
         api_key: <UNSET> # XFYun API Key. Must be provided for authentication.
         api_secret: <UNSET> # XFYun API Secret. Must be provided for authentication.
-      # group_id:  # The group ID for voiceprint recognition.
-
+      group_id: ~ # The group ID for voiceprint recognition.
       http: # HTTP client configuration for XFYun VPR service.
-        # proxy:  # Proxy URL to route HTTP requests through. Example: 'http://localhost:8080'
+        proxy: ~ # Proxy URL to route HTTP requests through. Example: 'http://localhost:8080'
         timeout: 10.0 # Timeout in seconds for HTTP requests.
-        # default_headers:  # Default headers to include in every HTTP request.
-    # default_params:  # Default query parameters to include in every HTTP request.
+        default_headers: ~ # Default headers to include in every HTTP request.
+        default_params: ~ # Default query parameters to include in every HTTP request.
     unisound: # Configuration for the Unisound VPR service.
       credential: # Credentials for Unisound VPR service.
         appkey: <UNSET> # Unisound App Key
         secret: <UNSET> # Unisound Secret
-      # group_id:  # The group ID for voiceprint recognition.
-
+      group_id: ~ # The group ID for voiceprint recognition.
       http: # HTTP client configuration for Unisound VPR service.
-        # proxy:  # Proxy URL to route HTTP requests through. Example: 'http://localhost:8080'
+        proxy: ~ # Proxy URL to route HTTP requests through. Example: 'http://localhost:8080'
         timeout: 10.0 # Timeout in seconds for HTTP requests.
-        # default_headers:  # Default headers to include in every HTTP request.
-# default_params:  # Default query parameters to include in every HTTP request.
+        default_headers: ~ # Default headers to include in every HTTP request.
+        default_params: ~ # Default query parameters to include in every HTTP request.
 infrastructure: # Infrastructure configuration settings.
   sqlite: # SQLite configuration.
     uri: "sqlite+aiosqlite:///./audex.db" # SQLite database URI.
@@ -102,4 +97,4 @@ infrastructure: # Infrastructure configuration settings.
     format: int16 # Audio sample format.
     channels: 1 # Number of audio channels.
     chunk: 1024 # Number of frames per buffer.
-    # input_device_index:  # Index of the input audio device. If None, the default device is used.
+    input_device_index: ~ # Index of the input audio device. If None, the default device is used.
