@@ -24,12 +24,18 @@ class Start:
 
 
 class Delta:
-    """Transcription delta event (partial or final result).
+    """Transcription delta event with optional sequence number.
 
-    No speaker info - just pass through transcription results.
+    Attributes:
+        session_id: Session ID.
+        from_at: Start timestamp.
+        to_at: End timestamp.
+        text: Transcribed text.
+        interim: Whether this is an interim result.
+        sequence: Utterance sequence number (None for interim results).
     """
 
-    __slots__ = ("from_at", "interim", "session_id", "text", "to_at")
+    __slots__ = ("from_at", "interim", "sequence", "session_id", "text", "to_at")
 
     def __init__(
         self,
@@ -39,23 +45,30 @@ class Delta:
         to_at: float,
         text: str,
         interim: bool,
+        sequence: int | None = None,
     ):
         self.session_id = session_id
         self.from_at = from_at
         self.to_at = to_at
         self.text = text
         self.interim = interim
+        self.sequence = sequence
 
 
 class Done:
     """Transcription completed event with speaker identification.
 
-    Speaker is identified ONCE when utterance is complete.
+    Attributes:
+        session_id: Session ID.
+        is_doctor: Whether the speaker is the doctor.
+        full_text: Full transcribed text.
+        sequence: Utterance sequence number.
     """
 
-    __slots__ = ("full_text", "is_doctor", "session_id")
+    __slots__ = ("full_text", "is_doctor", "sequence", "session_id")
 
-    def __init__(self, *, session_id: str, is_doctor: bool, full_text: str):
+    def __init__(self, *, session_id: str, is_doctor: bool, full_text: str, sequence: int):
         self.session_id = session_id
         self.is_doctor = is_doctor
         self.full_text = full_text
+        self.sequence = sequence

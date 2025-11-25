@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import builtins
 import contextlib
 import datetime
@@ -17,6 +18,7 @@ from audex.filters.generated import vp_filter
 from audex.helper.mixin import LoggingMixin
 from audex.helper.stream import AsyncStream
 from audex.lib.cache import KVCache
+from audex.lib.recorder import AudioFormat
 from audex.lib.recorder import AudioRecorder
 from audex.lib.repos.doctor import DoctorRepository
 from audex.lib.repos.segment import SegmentRepository
@@ -40,22 +42,16 @@ from audex.service.session.types import CreateSessionCommand
 from audex.service.session.types import Delta
 from audex.service.session.types import Done
 from audex.service.session.types import Start
-from audex.types import DuplexAbstractSession
+from audex.types import AbstractSession
 from audex.valueobj.utterance import Speaker
 
 
 class SessionServiceConfig(t.NamedTuple):
-    """SessionService configuration.
-
-    Attributes:
-        audio_key_prefix: Prefix for audio file keys in storage.
-        segment_buffer_ms: Buffer time (ms) to add before/after utterance for VPR.
-        vpr_sr: Sample rate for VPR verification.
-        vpr_threshold: Threshold for speaker verification (0-1, higher = stricter).
-    """
+    """SessionService configuration."""
 
     audio_key_prefix: str = "audio"
-    segment_buffer_ms: int = 200
+    segment_buffer_ms: int = 1000
+    sr: int = 16000
     vpr_sr: int = 16000
     vpr_threshold: float = 0.6
 
@@ -137,7 +133,6 @@ class SessionService(BaseService):
                     session_id=session_id,
                 )
 
-            # Also delete associated utterances
             f = utterance_filter().session_id.eq(session_id)
             await self.utterance_repo.delete_many(f.build())
 
@@ -235,32 +230,17 @@ class SessionService(BaseService):
 
     @require_auth
     async def session(self, session_id: str) -> SessionContext:
-        """Create a session context for recording.
-
-        Args:
-            session_id: ID of the session to start recording.
-
-        Returns:
-            SessionContext for managing the recording.
-
-        Raises:
-            NoActiveSessionError: If no active user session.
-            SessionNotFoundError: If session not found.
-            SessionServiceError: If no voiceprint found.
-        """
+        """Create a session context for recording."""
         try:
-            # Get current user session
             user_session = await self.session_manager.get_session()
             if not user_session:
                 raise NoActiveSessionError(ErrorMessages.NO_ACTIVE_SESSION)
 
-            # Get doctor's voiceprint
             f = vp_filter().doctor_id.eq(user_session.doctor_id).is_active.eq(True)
             vp = await self.vp_repo.first(f.build())
             if not vp:
                 raise SessionServiceError(ErrorMessages.NO_VOICEPRINT_FOUND)
 
-            # Get recording session
             session = await self.session_repo.read(session_id)
             if session is None:
                 raise SessionNotFoundError(
@@ -268,7 +248,6 @@ class SessionService(BaseService):
                     session_id=session_id,
                 )
 
-            # Update session status to IN_PROGRESS
             session.start()
             await self.session_repo.update(session)
 
@@ -291,8 +270,24 @@ class SessionService(BaseService):
             raise InternalSessionServiceError() from e
 
 
-class SessionContext(LoggingMixin, DuplexAbstractSession[bytes, Start | Delta | Done]):
-    """Context for managing an active recording session."""
+class _VPRTask(t.NamedTuple):
+    """VPR verification task."""
+
+    sequence: int
+    text: str
+    started_at: float  # Absolute timestamp from Start event
+    ended_at: float  # Absolute timestamp from Done event
+
+
+class _UtteranceData(t.TypedDict):
+    started_at: float  # Absolute timestamp from Start event
+    text: str
+    sequence: int | None
+
+
+class SessionContext(LoggingMixin, AbstractSession):
+    """Context for managing an active recording session with async
+    VPR."""
 
     __logtag__ = "audex.service.session:SessionContext"
 
@@ -319,18 +314,24 @@ class SessionContext(LoggingMixin, DuplexAbstractSession[bytes, Start | Delta | 
         self.recorder = recorder
         self.vpr_uid = vpr_uid
 
-        self.transcription_session = transcription.session()
+        self.transcription_session = transcription.session(fmt="pcm", sample_rate=self.config.sr)
         self._utterance_sequence = 0
 
-        # Track utterance info for Done event
-        self._current_utterance_start: float | None = None
-        self._current_utterance_end: float | None = None
-        self._current_full_text: str = ""
+        # VPR async processing
+        self._vpr_queue: asyncio.Queue[_VPRTask] = asyncio.Queue()
+        self._vpr_results: dict[int, bool] = {}  # sequence -> is_doctor
+        self._vpr_worker_task: asyncio.Task[None] | None = None
+
+        # Audio streaming
+        self._audio_sender_task: asyncio.Task[None] | None = None
+
+        # Utterance tracking (utterance_id -> data)
+        self._utterances: dict[str, _UtteranceData] = {}
 
     async def start(self) -> None:
         """Start the recording session."""
         try:
-            # Start transcription session
+            # Start transcription
             try:
                 await self.transcription_session.start()
             except TranscriptionError as e:
@@ -342,7 +343,6 @@ class SessionContext(LoggingMixin, DuplexAbstractSession[bytes, Start | Delta | 
                 await self.recorder.start(self.config.audio_key_prefix, self.session.id)
             except Exception as e:
                 self.logger.error(f"Failed to start recording: {e}")
-                # Try to clean up transcription
                 with contextlib.suppress(BaseException):
                     await self.transcription_session.close()
                 raise RecordingError(ErrorMessages.RECORDING_START_FAILED) from e
@@ -352,6 +352,12 @@ class SessionContext(LoggingMixin, DuplexAbstractSession[bytes, Start | Delta | 
             last_utterance = await self.utterance_repo.first(f.sequence.desc().build())
             self._utterance_sequence = 0 if last_utterance is None else last_utterance.sequence
 
+            # Start VPR worker
+            self._vpr_worker_task = asyncio.create_task(self._vpr_worker())
+
+            # Start audio sender
+            self._audio_sender_task = asyncio.create_task(self._audio_sender())
+
             self.logger.info(f"Started session context for {self.session.id}")
 
         except RecordingError:
@@ -360,37 +366,168 @@ class SessionContext(LoggingMixin, DuplexAbstractSession[bytes, Start | Delta | 
             self.logger.error(f"Failed to start session: {e}")
             raise InternalSessionServiceError(ErrorMessages.RECORDING_START_FAILED) from e
 
-    async def finish(self) -> None:
-        """Finish the transcription session."""
+    async def _audio_sender(self) -> None:
+        """Continuously send audio frames to transcription."""
         try:
-            await self.transcription_session.finish()
-            self.logger.info(f"Finished transcription for session {self.session.id}")
+            async for frame in self.recorder.stream(
+                chunk_size=self.config.sr // 10,  # 100ms chunks
+                format=AudioFormat.PCM,
+                rate=self.config.sr,
+                channels=1,
+            ):
+                await self.transcription_session.send(frame)
+        except asyncio.CancelledError:
+            self.logger.debug("Audio sender cancelled")
         except Exception as e:
-            self.logger.error(f"Failed to finish transcription: {e}")
-            # Don't raise, just log
+            self.logger.error(f"Audio sender error: {e}")
+
+    async def _vpr_worker(self) -> None:
+        """Background worker for VPR verification."""
+        try:
+            while True:
+                task = await self._vpr_queue.get()
+
+                try:
+                    # Calculate audio segment time range with buffer
+                    buffer_seconds = self.config.segment_buffer_ms / 1000.0
+                    utterance_start = datetime.datetime.fromtimestamp(
+                        task.started_at - buffer_seconds,
+                        tz=datetime.UTC,
+                    )
+                    utterance_end = datetime.datetime.fromtimestamp(
+                        task.ended_at + buffer_seconds,
+                        tz=datetime.UTC,
+                    )
+
+                    # Extract audio segment
+                    audio_segment = await self.recorder.segment(
+                        started_at=utterance_start,
+                        ended_at=utterance_end,
+                        rate=self.config.vpr_sr,
+                        channels=1,
+                        format=AudioFormat.MP3,
+                    )
+
+                    self.logger.debug(
+                        f"VPR seq={task.sequence}: extracted audio "
+                        f"from {utterance_start.isoformat()} to {utterance_end.isoformat()} "
+                        f"(duration={(task.ended_at - task.started_at):.2f}s)"
+                    )
+
+                    # VPR verification
+                    try:
+                        vpr_score = await self.vpr.verify(
+                            uid=self.vpr_uid,
+                            data=audio_segment,
+                            sr=self.config.vpr_sr,
+                        )
+                        is_doctor = vpr_score >= self.config.vpr_threshold
+
+                        self.logger.debug(
+                            f"VPR seq={task.sequence}: score={vpr_score:.3f}, "
+                            f"is_doctor={is_doctor}, text={task.text[:30]}..."
+                        )
+                    except VPRError as e:
+                        self.logger.warning(f"VPR verification failed: {e}")
+                        is_doctor = False
+
+                    # Store result
+                    self._vpr_results[task.sequence] = is_doctor
+
+                    # Store utterance to database
+                    await self._store_utterance(
+                        sequence=task.sequence,
+                        text=task.text,
+                        started_at=task.started_at,
+                        ended_at=task.ended_at,
+                        is_doctor=is_doctor,
+                    )
+
+                except Exception as e:
+                    self.logger.error(f"VPR worker error for seq={task.sequence}: {e}")
+                    self._vpr_results[task.sequence] = False
+
+                finally:
+                    self._vpr_queue.task_done()
+
+        except asyncio.CancelledError:
+            self.logger.debug("VPR worker cancelled")
+
+    async def _store_utterance(
+        self,
+        sequence: int,
+        text: str,
+        started_at: float,
+        ended_at: float,
+        is_doctor: bool,
+    ) -> None:
+        """Store utterance to database."""
+        try:
+            f = segment_filter().session_id.eq(self.session.id)
+            current_segment = await self.segment_repo.first(f.sequence.desc().build())
+            segment_id = current_segment.id if current_segment else "unknown"
+
+            speaker = Speaker.DOCTOR if is_doctor else Speaker.PATIENT
+
+            utterance = Utterance(
+                session_id=self.session.id,
+                segment_id=segment_id,
+                sequence=sequence,
+                speaker=speaker,
+                text=text,
+                confidence=None,
+                start_time_ms=int(started_at * 1000),
+                end_time_ms=int(ended_at * 1000),
+                timestamp=utils.utcnow(),
+            )
+
+            await self.utterance_repo.create(utterance)
+
+            self.logger.debug(
+                f"Stored utterance {utterance.id} (seq={sequence}, speaker={speaker.value})"
+            )
+
+        except Exception as e:
+            self.logger.error(f"Failed to store utterance seq={sequence}: {e}")
 
     async def close(self) -> None:
         """Close the session context."""
         try:
-            # Close transcription session
+            # Cancel audio sender
+            if self._audio_sender_task:
+                self._audio_sender_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await self._audio_sender_task
+
+            # Finish transcription
             try:
+                await self.transcription_session.finish()
                 await self.transcription_session.close()
             except Exception as e:
                 self.logger.warning(f"Failed to close transcription: {e}")
 
-            # Stop recorder and get segment info
+            # Wait for VPR queue to finish
+            if self._vpr_queue:
+                await self._vpr_queue.join()
+
+            # Cancel VPR worker
+            if self._vpr_worker_task:
+                self._vpr_worker_task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await self._vpr_worker_task
+
+            # Stop recorder
             try:
                 segment_data = await self.recorder.stop()
             except Exception as e:
                 self.logger.error(f"Failed to stop recording: {e}")
                 raise RecordingError(ErrorMessages.RECORDING_STOP_FAILED) from e
 
-            # Determine segment sequence
+            # Store segment info
             f = segment_filter().session_id.eq(self.session.id)
             last_segment = await self.segment_repo.first(f.sequence.desc().build())
             seq = 1 if last_segment is None else last_segment.sequence + 1
 
-            # Store segment info
             segment = Segment(
                 session_id=self.session.id,
                 audio_key=segment_data.key,
@@ -408,10 +545,13 @@ class SessionContext(LoggingMixin, DuplexAbstractSession[bytes, Start | Delta | 
                 )
             except Exception as e:
                 self.logger.error(f"Failed to store segment: {e}")
-                # Don't raise, segment data is already saved in storage
 
             # Clear audio frames
             self.recorder.clear_frames()
+
+            # Clean up utterance tracking
+            self._utterances.clear()
+            self._vpr_results.clear()
 
         except RecordingError:
             raise
@@ -419,138 +559,113 @@ class SessionContext(LoggingMixin, DuplexAbstractSession[bytes, Start | Delta | 
             self.logger.error(f"Failed to close session: {e}")
             raise InternalSessionServiceError() from e
 
-    async def send(self, message: bytes) -> None:
-        """Send audio data to transcription service."""
-        try:
-            await self.transcription_session.send(message)
-        except Exception as e:
-            self.logger.error(f"Failed to send audio data: {e}")
-            raise InternalSessionServiceError(ErrorMessages.TRANSCRIPTION_FAILED) from e
-
     def receive(self) -> AsyncStream[Start | Delta | Done]:
         """Receive transcription events."""
         return AsyncStream(self._receive_iter())
 
     async def _receive_iter(self) -> t.AsyncIterator[Start | Delta | Done]:
-        """Internal iterator for receiving and processing transcription
-        events."""
+        """Internal iterator for receiving transcription events."""
         async for event in self.transcription_session.receive():
             if isinstance(event, events.Start):
-                # Reset utterance tracking
-                self._current_utterance_start = None
-                self._current_utterance_end = None
-                self._current_full_text = ""
+                # Track new utterance with absolute start time
+                self._utterances[event.utterance_id] = {
+                    "started_at": event.started_at,
+                    "text": "",
+                    "sequence": None,
+                }
 
                 yield Start(session_id=self.session.id)
 
             elif isinstance(event, events.Delta):
-                # Track utterance timing
-                if self._current_utterance_start is None:
-                    self._current_utterance_start = event.from_at
+                # Update utterance tracking
+                if event.utterance_id not in self._utterances:
+                    self.logger.warning(
+                        f"Received Delta for unknown utterance: {event.utterance_id}"
+                    )
+                    continue
 
-                self._current_utterance_end = event.to_at
+                utt = self._utterances[event.utterance_id]
 
-                # Delta is cumulative
                 if not event.interim:
-                    self._current_full_text = event.text
+                    # Final delta - update text
+                    utt["text"] = event.text
 
-                yield Delta(
-                    session_id=self.session.id,
-                    from_at=event.from_at,
-                    to_at=event.to_at,
-                    text=event.text,
-                    interim=event.interim,
-                )
+                    # Assign sequence number
+                    self._utterance_sequence += 1
+                    utt["sequence"] = self._utterance_sequence
+
+                    # Calculate absolute timestamps (only for display, not for VPR)
+                    started_at = utt["started_at"]
+                    from_at = started_at + event.offset_begin
+                    to_at = (
+                        started_at + event.offset_end
+                        if event.offset_end is not None
+                        else started_at + event.offset_begin + 1.0
+                    )
+
+                    # Yield Delta with sequence
+                    yield Delta(
+                        session_id=self.session.id,
+                        from_at=from_at,
+                        to_at=to_at,
+                        text=event.text,
+                        interim=False,
+                        sequence=self._utterance_sequence,
+                    )
+                else:
+                    # Interim result - calculate display timestamps
+                    started_at = utt["started_at"]
+                    from_at = started_at + event.offset_begin
+                    to_at = (
+                        started_at + event.offset_end
+                        if event.offset_end is not None
+                        else started_at + event.offset_begin + 1.0
+                    )
+
+                    yield Delta(
+                        session_id=self.session.id,
+                        from_at=from_at,
+                        to_at=to_at,
+                        text=event.text,
+                        interim=True,
+                        sequence=None,
+                    )
 
             elif isinstance(event, events.Done):
-                # Speaker identification
-                is_doctor = False
-                full_text = self._current_full_text
-                vpr_score: float | None = None
+                # Get utterance data
+                if event.utterance_id not in self._utterances:
+                    self.logger.warning(
+                        f"Received Done for unknown utterance: {event.utterance_id}"
+                    )
+                    continue
 
-                if (
-                    self._current_utterance_start is not None
-                    and self._current_utterance_end is not None
-                    and full_text
-                ):
-                    try:
-                        # Extract audio segment
-                        buffer_seconds = self.config.segment_buffer_ms / 1000.0
-                        utterance_start = datetime.datetime.fromtimestamp(
-                            self._current_utterance_start - buffer_seconds,
-                            tz=datetime.UTC,
+                utt = self._utterances[event.utterance_id]
+                sequence = utt.get("sequence")
+                text = utt.get("text", "")
+
+                # Only queue for VPR if we have valid data
+                if sequence is not None and text:
+                    # Queue VPR task using absolute timestamps from Start and Done events
+                    await self._vpr_queue.put(
+                        _VPRTask(
+                            sequence=sequence,
+                            text=text,
+                            started_at=utt["started_at"],  # From Start event
+                            ended_at=event.ended_at,  # From Done event
                         )
-                        utterance_end = datetime.datetime.fromtimestamp(
-                            self._current_utterance_end + buffer_seconds,
-                            tz=datetime.UTC,
-                        )
+                    )
 
-                        audio_segment = await self.recorder.segment(
-                            started_at=utterance_start,
-                            ended_at=utterance_end,
-                            rate=self.config.vpr_sr,
-                            channels=1,
-                        )
+                # Check VPR result (may not be ready yet)
+                is_doctor = self._vpr_results.get(sequence, False) if sequence else False
 
-                        # VPR verification
-                        try:
-                            vpr_score = await self.vpr.verify(
-                                uid=self.vpr_uid,
-                                data=audio_segment,
-                                sr=self.config.vpr_sr,
-                            )
-                            is_doctor = vpr_score >= self.config.vpr_threshold
-
-                            self.logger.debug(
-                                f"VPR score: {vpr_score:.3f}, is_doctor: {is_doctor}, "
-                                f"text: {full_text[:50]}..."
-                            )
-                        except VPRError as e:
-                            self.logger.warning(f"VPR verification failed: {e}")
-
-                    except Exception as e:
-                        self.logger.warning(f"Failed to verify speaker: {e}")
-
-                    # Store utterance
-                    try:
-                        self._utterance_sequence += 1
-
-                        f = segment_filter().session_id.eq(self.session.id)
-                        current_segment = await self.segment_repo.first(f.sequence.desc().build())
-                        segment_id = current_segment.id if current_segment else "unknown"
-
-                        speaker = Speaker.DOCTOR if is_doctor else Speaker.PATIENT
-
-                        utterance = Utterance(
-                            session_id=self.session.id,
-                            segment_id=segment_id,
-                            sequence=self._utterance_sequence,
-                            speaker=speaker,
-                            text=full_text,
-                            confidence=vpr_score,
-                            start_time_ms=int(self._current_utterance_start * 1000),
-                            end_time_ms=int(self._current_utterance_end * 1000),
-                            timestamp=utils.utcnow(),
-                        )
-
-                        await self.utterance_repo.create(utterance)
-
-                        self.logger.debug(
-                            f"Stored utterance {utterance.id} "
-                            f"(seq={self._utterance_sequence}, speaker={speaker.value})"
-                        )
-
-                    except Exception as e:
-                        self.logger.error(f"Failed to store utterance: {e}")
-
-                # Yield Done event
                 yield Done(
                     session_id=self.session.id,
                     is_doctor=is_doctor,
-                    full_text=full_text,
+                    full_text=text,
+                    sequence=sequence or 0,
                 )
 
-                # Reset tracking
-                self._current_utterance_start = None
-                self._current_utterance_end = None
-                self._current_full_text = ""
+                # Clean up to prevent memory leak
+                del self._utterances[event.utterance_id]
+                if sequence in self._vpr_results:
+                    del self._vpr_results[sequence]
