@@ -1,0 +1,34 @@
+from __future__ import annotations
+
+from nicegui import app
+from nicegui import ui
+
+from audex.config import Config
+from audex.helper.mixin import LoggingMixin
+from audex.lifespan import LifeSpan
+
+
+class View(LoggingMixin):
+    __logtag__ = "audex.view"
+
+    def __init__(
+        self,
+        lifespan: LifeSpan,
+        config: Config,
+    ):
+        super().__init__()
+        self.lifespan = lifespan
+        self.config = config
+        app.on_startup(self.lifespan.__aenter__)
+        app.on_shutdown(self.lifespan.__aexit__)
+
+    def run(self) -> None:
+        from audex.view.pages import dashboard  # noqa: F401
+        from audex.view.pages import login  # noqa: F401
+        from audex.view.pages import recording  # noqa: F401
+        from audex.view.pages import register  # noqa: F401
+        from audex.view.pages import sessions  # noqa: F401
+        from audex.view.pages import settings  # noqa: F401
+        from audex.view.pages import voiceprint  # noqa: F401
+
+        ui.run(title=self.config.core.app_name, native=True)

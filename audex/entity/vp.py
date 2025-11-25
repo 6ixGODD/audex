@@ -58,7 +58,7 @@ class VP(BaseEntity):
         ```
     """
 
-    id: str = StringField(immutable=True, default_factory=lambda: utils.gen_id(prefix="vp_reg-"))
+    id: str = StringField(default_factory=lambda: utils.gen_id(prefix="vp_reg-"))
     doctor_id: str = StringField()
     vpr_uid: str = StringField()
     vpr_group_id: str | None = StringField(nullable=True)

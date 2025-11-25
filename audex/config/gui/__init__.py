@@ -17,6 +17,6 @@ class GUIConfig(BaseModel):
     )
 
     fullscreen: bool = Field(
-        default=True,
+        default=False,
         description="Whether to launch the GUI in fullscreen mode.",
     )

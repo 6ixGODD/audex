@@ -65,7 +65,7 @@ class Session(BaseEntity):
         ```
     """
 
-    id: str = StringField(immutable=True, default_factory=lambda: utils.gen_id(prefix="session-"))
+    id: str = StringField(default_factory=lambda: utils.gen_id(prefix="session-"))
     doctor_id: str = StringField()
     patient_name: str | None = StringField(nullable=True)
     clinic_number: str | None = StringField(nullable=True)

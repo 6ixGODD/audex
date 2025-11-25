@@ -83,7 +83,7 @@ class Utterance(BaseEntity):
         ```
     """
 
-    id: str = StringField(immutable=True, default_factory=lambda: utils.gen_id(prefix="utterance-"))
+    id: str = StringField(default_factory=lambda: utils.gen_id(prefix="utterance-"))
     session_id: str = StringField()
     segment_id: str = StringField()
     sequence: int = IntegerField()

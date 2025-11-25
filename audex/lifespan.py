@@ -18,6 +18,9 @@ class LifeSpan(LoggingMixin, t.AsyncContextManager):
         super().__init__()
         self.contexts = contexts
 
+    def append(self, context: object) -> None:
+        self.contexts += (context,)
+
     async def __aenter__(self) -> t.Self:
         atasks: list[t.Coroutine[None, None, None]] = []
         for ctx in self.contexts:

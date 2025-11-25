@@ -3,12 +3,12 @@ from __future__ import annotations
 from dependency_injector import containers
 from dependency_injector import providers
 
-from audex.applications.container import ApplicationContainer
 from audex.injectors.config import config
 from audex.injectors.lifespan import lifespan
 from audex.lib.injectors.container import InfrastructureContainer
 from audex.lib.repos.container import RepositoryContainer
 from audex.service.injectors.container import ServiceContainer
+from audex.view.container import ViewContainer
 
 
 class Container(containers.DeclarativeContainer):
@@ -18,7 +18,7 @@ class Container(containers.DeclarativeContainer):
     # Containers
     infrastructure = providers.Container(InfrastructureContainer, config=config)
     repository = providers.Container(RepositoryContainer, sqlite=infrastructure.sqlite)
-    service = providers.Container(
+    service: ServiceContainer = providers.Container(
         ServiceContainer,
         config=config,
         infrastructure=infrastructure,
@@ -36,11 +36,5 @@ class Container(containers.DeclarativeContainer):
         infrastructure.transcription,
     )
 
-    # Application
-    app = providers.Container(
-        ApplicationContainer,
-        config=config,
-        lifespan=lifespan,
-        infrastructure=infrastructure,
-        service=service,
-    )
+    # Views
+    view = providers.Container(ViewContainer, config=config, service=service, lifespan=lifespan)

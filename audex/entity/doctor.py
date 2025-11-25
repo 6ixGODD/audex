@@ -58,7 +58,7 @@ class Doctor(BaseEntity):
         ```
     """
 
-    id: str = StringField(immutable=True, default_factory=lambda: utils.gen_id(prefix="doctor-"))
+    id: str = StringField(default_factory=lambda: utils.gen_id(prefix="doctor-"))
     eid: str = StringField()
     password_hash: HashedPassword = StringBackedField(HashedPassword)
     name: str = StringField()

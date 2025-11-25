@@ -65,7 +65,7 @@ class Segment(BaseEntity):
         ```
     """
 
-    id: str = StringField(immutable=True, default_factory=lambda: utils.gen_id(prefix="segment-"))
+    id: str = StringField(default_factory=lambda: utils.gen_id(prefix="segment-"))
     session_id: str = StringField()
     sequence: int = IntegerField()
     audio_key: str = StringField()
