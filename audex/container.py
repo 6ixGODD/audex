@@ -36,4 +36,4 @@ class Container(containers.DeclarativeContainer):
     )
 
     # Views
-    view = providers.Container(ViewContainer, config=config, service=service, lifespan=lifespan)
+    views = providers.Container(ViewContainer, config=config, service=service, lifespan=lifespan)
