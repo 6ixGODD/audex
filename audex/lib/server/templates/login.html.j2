@@ -1,4 +1,4 @@
-<! DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -11,18 +11,30 @@
         <div class="login-card">
             <div class="login-header">
                 <h1>会话导出系统</h1>
-                <p>请登录以访问导出功能</p>
+                <p>登录以访问导出功能</p>
             </div>
 
             <form id="loginForm" class="login-form">
                 <div class="form-group">
                     <label for="eid">工号</label>
-                    <input type="text" id="eid" name="eid" required autocomplete="username">
+                    <input
+                        type="text"
+                        id="eid"
+                        name="eid"
+                        required
+                        autocomplete="username"
+                        placeholder="请输入工号">
                 </div>
 
                 <div class="form-group">
                     <label for="password">密码</label>
-                    <input type="password" id="password" name="password" required autocomplete="current-password">
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        required
+                        autocomplete="current-password"
+                        placeholder="请输入密码">
                 </div>
 
                 <div id="errorMessage" class="error-message" style="display: none;"></div>
@@ -36,46 +48,64 @@
 
     <script src="/static/script.js"></script>
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        const form = document.getElementById('loginForm');
+        const eidInput = document.getElementById('eid');
+        const passwordInput = document.getElementById('password');
+        const errorMessage = document.getElementById('errorMessage');
+        const loginBtn = document.getElementById('loginBtn');
+
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const eid = document.getElementById('eid').value;
-            const password = document.getElementById('password').value;
-            const errorMessage = document.getElementById('errorMessage');
-            const loginBtn = document.getElementById('loginBtn');
+            const eid = eidInput.value.trim();
+            const password = passwordInput.value;
 
-            // Clear previous error
-            errorMessage.style.display = 'none';
+            if (!eid || ! password) {
+                showError('请输入工号和密码');
+                return;
+            }
+
+            hideError();
             loginBtn.disabled = true;
             loginBtn.textContent = '登录中...';
 
             try {
                 const response = await fetch('/api/login', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ eid, password }),
                 });
 
                 const data = await response.json();
 
                 if (response.ok && data.success) {
-                    // Login successful, redirect to index
-                    window.location.href = '/';
+                    loginBtn.textContent = '登录成功';
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 200);
                 } else {
-                    // Show error
-                    errorMessage.textContent = data.error || '登录失败，请检查工号和密码';
-                    errorMessage.style.display = 'block';
+                    showError(data.error || '登录失败，请检查工号和密码');
                 }
             } catch (error) {
-                errorMessage.textContent = '网络错误，请稍后重试';
-                errorMessage.style.display = 'block';
+                showError('网络错误，请稍后重试');
             } finally {
-                loginBtn.disabled = false;
-                loginBtn.textContent = '登录';
+                if (! errorMessage.style.display || errorMessage.style.display === 'none') {
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = '登录';
+                }
             }
         });
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+
+        eidInput.focus();
     </script>
 </body>
 </html>

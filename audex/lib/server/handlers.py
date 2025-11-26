@@ -10,8 +10,6 @@ from starlette.templating import Jinja2Templates
 from audex.filters.generated import doctor_filter
 from audex.filters.generated import session_filter
 from audex.helper.mixin import LoggingMixin
-from audex.lib.exporter import Exporter
-from audex.lib.repos.doctor import DoctorRepository
 from audex.lib.server.auth import AuthMiddleware
 from audex.lib.server.types import DoctorSessionData
 from audex.lib.server.types import ErrorResponse
@@ -20,6 +18,10 @@ from audex.lib.server.types import LoginRequest
 from audex.lib.server.types import LoginResponse
 from audex.lib.server.types import SessionListResponse
 from audex.valueobj.common.auth import Password
+
+if t.TYPE_CHECKING:
+    from audex.lib.exporter import Exporter
+    from audex.lib.repos.doctor import DoctorRepository
 
 
 class RequestHandlers(LoggingMixin):
