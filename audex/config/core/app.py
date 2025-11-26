@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import os
-import pathlib
-
 from pydantic import Field
 
 from audex import __title__
@@ -29,9 +26,4 @@ class AppConfig(BaseModel):
     native: bool = Field(
         default=False,
         description="Indicates if the application is running in native mode.",
-    )
-
-    logo_path: os.PathLike[str] = Field(
-        default=pathlib.Path("assets/logo.png"),
-        description="Path to the application logo.",
     )
