@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import pathlib
 import sys
 import typing as t
 
@@ -96,6 +97,11 @@ class LoggingConfig(BaseModel):
         default_factory=lambda: [
             LoggingTarget(logname="stdout", loglevel="debug"),
             LoggingTarget(logname="stderr", loglevel="error"),
+            LoggingTarget(
+                logname=pathlib.Path("logs/audex.jsonl"),
+                loglevel="info",
+                rotation=Rotation(size_based=SizeBasedRotation()),
+            ),
         ],
         description="List of logging targets",
     )

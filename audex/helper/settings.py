@@ -19,7 +19,7 @@ class Settings(ps.BaseSettings):
             import yaml
 
             data = yaml.safe_load(pathlib.Path(path).read_text(encoding="utf-8"))
-            return cls.model_validate(data, strict=True)
+            return cls.model_validate(data, strict=False)
         except ImportError as e:
             raise RequiredModuleNotFoundError(
                 "`yaml` module is required to load configuration from YAML "
@@ -32,7 +32,7 @@ class Settings(ps.BaseSettings):
             import json5
 
             data = json5.loads(pathlib.Path(fpath).read_text(encoding="utf-8"))
-            return cls.model_validate(data, strict=True)
+            return cls.model_validate(data, strict=False)
         except ImportError:
             import json
 
@@ -43,7 +43,7 @@ class Settings(ps.BaseSettings):
                     "If you need to load configuration from JSON5 files, please install the "
                     "`json5` module using `pip install json5`."
                 ) from e
-            return cls.model_validate(data, strict=True)
+            return cls.model_validate(data, strict=False)
 
     def _collect_field_desc(
         self,
@@ -93,6 +93,13 @@ class Settings(ps.BaseSettings):
         # Handle None - return as-is if we want to include it
         if value is None:
             return value if include_none else None
+
+        # Handle os.PathLike
+        if isinstance(value, os.PathLike):
+            try:
+                return os.fspath(value)
+            except Exception:
+                return None
 
         # Execute callables
         if callable(value):
@@ -181,7 +188,7 @@ class Settings(ps.BaseSettings):
             YAML string representation.
         """
         if value is None:
-            return "null"
+            return "~"
         if isinstance(value, bool):
             return "true" if value else "false"
         if isinstance(value, (int | float)):
@@ -190,7 +197,7 @@ class Settings(ps.BaseSettings):
             # Check if string needs quoting
             if (
                 not value
-                or value[0] in "-?:,[]{}#&*!|>'\"%@`"
+                or value[0] in "-? :,[]{}#&*! |>'\"%@`"
                 or value in ("true", "false", "null", "yes", "no", "on", "off")
                 or ":" in value
                 or "#" in value
@@ -211,104 +218,104 @@ class Settings(ps.BaseSettings):
         descriptions = self._collect_field_desc()
         data = self.serl(include_none=True)
 
-        def add_comments(obj: t.Any, prefix: str = "", indent: int = 0) -> list[str]:
-            """Recursively add comments to YAML structure."""
-            lines = []
+        def write_yaml_value(
+            f: t.TextIO,
+            key: str,
+            value: t.Any,
+            field_path: str,
+            indent: int = 0,
+        ) -> None:
+            """Write a single YAML key-value pair with proper
+            formatting."""
             indent_str = "  " * indent
+            desc = descriptions.get(field_path, "")
+            comment = f" # {desc}" if desc else ""
 
-            if isinstance(obj, dict):
-                for key, value in obj.items():
-                    field_path = f"{prefix}.{key}" if prefix else key
+            if value is None:
+                f.write(f"{indent_str}{key}: ~{comment}\n")
+            elif isinstance(value, dict):
+                f.write(f"{indent_str}{key}:{comment}\n")
+                write_yaml_dict(f, value, field_path, indent + 1)
+            elif isinstance(value, list):
+                f.write(f"{indent_str}{key}:{comment}\n")
+                write_yaml_list(f, value, field_path, indent + 1)
+            elif isinstance(value, str) and ("\n" in value or len(value) > 80):
+                f.write(f"{indent_str}{key}: |-{comment}\n")
+                for line in value.split("\n"):
+                    f.write(f"{indent_str}  {line}\n")
+            else:
+                yaml_value = self._yaml_repr(value)
+                f.write(f"{indent_str}{key}: {yaml_value}{comment}\n")
 
-                    # Get description if available
-                    desc = descriptions.get(field_path, "")
-                    comment = f" # {desc}" if desc else ""
+        def write_yaml_dict(
+            f: t.TextIO,
+            obj: dict[str, t.Any],
+            prefix: str,
+            indent: int = 0,
+        ) -> None:
+            """Write a dictionary as YAML."""
+            for key, value in obj.items():
+                field_path = f"{prefix}.{key}" if prefix else key
+                write_yaml_value(f, key, value, field_path, indent)
 
-                    # Handle None values - use ~ to represent None
-                    if value is None:
-                        lines.append(f"{indent_str}{key}: ~{comment}")
-                    elif isinstance(value, dict):
-                        lines.append(f"{indent_str}{key}:{comment}")
-                        nested = add_comments(value, prefix=field_path, indent=indent + 1)
-                        lines.extend(nested)
-                    elif isinstance(value, list):
-                        lines.append(f"{indent_str}{key}:{comment}")
-                        for item in value:
-                            if isinstance(item, dict):
-                                # Get first key-value pair for inline format
-                                items_list = list(item.items())
-                                if items_list:
-                                    first_key, first_value = items_list[0]
-                                    first_field_path = f"{field_path}.{first_key}"
-                                    first_desc = descriptions.get(first_field_path, "")
-                                    first_comment = f"  # {first_desc}" if first_desc else ""
+        def write_yaml_list(
+            f: t.TextIO,
+            items: list[t.Any],
+            prefix: str,
+            indent: int = 0,
+        ) -> None:
+            """Write a list as YAML."""
+            indent_str = "  " * indent
+            for item in items:
+                if isinstance(item, dict):
+                    # Write dict items with proper structure
+                    items_list = list(item.items())
+                    if items_list:
+                        # Write first key-value pair with dash
+                        first_key, first_value = items_list[0]
+                        first_field_path = f"{prefix}.{first_key}"
+                        first_desc = descriptions.get(first_field_path, "")
+                        first_comment = f"  # {first_desc}" if first_desc else ""
 
-                                    if first_value is None:
-                                        lines.append(
-                                            f"{indent_str}  - {first_key}: ~{first_comment}"
-                                        )
-                                    elif isinstance(first_value, str) and (
-                                        "\n" in first_value or len(first_value) > 80
-                                    ):
-                                        lines.append(
-                                            f"{indent_str}  - {first_key}: |-{first_comment}"
-                                        )
-                                        for line in first_value.split("\n"):
-                                            lines.append(f"{indent_str}      {line}")
-                                    else:
-                                        yaml_val = self._yaml_repr(first_value)
-                                        lines.append(
-                                            f"{indent_str}  - {first_key}: {yaml_val}{first_comment}"
-                                        )
+                        if first_value is None:
+                            f.write(f"{indent_str}- {first_key}: ~{first_comment}\n")
+                        elif isinstance(first_value, dict):
+                            f.write(f"{indent_str}- {first_key}:{first_comment}\n")
+                            write_yaml_dict(f, first_value, first_field_path, indent + 1)
+                        elif isinstance(first_value, list):
+                            f.write(f"{indent_str}- {first_key}:{first_comment}\n")
+                            write_yaml_list(f, first_value, first_field_path, indent + 1)
+                        elif isinstance(first_value, str) and (
+                            "\n" in first_value or len(first_value) > 80
+                        ):
+                            f.write(f"{indent_str}- {first_key}: |-{first_comment}\n")
+                            for line in first_value.split("\n"):
+                                f.write(f"{indent_str}    {line}\n")
+                        else:
+                            yaml_val = self._yaml_repr(first_value)
+                            f.write(f"{indent_str}- {first_key}: {yaml_val}{first_comment}\n")
 
-                                    # Add remaining key-value pairs
-                                    for sub_key, sub_value in items_list[1:]:
-                                        sub_field_path = f"{field_path}.{sub_key}"
-                                        sub_desc = descriptions.get(sub_field_path, "")
-                                        sub_comment = f"  # {sub_desc}" if sub_desc else ""
-
-                                        if sub_value is None:
-                                            lines.append(
-                                                f"{indent_str}    {sub_key}: ~{sub_comment}"
-                                            )
-                                        elif isinstance(sub_value, str) and (
-                                            "\n" in sub_value or len(sub_value) > 80
-                                        ):
-                                            lines.append(
-                                                f"{indent_str}    {sub_key}: |-{sub_comment}"
-                                            )
-                                            for line in sub_value.split("\n"):
-                                                lines.append(f"{indent_str}      {line}")
-                                        else:
-                                            yaml_val = self._yaml_repr(sub_value)
-                                            lines.append(
-                                                f"{indent_str}    {sub_key}: {yaml_val}{sub_comment}"
-                                            )
-                            else:
-                                yaml_item = self._yaml_repr(item)
-                                lines.append(f"{indent_str}  - {yaml_item}")
-                    # Handle multiline strings
-                    elif isinstance(value, str) and ("\n" in value or len(value) > 80):
-                        lines.append(f"{indent_str}{key}: |-{comment}")
-                        for line in value.split("\n"):
-                            lines.append(f"{indent_str}  {line}")
-                    else:
-                        yaml_value = self._yaml_repr(value)
-                        lines.append(f"{indent_str}{key}: {yaml_value}{comment}")
-
-            return lines
+                        # Write remaining key-value pairs
+                        for sub_key, sub_value in items_list[1:]:
+                            sub_field_path = f"{prefix}.{sub_key}"
+                            write_yaml_value(f, sub_key, sub_value, sub_field_path, indent + 1)
+                elif isinstance(item, list):
+                    # Nested list
+                    f.write(f"{indent_str}-\n")
+                    write_yaml_list(f, item, prefix, indent + 1)
+                else:
+                    yaml_item = self._yaml_repr(item)
+                    f.write(f"{indent_str}- {yaml_item}\n")
 
         with pathlib.Path(fpath).open("w", encoding="utf-8") as f:
-            lines = add_comments(data)
-            f.write("\n".join(lines))
-            f.write("\n")
+            write_yaml_dict(f, data, "")
 
     def to_json(self, fpath: str | pathlib.Path | os.PathLike[str], jsonc: bool = True) -> None:
         """Export configuration to JSON or JSONC file.
 
         Args:
             fpath: Path to the output JSON/JSONC file.
-            jsonc: If True, export as JSONC with comments. If False,
+            jsonc: If True, export as JSONC with comments.  If False,
                 export as plain JSON.
         """
         import json
@@ -318,8 +325,8 @@ class Settings(ps.BaseSettings):
 
         # Adjust file extension based on with_comments
         fpath_str = str(fpath)
-        if jsonc and not fpath_str.endswith(".jsonc"):
-            # Change extension to .jsonc if comments are enabled
+        if jsonc and not fpath_str.endswith(". jsonc"):
+            # Change extension to . jsonc if comments are enabled
             base = pathlib.Path(fpath_str).stem
             path = f"{base}.jsonc"
         elif not jsonc and fpath_str.endswith(".jsonc"):
@@ -394,6 +401,13 @@ class Settings(ps.BaseSettings):
         # Handle None
         if value is None:
             return ""
+
+        # Handle os.PathLike
+        if isinstance(value, os.PathLike):
+            try:
+                return os.fspath(value)
+            except Exception:
+                return ""
 
         # Handle boolean
         if isinstance(value, bool):
@@ -470,7 +484,7 @@ class Settings(ps.BaseSettings):
             f.write(
                 "# Description: Example environment configuration file for Audex application.\n"
             )
-            f.write("# Note: Copy this file to '.env' and modify the values as needed.\n\n")
+            f.write("# Note: Copy this file to '. env' and modify the values as needed.\n\n")
             for top_key, flattened in grouped_keys.items():
                 # Add separator between top-level sections
                 f.write(f"# {'=' * 70}\n")
