@@ -38,18 +38,12 @@ jobs:
           key: ${{ runner.os }}-pip-docs-${{ hashFiles('**/pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-pip-docs-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: latest
-          virtualenvs-create: true
-          virtualenvs-in-project: true
       - name: Install dependencies
         run: |
-          poetry install --extras docs --no-interaction
+          pip install mkdocs>=1.6.1 mkdocs-material>=9.7 mkdocs-minify-plugin>=0.8 "mkdocstrings[python]>=0.30.1" pymdown-extensions>=10.17.1
       - name: Build documentation
         run: |
-          poetry run mkdocs build --strict
+          mkdocs build --strict
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
