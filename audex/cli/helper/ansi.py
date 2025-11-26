@@ -99,7 +99,7 @@ class ANSI:
             return True
 
         # Check if stdout is a TTY
-        return hasattr(sys.stdout, "isatty") or sys.stdout.isatty()
+        return hasattr(sys.stdout, "isatty") and sys.stdout.isatty()
 
     @classmethod
     def enable(cls, enabled: bool = True) -> None:
@@ -111,7 +111,7 @@ class ANSI:
         cls._enabled = enabled and cls.supports_color()
 
     @classmethod
-    def format(cls, text: str, /, *styles: STYLE | FG | BG | None) -> str:
+    def format(cls, text: str, /, *styles: STYLE | FG | BG) -> str:
         """Format text with the specified ANSI styles.
 
         Intelligently reapplies styles after any reset sequences in the text.
@@ -126,10 +126,16 @@ class ANSI:
         """
         if not cls._enabled or not styles:
             return text
-        if any(s is None for s in styles):
-            styles = tuple(s for s in styles if s is not None)
 
-        style_str = "".join(styles)
+        # Filter out None values and get the actual string values from enums
+        valid_styles = [
+            str(s.value) if hasattr(s, "value") else str(s) for s in styles if s is not None
+        ]
+
+        if not valid_styles:
+            return text
+
+        style_str = "".join(valid_styles)
 
         # Handle text that already contains reset codes
         if cls.STYLE.RESET in text:
@@ -168,9 +174,9 @@ class ANSI:
 
         Args:
             text: The text to format
-            r: R
-            g: G
-            b: B
+            r: Red value (0-255)
+            g: Green value (0-255)
+            b: Blue value (0-255)
             background: If True, set as background color instead of foreground
 
         Returns:
@@ -182,3 +188,6 @@ class ANSI:
         code = 48 if background else 38
         color_seq = f"\033[{code};2;{r};{g};{b}m"
         return f"{color_seq}{text}{cls.STYLE.RESET}"
+
+
+ANSI.enable()

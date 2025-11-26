@@ -9,7 +9,7 @@ import typing as t
 
 import halo
 
-from audex.utils import ANSI
+from audex.cli.helper.ansi import ANSI
 
 # Initialize spinner
 spinner = halo.Halo(spinner="dots")
@@ -98,11 +98,7 @@ def separator(width: int = 60) -> None:
     print("-" * width)
 
 
-def table(
-    headers: list[str],
-    rows: list[list[str]],
-    /,
-) -> None:
+def table(headers: list[str], rows: list[list[str]], /) -> None:
     """Print a simple table.
 
     Args:
@@ -127,6 +123,17 @@ def table(
     # Print rows
     for row in rows:
         print(" | ".join(str(cell).ljust(col_widths[i]) for i, cell in enumerate(row)))
+
+
+def table_dict(data: dict[str, t.Any], /, headers: tuple[str, str] = ("Key", "Value")) -> None:
+    """Print a table from a dictionary.
+
+    Args:
+        data: Dictionary to display
+        headers: Column headers
+    """
+    rows = [[str(k), str(v)] for k, v in data.items()]
+    table(list(headers), rows)
 
 
 def list_items(
