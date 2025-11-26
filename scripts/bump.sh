@@ -12,11 +12,11 @@ set -e
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Source common utilities
-# shellcheck source=bin/tools/common.sh
-. "$SCRIPT_DIR/common.sh"
+# shellcheck source=scripts/tools/common.sh
+. "$SCRIPT_DIR/tools/common.sh"
 
 # ============================================================================
 # Configuration
