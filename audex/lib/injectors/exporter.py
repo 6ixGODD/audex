@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from audex.lib.exporter import Exporter
-from audex.lib.repos.segment import SegmentRepository
-from audex.lib.repos.session import SessionRepository
-from audex.lib.repos.utterance import UtteranceRepository
-from audex.lib.store import Store
+import typing as t
+
+if t.TYPE_CHECKING:
+    from audex.lib.exporter import Exporter
+    from audex.lib.repos.segment import SegmentRepository
+    from audex.lib.repos.session import SessionRepository
+    from audex.lib.repos.utterance import UtteranceRepository
+    from audex.lib.store import Store
 
 
 def make_exporter(
@@ -13,6 +16,8 @@ def make_exporter(
     utterance_repo: UtteranceRepository,
     store: Store,
 ) -> Exporter:
+    from audex.lib.exporter import Exporter
+
     return Exporter(
         session_repo=session_repo,
         segment_repo=segment_repo,

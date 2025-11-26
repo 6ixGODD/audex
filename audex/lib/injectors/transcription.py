@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-from audex.config import Config
-from audex.lib.transcription import Transcription
+import typing as t
+
+if t.TYPE_CHECKING:
+    from audex.config import Config
+    from audex.lib.transcription import Transcription
 
 
 def make_transcription(config: Config) -> Transcription:
