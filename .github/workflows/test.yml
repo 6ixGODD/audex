@@ -22,8 +22,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install PortAudio (Ubuntu)
-        # 安装 PortAudio 系统依赖
-
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
@@ -100,8 +98,6 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install PortAudio
-        # 为 lint job 也添加 PortAudio（因为需要安装所有依赖）
-
         run: |
           sudo apt-get update
           sudo apt-get install -y portaudio19-dev python3-pyaudio
