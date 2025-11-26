@@ -14,14 +14,13 @@ core: # Core configuration settings.
         loglevel: error
         rotation: ~
         serl: false
-  server: # Server configuration
   audio: # Audio processing configuration
     sample_rate: 16000 # The sample rate of the audio in Hz.
     vpr_sample_rate: 16000 # The sample rate for voice print recognition in Hz.
     vpr_text_content: 您好，请问您今天需要什么帮助？ # The text content used for voice print recognition.
-    vpr_threshold: 0.6 # The threshold for voice print recognition similarity.
+    vpr_threshold: 0.4 # The threshold for voice print recognition similarity.
     key_prefix: audex # The prefix for storing audio files in cloud storage.
-    segment_buffer: 200 # The buffer time in milliseconds for audio segmentation.
+    segment_buffer: 2000 # The buffer time in milliseconds for audio segmentation.
   session: # Session management configuration
     ttl_hours: 168 # Time to live for a session in hours.
 provider: # Provider configuration settings.
@@ -57,6 +56,7 @@ provider: # Provider configuration settings.
         api_key: <UNSET> # XFYun API Key. Must be provided for authentication.
         api_secret: <UNSET> # XFYun API Secret. Must be provided for authentication.
       group_id: ~ # The group ID for voiceprint recognition.
+      group_id_path: .xfyun.vpr.gid # The file path to read the group ID from if not provided directly.
       http: # HTTP client configuration for XFYun VPR service.
         proxy: ~ # Proxy URL to route HTTP requests through. Example: 'http://localhost:8080'
         timeout: 10.0 # Timeout in seconds for HTTP requests.
@@ -67,6 +67,7 @@ provider: # Provider configuration settings.
         appkey: <UNSET> # Unisound App Key
         secret: <UNSET> # Unisound Secret
       group_id: ~ # The group ID for voiceprint recognition.
+      group_id_path: .unisound.vpr.gid # The file path to read the group ID from if not provided directly.
       http: # HTTP client configuration for Unisound VPR service.
         proxy: ~ # Proxy URL to route HTTP requests through. Example: 'http://localhost:8080'
         timeout: 10.0 # Timeout in seconds for HTTP requests.
@@ -81,6 +82,7 @@ infrastructure: # Infrastructure configuration settings.
     pool_timeout: 30.0 # The timeout in seconds to wait for a connection from the pool.
     pool_recycle: 3600 # The number of seconds after which a connection is automatically recycled.
     pool_pre_ping: true # Enable connection health checks before using a connection from the pool.
+    create_all: true # Whether to create all tables on initialization.
   cache: # Cache configuration.
     provider: inmemory # Type of cache backend to use.
     split_char: ":" # Character used to split cache keys.
