@@ -29,8 +29,8 @@ class View(LoggingMixin):
         super().__init__()
         self.lifespan = lifespan
         self.config = config
-        app.on_startup(self.lifespan.__aenter__)
-        app.on_shutdown(self.lifespan.__aexit__)
+        app.on_startup(self.lifespan.startup)
+        app.on_shutdown(self.lifespan.shutdown)
 
     def run(self) -> None:
         import audex.view.pages.dashboard

@@ -467,6 +467,10 @@ class Settings(ps.BaseSettings):
             grouped_keys[top_level_key] = flattened
 
         with pathlib.Path(fpath).open("w", encoding="utf-8") as f:
+            f.write(
+                "# Description: Example environment configuration file for Audex application.\n"
+            )
+            f.write("# Note: Copy this file to '.env' and modify the values as needed.\n\n")
             for top_key, flattened in grouped_keys.items():
                 # Add separator between top-level sections
                 f.write(f"# {'=' * 70}\n")
