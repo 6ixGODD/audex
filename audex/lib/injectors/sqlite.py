@@ -20,4 +20,5 @@ def make_sqlite(config: Config) -> SQLite:
         pool_recycle=config.infrastructure.sqlite.pool_recycle,
         pool_timeout=config.infrastructure.sqlite.pool_timeout,
         pool_pre_ping=config.infrastructure.sqlite.pool_pre_ping,
+        create_all=config.infrastructure.sqlite.create_all,
     )
