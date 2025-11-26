@@ -3,6 +3,8 @@ from __future__ import annotations
 import argparse
 import sys
 
+import dotenv
+
 from audex.cli.apis import register_apis
 from audex.cli.args import parser_with_version
 from audex.cli.exceptions import CLIError
@@ -11,6 +13,19 @@ from audex.exceptions import AudexError
 
 
 def main() -> int:
+    """Main entry point for the Audex CLI.
+
+    This function parses command-line arguments, executes the appropriate
+    command, and handles errors gracefully.
+
+    Returns:
+        Exit code indicating success or type of failure.
+    """
+
+    # Load environment variables from .env file if it exists
+    if dotenv.find_dotenv():
+        dotenv.load_dotenv()
+
     try:
         args = parse_args()
         args.func(args)
