@@ -165,6 +165,7 @@ nav:
               - Segment Repository: reference/lib/repos/segment.md
               - Session Repository: reference/lib/repos/session.md
               - Utterance Repository: reference/lib/repos/utterance.md
+              - Voiceprint Repository: reference/lib/repos/vp.md
           - Exporter Server:
               - reference/lib/server/index.md
               - Auth Middleware: reference/lib/server/auth.md
@@ -178,13 +179,13 @@ nav:
               - Events: reference/lib/transcription/events.md
               - Dashscope Transcription: reference/lib/transcription/dashscope.md
           - Voiceprint Recognition (VPR:
-              - reference/lib/voiceprint/index.md
+              - reference/lib/vpr/index.md
               - Unisound VPR:
-                  - reference/lib/voiceprint/unisound/index.md
-                  - Types: reference/lib/voiceprint/unisound/types.md
+                  - reference/lib/vpr/unisound/index.md
+                  - Types: reference/lib/vpr/unisound/types.md
               - XFyun VPR:
-                  - reference/lib/voiceprint/xfyun/index.md
-                  - Types: reference/lib/voiceprint/xfyun/types.md
+                  - reference/lib/vpr/xfyun/index.md
+                  - Types: reference/lib/vpr/xfyun/types.md
           - Websocket:
               - reference/lib/websocket/index.md
               - Websocket Connection: reference/lib/websocket/connection.md
