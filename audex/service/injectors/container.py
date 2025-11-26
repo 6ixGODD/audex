@@ -5,6 +5,7 @@ from dependency_injector import providers
 
 from audex.config import Config
 from audex.service.injectors.doctor import make_doctor_service
+from audex.service.injectors.export import make_export_service
 from audex.service.injectors.session import make_session_service
 
 
@@ -39,4 +40,14 @@ class ServiceContainer(containers.DeclarativeContainer):
         vpr=infrastructure.vpr,
         transcription=infrastructure.transcription,
         recorder=infrastructure.recorder,
+    )
+
+    export = providers.Factory(
+        make_export_service,
+        session_manager=infrastructure.session_manager,
+        cache=infrastructure.cache,
+        doctor_repo=repository.doctor,
+        usb=infrastructure.usb,
+        exporter=infrastructure.exporter,
+        server=infrastructure.server,
     )
