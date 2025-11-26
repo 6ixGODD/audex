@@ -1,9 +1,9 @@
-site_name: BoxLab Documentation
-site_description: A Python toolkit for managing, converting, and annotating object detection datasets
+site_name: Audex Documentation
+site_description: Audex is an intelligent medical transcription system designed specifically for clinical scenarios.
 site_author: BoChenSHEN
-site_url: https://6ixgodd.github.io/boxlab
-repo_name: 6ixGODD/boxlab
-repo_url: https://github.com/6ixGODD/boxlab
+site_url: https://6ixgodd.github.io/audex
+repo_name: 6ixGODD/audex
+repo_url: https://github.com/6ixGODD/audex
 edit_uri: edit/main/docs/
 copyright: Copyright &copy; 2025 BoChenSHEN
 theme:
@@ -65,7 +65,7 @@ extra:
     - icon: fontawesome/brands/github
       link: https://github.com/6ixGODD
     - icon: fontawesome/brands/python
-      link: https://pypi.org/project/boxlab
+      link: https://pypi.org/project/audex
   analytics:
     provider: google
     property: !ENV GOOGLE_ANALYTICS_KEY
@@ -148,27 +148,33 @@ plugins:
       cache_safe: true
 nav:
   - Home: index.md
-  - Guides:
-      - guides/index.md
-      - Installation: guides/installation.md
-      - Quick Start: guides/quick-start.md
-      - CLI Overview: guides/cli-overview.md
-      - Dataset Commands: guides/cli-dataset.md
-      - Annotator Command: guides/cli-annotator.md
-      - Advanced Usage: guides/advanced-usage.md
   - API Reference:
       - reference/index.md
-      - Dataset:
-          - reference/dataset/index.md
-          - I/O Operations: reference/dataset/io.md
-          - Types: reference/dataset/types.md
-          - PyTorch Adapter: reference/dataset/torchadapter.md
-          - Plugins:
-              - reference/dataset/plugins/index.md
-              - Registry: reference/dataset/plugins/registry.md
-              - COCO Plugin: reference/dataset/plugins/coco.md
-              - YOLO Plugin: reference/dataset/plugins/yolo.md
-      - Annotator: reference/annotator.md
-      - Exceptions: reference/exceptions.md
+      - Library:
+          - reference/lib/index.md
+          - Cache:
+              - reference/lib/cache/index.md
+              - Inmemory Cache: reference/lib/cache/inmemory.md
+          - Database:
+              - reference/lib/database/index.md
+              - SQLite Database: reference/lib/database/sqlite.md
+          - Repository:
+              - reference/lib/repos/index.md
+              - Decorators: reference/lib/repos/decorators.md
+              - Doctor Repository: reference/lib/repos/doctor.md
+              - Segment Repository: reference/lib/repos/segment.md
+              - Session Repository: reference/lib/repos/session.md
+              - Utterance Repository: reference/lib/repos/utterance.md
+          - Exporter Server:
+              - reference/lib/server/index.md
+              - Auth Middleware: reference/lib/server/auth.md
+              - Handlers: reference/lib/server/handlers.md
+              - Types: reference/lib/server/types.md
+          - Store:
+              - reference/lib/store/index.md
+              - Localfile Store: reference/lib/store/localfile.md
+          - Transcription:
+              - reference/lib/transcription/index.md
+              - Events: reference/lib/transcription/events.md
+              - Dashscope Transcription: reference/lib/transcription/dashscope.md
   - Changelog: changelog.md
-  - License: license.md
