@@ -1,7 +1,7 @@
 core: # Core configuration settings.
   app: # Application specific configuration
     app_name: Audex # The name of the application.
-    app_version: 1.0.0 # The version of the application.
+    app_version: 1.0.1 # The version of the application.
     debug: false # Enable or disable debug mode.
     native: false # Indicates if the application is running in native mode.
   logging: # Logging configuration
@@ -9,11 +9,9 @@ core: # Core configuration settings.
       - logname: stdout
         loglevel: debug
         rotation: ~
-        serl: false
       - logname: stderr
         loglevel: error
         rotation: ~
-        serl: false
   audio: # Audio processing configuration
     sample_rate: 16000 # The sample rate of the audio in Hz.
     vpr_sample_rate: 16000 # The sample rate for voice print recognition in Hz.
