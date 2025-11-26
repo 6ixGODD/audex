@@ -63,3 +63,23 @@ def parse_args() -> argparse.Namespace:
     parser.set_defaults(func=lambda _: parser.print_help())
 
     return parser.parse_args()
+
+
+def cli() -> None:
+    """Entry point for installed command-line script.
+
+    This function is called when running `audex` as an installed command.
+    It's registered in pyproject.toml as a console script entry point.
+
+    Example:
+        After installing with pip:
+
+        ```bash
+        audex --help
+        ```
+    """
+    sys.exit(main())
+
+
+if __name__ == "__main__":
+    sys.exit(main())
