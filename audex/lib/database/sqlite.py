@@ -29,6 +29,9 @@ class SQLitePoolConfig(t.TypedDict):
     pool_pre_ping: bool
     """Test connections before using them."""
 
+    create_all: bool
+    """Whether to create all tables on init."""
+
 
 class SQLite(Database):
     """SQLite database container with async SQLModel/SQLAlchemy support.
@@ -65,6 +68,7 @@ class SQLite(Database):
             Set to -1 to disable recycling.
         pool_pre_ping: Test connections before using them. Recommended
             for production to handle stale connections.
+        create_all: Whether to create all tables on init().
 
     Example:
         ```python
@@ -122,6 +126,7 @@ class SQLite(Database):
         pool_timeout: float = 30.0,
         pool_recycle: int = 3600,
         pool_pre_ping: bool = True,
+        create_all: bool = True,
     ) -> None:
         self.uri = uri
         self.tables = tables or []
@@ -134,6 +139,7 @@ class SQLite(Database):
             pool_timeout=pool_timeout,
             pool_recycle=pool_recycle,
             pool_pre_ping=pool_pre_ping,
+            create_all=create_all,
         )
 
     async def init(self) -> None:
@@ -177,6 +183,9 @@ class SQLite(Database):
             class_=aiosa.AsyncSession,
             expire_on_commit=False,
         )
+
+        if self.cfg["create_all"]:
+            await self.create_all()
 
     async def close(self) -> None:
         """Close the database engine and clean up resources.
