@@ -222,7 +222,7 @@ class Settings(ps.BaseSettings):
 
                     # Get description if available
                     desc = descriptions.get(field_path, "")
-                    comment = f"  # {desc}" if desc else ""
+                    comment = f" # {desc}" if desc else ""
 
                     # Handle None values - use ~ to represent None
                     if value is None:
