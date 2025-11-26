@@ -177,4 +177,21 @@ nav:
               - reference/lib/transcription/index.md
               - Events: reference/lib/transcription/events.md
               - Dashscope Transcription: reference/lib/transcription/dashscope.md
+          - Voiceprint Recognition (VPR:
+              - reference/lib/voiceprint/index.md
+              - Unisound VPR:
+                  - reference/lib/voiceprint/unisound/index.md
+                  - Types: reference/lib/voiceprint/unisound/types.md
+              - XFyun VPR:
+                  - reference/lib/voiceprint/xfyun/index.md
+                  - Types: reference/lib/voiceprint/xfyun/types.md
+          - Websocket:
+              - reference/lib/websocket/index.md
+              - Websocket Connection: reference/lib/websocket/connection.md
+              - WebSocket Connection Pool (Async): reference/lib/websocket/pool.md
+          - Exporter: reference/lib/exporter.md
+          - Recorder: reference/lib/recorder.md
+          - RESTful Client: reference/lib/restful.md
+          - Session Manager: reference/lib/session.md
+          - USB Manager: reference/lib/usb.md
   - Changelog: changelog.md
