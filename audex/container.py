@@ -6,7 +6,6 @@ from dependency_injector import providers
 from audex.injectors.config import config
 from audex.injectors.lifespan import lifespan
 from audex.lib.injectors.container import InfrastructureContainer
-from audex.lib.repos.container import RepositoryContainer
 from audex.service.injectors.container import ServiceContainer
 from audex.view.container import ViewContainer
 
@@ -17,12 +16,11 @@ class Container(containers.DeclarativeContainer):
 
     # Containers
     infrastructure = providers.Container(InfrastructureContainer, config=config)
-    repository = providers.Container(RepositoryContainer, sqlite=infrastructure.sqlite)
-    service: ServiceContainer = providers.Container(
+    service = providers.Container(
         ServiceContainer,
         config=config,
         infrastructure=infrastructure,
-        repository=repository,
+        repository=infrastructure.repository,
     )
 
     # Lifespan
