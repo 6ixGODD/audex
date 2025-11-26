@@ -11,10 +11,12 @@ from starlette.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 
 from audex.helper.mixin import LoggingMixin
-from audex.lib.exporter import Exporter
-from audex.lib.repos.doctor import DoctorRepository
 from audex.lib.server.auth import AuthMiddleware
 from audex.lib.server.handlers import RequestHandlers
+
+if t.TYPE_CHECKING:
+    from audex.lib.exporter import Exporter
+    from audex.lib.repos.doctor import DoctorRepository
 
 
 class ServerConfig(t.NamedTuple):
