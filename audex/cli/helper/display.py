@@ -4,6 +4,7 @@ import contextlib
 import os
 import pathlib
 import sys
+import textwrap
 import traceback
 import typing as t
 
@@ -98,42 +99,201 @@ def separator(width: int = 60) -> None:
     print("-" * width)
 
 
-def table(headers: list[str], rows: list[list[str]], /) -> None:
-    """Print a simple table.
+def _wrap_text(text: str, width: int) -> list[str]:
+    """Wrap text to specified width, preserving words.
+
+    Args:
+        text: Text to wrap
+        width: Maximum width per line
+
+    Returns:
+        List of wrapped lines
+    """
+    if width <= 0:
+        return [text]
+
+    # Use textwrap for intelligent word wrapping
+    return textwrap.wrap(
+        str(text),
+        width=width,
+        break_long_words=True,
+        break_on_hyphens=True,
+        expand_tabs=True,
+        replace_whitespace=True,
+    ) or [""]
+
+
+def _calculate_column_widths(
+    headers: list[str],
+    rows: list[list[str]],
+    max_width: int | None = None,
+    min_width: int = 10,
+) -> list[int]:
+    """Calculate optimal column widths with constraints.
 
     Args:
         headers: Column headers
         rows: Table rows
-    """
-    if not headers or not rows:
-        return
+        max_width: Maximum width for any column (None = no limit)
+        min_width: Minimum width for any column
 
-    # Calculate column widths
+    Returns:
+        List of column widths
+    """
+    if not headers:
+        return []
+
+    # Calculate initial widths based on content
     col_widths = [len(h) for h in headers]
+
     for row in rows:
         for i, cell in enumerate(row):
             if i < len(col_widths):
                 col_widths[i] = max(col_widths[i], len(str(cell)))
 
+    # Apply constraints
+    for i in range(len(col_widths)):
+        col_widths[i] = max(min_width, col_widths[i])
+        if max_width is not None:
+            col_widths[i] = min(max_width, col_widths[i])
+
+    return col_widths
+
+
+def table(
+    headers: list[str],
+    rows: list[list[str]],
+    /,
+    max_col_width: int | None = 50,
+    min_col_width: int = 10,
+    wrap_text: bool = True,
+    align: str | list[str] = "left",
+    row_spacing: int = 0,
+    compact: bool = False,
+) -> None:
+    """Print a table with automatic text wrapping and column width
+    limits.
+
+    Args:
+        headers: Column headers
+        rows: Table rows
+        max_col_width: Maximum width for any column (None = no limit)
+        min_col_width: Minimum width for any column
+        wrap_text: Whether to wrap text that exceeds column width
+        align: Text alignment - "left", "right", "center", or list per column
+        row_spacing: Number of blank lines between rows (0 = no spacing)
+        compact: If True, use more compact spacing for wrapped lines
+    """
+    if not headers or not rows:
+        return
+
+    # Normalize alignment
+    if isinstance(align, str):
+        alignments = [align] * len(headers)
+    else:
+        alignments = align + ["left"] * (len(headers) - len(align))
+
+    # Calculate column widths
+    col_widths = _calculate_column_widths(headers, rows, max_col_width, min_col_width)
+
+    def format_cell(text: str, width: int, alignment: str = "left") -> str:
+        """Format a cell with proper alignment."""
+        text = str(text)
+        if len(text) <= width:
+            if alignment == "right":
+                return text.rjust(width)
+            if alignment == "center":
+                return text.center(width)
+            return text.ljust(width)
+        return text[:width]
+
+    def print_row(cells: list[str]) -> None:
+        """Print a single row of the table."""
+        formatted_cells = [
+            format_cell(cell, col_widths[i], alignments[i]) for i, cell in enumerate(cells)
+        ]
+        print(" │ ".join(formatted_cells))
+
+    def print_spacing() -> None:
+        """Print spacing between rows."""
+        if row_spacing > 0:
+            empty_cells = [" " * w for w in col_widths]
+            for _ in range(row_spacing):
+                print(" │ ".join(empty_cells))
+
     # Print header
-    header_row = " | ".join(h.ljust(col_widths[i]) for i, h in enumerate(headers))
-    print(header_row)
-    print("-" * len(header_row))
+    print_row(headers)
+    print("─" * (sum(col_widths) + 3 * (len(col_widths) - 1)))
 
-    # Print rows
-    for row in rows:
-        print(" | ".join(str(cell).ljust(col_widths[i]) for i, cell in enumerate(row)))
+    # Print rows with wrapping
+    for row_idx, row in enumerate(rows):
+        if wrap_text:
+            # Wrap each cell
+            wrapped_cells = [_wrap_text(str(cell), col_widths[i]) for i, cell in enumerate(row)]
+
+            # Find maximum number of lines needed
+            max_lines = max(len(lines) for lines in wrapped_cells)
+
+            # Print each line
+            for line_idx in range(max_lines):
+                line_cells = [
+                    wrapped[line_idx] if line_idx < len(wrapped) else ""
+                    for wrapped in wrapped_cells
+                ]
+                print_row(line_cells)
+
+                # Add compact spacing between wrapped lines if not compact mode
+                if not compact and line_idx < max_lines - 1:
+                    pass  # No spacing between wrapped lines in same row
+        else:
+            # Truncate cells that are too long
+            truncated_row = [
+                str(cell)[: col_widths[i]] if len(str(cell)) > col_widths[i] else str(cell)
+                for i, cell in enumerate(row)
+            ]
+            print_row(truncated_row)
+
+        # Add spacing between different rows
+        if row_idx < len(rows) - 1:
+            print_spacing()
 
 
-def table_dict(data: dict[str, t.Any], /, headers: tuple[str, str] = ("Key", "Value")) -> None:
-    """Print a table from a dictionary.
+def table_dict(
+    data: dict[str, t.Any],
+    /,
+    headers: tuple[str, str] = ("Key", "Value"),
+    max_col_width: int | None = 50,
+    min_col_width: int = 10,
+    wrap_text: bool = True,
+    key_align: str = "left",
+    value_align: str = "left",
+    row_spacing: int = 1,
+    compact: bool = False,
+) -> None:
+    """Print a table from a dictionary with automatic text wrapping.
 
     Args:
         data: Dictionary to display
         headers: Column headers
+        max_col_width: Maximum width for any column (None = no limit)
+        min_col_width: Minimum width for any column
+        wrap_text: Whether to wrap text that exceeds column width
+        key_align: Alignment for key column ("left", "right", "center")
+        value_align: Alignment for value column ("left", "right", "center")
+        row_spacing: Number of blank lines between rows (0 = no spacing)
+        compact: If True, use more compact spacing for wrapped lines
     """
     rows = [[str(k), str(v)] for k, v in data.items()]
-    table(list(headers), rows)
+    table(
+        list(headers),
+        rows,
+        max_col_width=max_col_width,
+        min_col_width=min_col_width,
+        wrap_text=wrap_text,
+        align=[key_align, value_align],
+        row_spacing=row_spacing,
+        compact=compact,
+    )
 
 
 def list_items(
@@ -158,12 +318,17 @@ def key_value(
     data: dict[str, t.Any],
     /,
     indent: int = 0,
+    max_value_width: int | None = 60,
+    wrap_values: bool = True,
 ) -> None:
-    """Print key-value pairs in a formatted style.
+    """Print key-value pairs in a formatted style with optional
+    wrapping.
 
     Args:
         data: Dictionary of key-value pairs
         indent: Indentation level
+        max_value_width: Maximum width for values before wrapping
+        wrap_values: Whether to wrap long values
     """
     if not data:
         return
@@ -172,7 +337,20 @@ def key_value(
     indent_str = "  " * indent
 
     for key, value in data.items():
-        print(f"{indent_str}{str(key).ljust(max_key_len)} : {value}")
+        value_str = str(value)
+        key_part = f"{indent_str}{str(key).ljust(max_key_len)} : "
+
+        if wrap_values and max_value_width and len(value_str) > max_value_width:
+            # Wrap the value
+            wrapped_lines = _wrap_text(value_str, max_value_width)
+            print(f"{key_part}{wrapped_lines[0]}")
+
+            # Print continuation lines with proper indentation
+            continuation_indent = " " * len(key_part)
+            for line in wrapped_lines[1:]:
+                print(f"{continuation_indent}{line}")
+        else:
+            print(f"{key_part}{value_str}")
 
 
 def progress_bar(
