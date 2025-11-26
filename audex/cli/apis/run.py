@@ -14,9 +14,7 @@ from audex.cli.helper import display
 from audex.config import Config
 from audex.config import build_config
 from audex.config import setconfig
-from audex.container import Container
 from audex.utils import flatten_dict
-from audex.view import View
 
 
 class Args(BaseArgs):
@@ -75,6 +73,8 @@ class Args(BaseArgs):
         # Initialize container
         display.step("Initializing application", step=2 if cfg.core.app.native else 1)
         with display.loading("Wiring dependencies... "):
+            from audex.container import Container
+
             container = Container()
 
             import audex.view.pages.dashboard
@@ -159,8 +159,6 @@ def _setup_native_environment(cfg: Config) -> None:
         _setup_linux_env(cfg, env_vars)
     elif system == "Windows":
         _setup_windows_env(cfg, env_vars)
-    elif system == "Darwin":  # macOS
-        _setup_macos_env(cfg, env_vars)
     else:
         display.warning(f"Unsupported platform: {system}")
 
@@ -268,39 +266,8 @@ def _setup_windows_env(cfg: Config, env_vars: dict[str, str]) -> None:
         display.debug("Multimedia backend: Windows Media Foundation")
 
 
-def _setup_macos_env(_: Config, env_vars: dict[str, str]) -> None:
-    """Setup macOS-specific environment variables.
-
-    Args:
-        cfg: Application configuration
-        env_vars: Dictionary to store environment variables
-    """
-    display.info("Configuring for macOS")
-
-    # === QT Platform Plugin ===
-    env_vars["QT_QPA_PLATFORM"] = "cocoa"
-    display.info("Using Cocoa platform plugin")
-
-    # === High DPI Support ===
-    if not os.environ.get("QT_AUTO_SCREEN_SCALE_FACTOR"):
-        env_vars["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
-        display.debug("High DPI scaling enabled")
-
-    # === Metal vs OpenGL ===
-    # macOS prefers Metal on newer systems
-    if not os.environ.get("QSG_RHI_BACKEND"):
-        # metal, opengl, or software
-        env_vars["QSG_RHI_BACKEND"] = "metal"
-        display.debug("Rendering backend: Metal")
-
-    # === Multimedia ===
-    if not os.environ.get("QT_MULTIMEDIA_PREFERRED_PLUGINS"):
-        env_vars["QT_MULTIMEDIA_PREFERRED_PLUGINS"] = "darwin"
-        display.debug("Multimedia backend: AVFoundation")
-
-    # === Menu Bar ===
-    # Keep menu in window instead of system menu bar
-    # env_vars["QT_MAC_WANTS_LAYER"] = "1"
+from audex.container import Container  # noqa: E402
+from audex.view import View  # noqa: E402
 
 
 @inject
