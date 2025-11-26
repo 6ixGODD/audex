@@ -91,6 +91,32 @@ class RequiredModuleNotFoundError(InternalError):
         super().__init__(full_message, **details)
 
 
+class ConfigurationError(InternalError):
+    """Exception raised for configuration errors."""
+
+    __slots__ = ("config_key", "details", "message")
+
+    default_message = "Configuration error occurred"
+    code: t.ClassVar[int] = 0x13
+
+    def __init__(
+        self, message: str | None = None, *, config_key: str, reason: str, **details: t.Any
+    ) -> None:
+        """Initialize the exception.
+
+        Args:
+            message: Custom error message. If None, uses formatted
+                default_message.
+            config_key: The configuration key that caused the error.
+            reason: Description of the configuration error.
+            **details: Additional technical details for logging/debugging.
+        """
+        self.config_key = config_key
+        self.reason = reason
+        full_message = message or f"{self.default_message}: [{config_key}] {reason}"
+        super().__init__(full_message, **details)
+
+
 class ValidationError(AudexError):
     """Exception raised for validation errors."""
 
@@ -99,7 +125,7 @@ class ValidationError(AudexError):
     default_message = "Validation failed"
     code: t.ClassVar[int] = 0x12
 
-    def __init__(self, reason: str, message: str | None = None) -> None:
+    def __init__(self, message: str | None = None, *, reason: str) -> None:
         """Initialize the exception.
 
         Args:
