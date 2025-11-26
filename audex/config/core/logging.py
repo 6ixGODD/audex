@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import os
 import pathlib
 import sys
@@ -110,20 +109,10 @@ class LoggingConfig(BaseModel):
         from loguru import logger
 
         if t.TYPE_CHECKING:
-            from loguru import Record
+            pass
 
         # Clear existing handlers
         logger.remove()
-
-        def serializer(record: Record) -> str:
-            rec = record.copy()
-            out = {
-                "message": rec["message"],
-                "extra": rec["extra"],
-                "time": rec["time"].isoformat(),
-                "level": rec["level"].name,
-            }
-            return json.dumps(out, ensure_ascii=False)
 
         # Set up each logging target
         for target in self.targets:
@@ -144,7 +133,7 @@ class LoggingConfig(BaseModel):
                         retention=target.rotation.size_based.backup_count,
                         level=level,
                         rotation=f"{target.rotation.size_based.max_size} MB",
-                        format=serializer,
+                        serialize=True,
                     )
                 elif target.rotation.time_based:
                     logger.add(
@@ -152,7 +141,7 @@ class LoggingConfig(BaseModel):
                         retention=target.rotation.time_based.backup_count,
                         level=level,
                         rotation=f"{target.rotation.time_based.interval} hours",
-                        format=serializer,
+                        serialize=True,
                     )
             else:
                 logger.add(sink, level=level)
