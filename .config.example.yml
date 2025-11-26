@@ -4,6 +4,8 @@ core: # Core configuration settings.
     app_version: 1.0.1 # The version of the application.
     debug: false # Enable or disable debug mode.
     native: false # Indicates if the application is running in native mode.
+    touch: false # Enable or disable touch support.
+    fullscreen: false # Enable or disable fullscreen mode.
   logging: # Logging configuration
     targets: # List of logging targets
       - logname: stdout
