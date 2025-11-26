@@ -41,28 +41,25 @@ def make_vpr(config: Config) -> VPR:
             default_params=config.provider.vpr.xfyun.http.default_params,
         )
 
-    if config.provider.vpr.provider == "unisound":
-        if isinstance(config.provider.vpr.unisound.credential.appkey, Unset):
-            raise ConfigurationError(
-                config_key="provider.vpr.unisound.credential.appkey",
-                reason="missing",
-            )
-        if isinstance(config.provider.vpr.unisound.credential.secret, Unset):
-            raise ConfigurationError(
-                config_key="provider.vpr.unisound.credential.secret",
-                reason="missing",
-            )
-
-        from audex.lib.vpr.unisound import UnisoundVPR
-
-        return UnisoundVPR(
-            appkey=config.provider.vpr.unisound.credential.appkey,
-            secret=config.provider.vpr.unisound.credential.secret,
-            group_id=config.provider.vpr.unisound.group_id,
-            proxy=config.provider.vpr.unisound.http.proxy,
-            timeout=config.provider.vpr.unisound.http.timeout,
-            default_headers=config.provider.vpr.unisound.http.default_headers,
-            default_params=config.provider.vpr.unisound.http.default_params,
+    if isinstance(config.provider.vpr.unisound.credential.appkey, Unset):
+        raise ConfigurationError(
+            config_key="provider.vpr.unisound.credential.appkey",
+            reason="missing",
+        )
+    if isinstance(config.provider.vpr.unisound.credential.secret, Unset):
+        raise ConfigurationError(
+            config_key="provider.vpr.unisound.credential.secret",
+            reason="missing",
         )
 
-    return NotImplemented
+    from audex.lib.vpr.unisound import UnisoundVPR
+
+    return UnisoundVPR(
+        appkey=config.provider.vpr.unisound.credential.appkey,
+        secret=config.provider.vpr.unisound.credential.secret,
+        group_id=config.provider.vpr.unisound.group_id,
+        proxy=config.provider.vpr.unisound.http.proxy,
+        timeout=config.provider.vpr.unisound.http.timeout,
+        default_headers=config.provider.vpr.unisound.http.default_headers,
+        default_params=config.provider.vpr.unisound.http.default_params,
+    )

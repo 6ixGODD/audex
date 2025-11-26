@@ -38,7 +38,7 @@ def require_auth(func: ServiceMethodT) -> ServiceMethodT:
             raise PermissionDeniedError("Authentication required to access this method.")
         raise PermissionDeniedError("Authentication required to access this method.")
 
-    return wrapper
+    return wrapper  # type: ignore
 
 
 def log_call(func: ServiceMethodT) -> ServiceMethodT:
@@ -70,4 +70,4 @@ def log_call(func: ServiceMethodT) -> ServiceMethodT:
             self.logger.error(f"{op} failed with error: {e}")
             raise
 
-    return wrapper
+    return wrapper  # type: ignore

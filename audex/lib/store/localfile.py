@@ -180,8 +180,26 @@ class LocalFileStore(Store):
 
         async with aiofiles.open(metadata_file, encoding="utf-8") as f:
             content = await f.read()
-            return json.loads(content)
+            return json.loads(content)  # type: ignore
 
+    @t.overload
+    async def download(
+        self,
+        key: str,
+        *,
+        stream: t.Literal[False] = False,
+        chunk_size: int = 8192,
+        **kwargs: t.Any,
+    ) -> bytes: ...
+    @t.overload
+    async def download(
+        self,
+        key: str,
+        *,
+        stream: t.Literal[True],
+        chunk_size: int = 8192,
+        **kwargs: t.Any,
+    ) -> bytes: ...
     async def download(
         self,
         key: str,

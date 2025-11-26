@@ -219,7 +219,7 @@ class SegmentRepository(SQLiteRepository[Segment]):
     async def delete_many(
         self,
         arg: builtins.list[str] | t.Optional[Filter] = None,  # noqa
-    ) -> builtins.list[str] | int:
+    ) -> builtins.list[str]:
         """Delete multiple segments by IDs or matching a filter.
 
         Args:
@@ -249,7 +249,7 @@ class SegmentRepository(SQLiteRepository[Segment]):
                 return segment_ids
 
             spec = self.build_query_spec(arg)
-            stmt = sqlm.select(SegmentTable.id)
+            stmt = sqlm.select(SegmentTable.id)  # type: ignore
             for clause in spec.where:
                 stmt = stmt.where(clause)
 
@@ -257,13 +257,12 @@ class SegmentRepository(SQLiteRepository[Segment]):
             segment_ids = [row[0] for row in result.all()]
 
             if not segment_ids:
-                return 0
+                return []
 
-            count = len(segment_ids)
             delete_stmt = sa.delete(SegmentTable).where(sqlm.col(SegmentTable.id).in_(segment_ids))
             await session.execute(delete_stmt)
             await session.commit()
-            return count
+            return segment_ids
 
     async def count(self, filter: t.Optional[Filter] = None) -> int:  # noqa
         """Count segments matching the filter.

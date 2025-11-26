@@ -113,7 +113,7 @@ class CreateFeatureRequest(AuthParams):
         serialization_alias="audioData",
         description="Base64 encoded audio data",
     )
-    audio_sample_rate: str = Field(
+    audio_sample_rate: int = Field(
         ...,
         alias="audioSampleRate",
         serialization_alias="audioSampleRate",
@@ -223,7 +223,7 @@ class ConfirmFeatureRequest(AuthParams):
         serialization_alias="audioData",
         description="Base64 encoded audio data",
     )
-    audio_sample_rate: str = Field(
+    audio_sample_rate: int = Field(
         ...,
         alias="audioSampleRate",
         serialization_alias="audioSampleRate",

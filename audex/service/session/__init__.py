@@ -101,11 +101,6 @@ class SessionService(BaseService):
             )
 
             uid = await self.session_repo.create(session)
-            session = await self.session_repo.read(uid)
-
-            if session is None:
-                raise SessionServiceError(ErrorMessages.SESSION_CREATE_FAILED)
-
             self.logger.info(f"Created session {uid} for doctor {command.doctor_id}")
             return session
 
@@ -202,13 +197,13 @@ class SessionService(BaseService):
     async def stats(self) -> SessionStats:
         """Get session statistics for the current doctor."""
         try:
-            doctor_id = await self.session_manager.get_doctor_id()
+            doctor_id = t.cast(str, await self.session_manager.get_doctor_id())
 
             # Check cache first
             cache_key = self.cache.key_builder.build("session_stats", doctor_id)
             if await self.cache.contains(cache_key):
                 self.logger.debug(f"Session stats for doctor {doctor_id} fetched from cache")
-                return await self.cache.get(cache_key)
+                return await self.cache.get(cache_key)  # type: ignore
 
             # Calculate total sessions
             f_total = session_filter().doctor_id.eq(doctor_id)

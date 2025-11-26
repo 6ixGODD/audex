@@ -32,7 +32,9 @@ class AuthMiddleware(BaseHTTPMiddleware, LoggingMixin):
         super().__init__(app)
         self.doctor_repo = doctor_repo
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(
+        self, request: Request, call_next: t.Callable[[Request], t.Awaitable[Response]]
+    ) -> Response:
         """Process request with authentication check."""
         # Check if route is public
         if self._is_public_route(request.url.path):

@@ -46,7 +46,7 @@ class BaseTable(sqlm.SQLModel, abc.ABC, t.Generic[E], table=False):
     )
 
     def __repr__(self) -> str:
-        return f"TABLE <{self.__class__.__name__}(uid={self.uid!r})>"
+        return f"TABLE <{self.__class__.__name__}(uid={self.id!r})>"
 
     @classmethod
     @abc.abstractmethod

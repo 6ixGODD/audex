@@ -71,8 +71,6 @@ class RepositoryMeta(abc.ABCMeta):
             if not inspect.ismethod(attr) and not inspect.isfunction(attr):
                 continue
 
-            attr: t.Callable[[t.Concatenate[cls, ...]], t.Awaitable[t.Any]]
-
             # Skip if already decorated (has marker attribute)
             if hasattr(attr, "_repo_decorated"):
                 continue
@@ -91,7 +89,7 @@ class RepositoryMeta(abc.ABCMeta):
             decorated = log_repo_call(attr)
 
             # Mark as decorated to avoid double decoration
-            decorated._repo_decorated = True
+            decorated._repo_decorated = True  # type: ignore
 
             # Replace the method
             setattr(cls, attr_name, decorated)

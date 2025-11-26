@@ -167,7 +167,7 @@ class ANSI:
         if any(s is None for s in styles):
             styles = tuple(s for s in styles if s is not None)
 
-        style_str = "".join(styles)
+        style_str = "".join(styles)  # type: ignore[arg-type]
 
         # Handle text that already contains reset codes
         if cls.STYLE.RESET in text:

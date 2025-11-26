@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio as aio
 import contextlib
 import time
+import types
 import typing as t
 import uuid
 
@@ -45,7 +46,7 @@ class ConnectionDrainTimeoutError(WebsocketError):
 DrainConditionCallback: t.TypeAlias = t.Callable[[str | bytes], bool]
 
 
-class WebsocketConnection(LoggingMixin, t.Hashable, t.AsyncContextManager):
+class WebsocketConnection(LoggingMixin, t.Hashable):
     """Manages a single WebSocket connection with lifecycle management.
 
     This class provides automatic idle timeout monitoring, connection health
@@ -101,7 +102,7 @@ class WebsocketConnection(LoggingMixin, t.Hashable, t.AsyncContextManager):
         self._is_busy = False
         self._is_draining = False
         self._last_activity = time.time()
-        self._monitor_task: aio.Task | None = None
+        self._monitor_task: aio.Task[None] | None = None
         self._closed = False
         self._lock = aio.Lock()
         self._connection_id = uuid.uuid4().hex  # For hashing
@@ -474,6 +475,11 @@ class WebsocketConnection(LoggingMixin, t.Hashable, t.AsyncContextManager):
         await self.acquire()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> t.Literal[False]:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: types.TracebackType | None,
+    ) -> t.Literal[False]:
         await self.release()
         return False

@@ -7,7 +7,7 @@ from audex.valueobj.common.ops import Order
 
 if t.TYPE_CHECKING:
     from audex.entity import Entity
-    from audex.entity import Field
+    from audex.entity.fields import FieldSpec
 
 E = t.TypeVar("E", bound="Entity")
 T = t.TypeVar("T")
@@ -306,7 +306,7 @@ class Filter:
 
         # Delegate to the builder if available
         if self._builder is not None:
-            return getattr(self._builder, name)
+            return getattr(self._builder, name)  # type: ignore
 
         # Fallback: check if field exists
         if name not in self._entity_class._fields:
@@ -314,9 +314,9 @@ class Filter:
 
         field = self._entity_class._fields[name]
 
-        from audex.entity import ListField
-        from audex.entity import StringBackedField
-        from audex.entity import StringField
+        from audex.entity.fields import ListFieldSpec as ListField
+        from audex.entity.fields import StringBackedFieldSpec as StringBackedField
+        from audex.entity.fields import StringFieldSpec as StringField
 
         if isinstance(field, StringField):
             return StringFieldFilter(name, self)
@@ -657,13 +657,13 @@ class FilterBuilder(t.Generic[E]):
         if name not in entity_class._fields:
             raise AttributeError(f"Entity '{entity_class.__name__}' has no field '{name}'")
 
-        field: Field[t.Any] = entity_class._fields[name]
+        field: FieldSpec[t.Any] = entity_class._fields[name]
         filter_obj: Filter = object.__getattribute__(self, "_filter")
 
         # Return appropriate filter type based on field type
-        from audex.entity import ListField
-        from audex.entity import StringBackedField
-        from audex.entity import StringField
+        from audex.entity.fields import ListFieldSpec as ListField
+        from audex.entity.fields import StringBackedFieldSpec as StringBackedField
+        from audex.entity.fields import StringFieldSpec as StringField
 
         if isinstance(field, StringField):
             return StringFieldFilter(name, filter_obj)
@@ -689,4 +689,4 @@ class FilterBuilder(t.Generic[E]):
             after each condition method call, so you can use the filter
             directly without calling build().
         """
-        return object.__getattribute__(self, "_filter")
+        return object.__getattribute__(self, "_filter")  # type: ignore

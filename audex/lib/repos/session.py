@@ -219,7 +219,7 @@ class SessionRepository(SQLiteRepository[Session]):
     async def delete_many(
         self,
         arg: builtins.list[str] | t.Optional[Filter] = None,  # noqa
-    ) -> builtins.list[str] | int:
+    ) -> builtins.list[str]:
         """Delete multiple sessions by IDs or matching a filter.
 
         Args:
@@ -249,7 +249,7 @@ class SessionRepository(SQLiteRepository[Session]):
                 return session_ids
 
             spec = self.build_query_spec(arg)
-            stmt = sqlm.select(SessionTable.id)
+            stmt = sqlm.select(SessionTable.id)  # type: ignore
             for clause in spec.where:
                 stmt = stmt.where(clause)
 
@@ -257,13 +257,12 @@ class SessionRepository(SQLiteRepository[Session]):
             session_ids = [row[0] for row in result.all()]
 
             if not session_ids:
-                return 0
+                return []
 
-            count = len(session_ids)
             delete_stmt = sa.delete(SessionTable).where(sqlm.col(SessionTable.id).in_(session_ids))
             await session.execute(delete_stmt)
             await session.commit()
-            return count
+            return session_ids
 
     async def count(self, filter: t.Optional[Filter] = None) -> int:  # noqa
         """Count sessions matching the filter.
