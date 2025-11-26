@@ -19,22 +19,15 @@ if t.TYPE_CHECKING:
     from audex.lib.repos.doctor import DoctorRepository
 
 
-class ServerConfig(t.NamedTuple):
-    host: str = "0.0.0.0"
-    port: int = 8080
-
-
 class Server(LoggingMixin):
     __logtag__ = "audex.lib.http"
 
     def __init__(
         self,
-        config: ServerConfig,
         doctor_repo: DoctorRepository,
         exporter: Exporter,
     ):
         super().__init__()
-        self.config = config
         self.doctor_repo = doctor_repo
         self.exporter = exporter
 
@@ -91,17 +84,12 @@ class Server(LoggingMixin):
             middleware=middleware,
         )
 
-    async def start(self) -> None:
+    async def start(self, host: str, port: int) -> None:
         import uvicorn
 
-        self.logger.info(f"Starting HTTP server on {self.config.host}:{self.config.port}")
+        self.logger.info(f"Starting HTTP server on {host}:{port}")
 
-        config = uvicorn.Config(
-            self.app,
-            host=self.config.host,
-            port=self.config.port,
-            log_level="info",
-        )
+        config = uvicorn.Config(self.app, host=host, port=port, log_level="info")
 
         self.server = uvicorn.Server(config)
         await self.server.serve()

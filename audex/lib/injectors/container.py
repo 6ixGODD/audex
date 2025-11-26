@@ -33,14 +33,13 @@ class InfrastructureContainer(containers.DeclarativeContainer):
     repository = providers.Container(RepositoryContainer, sqlite=sqlite)
     exporter = providers.Factory(
         make_exporter,
-        session_repo=repository.provided.session,
-        segment_repo=repository.provided.segment,
-        utterance_repo=repository.provided.utterance,
+        session_repo=repository.session,
+        segment_repo=repository.segment,
+        utterance_repo=repository.utterance,
         store=store,
     )
     server = providers.Factory(
         make_server,
-        config=config,
-        doctor_repo=repository.provided.doctor,
+        doctor_repo=repository.doctor,
         exporter=exporter,
     )
