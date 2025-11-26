@@ -21,7 +21,7 @@ class LifeSpan(LoggingMixin):
     def append(self, context: object) -> None:
         self.contexts += (context,)
 
-    async def __aenter__(self) -> t.Self:
+    async def startup(self) -> t.Self:
         atasks: list[t.Coroutine[None, None, None]] = []
         for ctx in self.contexts:
             if isinstance(ctx, ContextMixin):
@@ -43,12 +43,10 @@ class LifeSpan(LoggingMixin):
 
         return self
 
-    async def __aexit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        traceback: types.TracebackType | None,
-    ) -> None:
+    async def __aenter__(self) -> t.Self:
+        return await self.startup()
+
+    async def shutdown(self) -> None:
         atasks: list[t.Coroutine[None, None, None]] = []
         for ctx in self.contexts:
             if isinstance(ctx, ContextMixin):
@@ -67,3 +65,11 @@ class LifeSpan(LoggingMixin):
 
         if atasks:
             await asyncio.gather(*atasks)
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: types.TracebackType | None,
+    ) -> None:
+        await self.shutdown()
