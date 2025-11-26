@@ -60,6 +60,9 @@ optional-dependencies.test = [
   "pytest>=9.0.1,<10",
   "pytest-asyncio>=1.3,<2",
   "pytest-cov>=7,<8",
+  "types-aiofiles>=25.1.0.20251011,<26",
+  "types-cachetools>=6.2.0.20251022,<7",
+  "types-pyyaml>=6.0.12.20250915,<7",
 ]
 
 [tool.poetry]
