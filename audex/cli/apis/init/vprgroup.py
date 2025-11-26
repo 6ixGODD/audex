@@ -6,17 +6,19 @@ import pathlib
 from pydantic import Field
 
 from audex.cli.args import BaseArgs
+from audex.cli.exceptions import IllegalOperationError
 from audex.cli.exceptions import InvalidArgumentError
 from audex.cli.helper import display
 from audex.config import Config
 from audex.config import build_config
 from audex.config import setconfig
 from audex.lib.injectors.container import InfrastructureContainer
+from audex.lib.vpr import GroupAlreadyExistsError
 
 
 class Args(BaseArgs):
-    config: pathlib.Path | None = Field(
-        default=None,
+    config: pathlib.Path = Field(
+        ...,
         alias="c",
         description="Path to the configuration file.",
     )
@@ -80,7 +82,10 @@ class Args(BaseArgs):
         # Create VPR group
         async def create_group(name: str | None) -> str:
             async with vpr:
-                return await vpr.create_group(name)
+                try:
+                    return await vpr.create_group(name)
+                except GroupAlreadyExistsError as e:
+                    raise IllegalOperationError(operation="Create VPR Group", reason=str(e)) from e
 
         with display.loading("Creating VPR group..."):
             group_id = asyncio.run(create_group(self.name))

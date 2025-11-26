@@ -7,114 +7,14 @@ import typing as t
 
 from pydantic import BaseModel
 from pydantic import ConfigDict
-from pydantic import Field
 from pydantic import ModelWrapValidatorHandler
 from pydantic import ValidationError
 from pydantic import model_validator
 
+from audex import __description__
+from audex import __title__
 from audex import __version__
 from audex.cli.exceptions import InvalidArgumentError
-
-
-class KeyValueAction(argparse.Action):
-    """Custom argparse action to capture key=value pairs.
-
-    Captures any argument in the form --key=value or --key value and
-    stores them in a dictionary.
-    """
-
-    def __call__(
-        self,
-        parser: argparse.ArgumentParser,  # noqa
-        namespace: argparse.Namespace,
-        values: str | list[str] | None,
-        option_string: str | None = None,
-    ) -> None:
-        """Process key=value arguments.
-
-        Args:
-            parser: The argument parser.
-            namespace: The namespace to update.
-            values: The values to process.
-            option_string: The option string (e.g., '--key').
-        """
-        if not hasattr(namespace, "kwargs"):
-            namespace.kwargs = {}
-
-        kwargs_dict = namespace.kwargs
-
-        if option_string:
-            # Extract key from option string (remove leading dashes)
-            key = option_string.lstrip("-")
-
-            # Handle both --key=value and --key value formats
-            if isinstance(values, str):
-                kwargs_dict[key] = values
-            elif isinstance(values, list) and values:
-                kwargs_dict[key] = values[0]
-
-
-class KeyValueParser(argparse.ArgumentParser):
-    """Custom ArgumentParser that captures unknown --key=value
-    arguments.
-
-    This parser intercepts unknown arguments that match the --key=value
-    pattern and stores them in the 'kwargs' namespace attribute.
-    """
-
-    def parse_known_args(
-        self,
-        args: list[str] | None = None,
-        namespace: argparse.Namespace | None = None,
-    ) -> tuple[argparse.Namespace, list[str]]:
-        """Parse known args and capture --key=value pairs from unknown
-        args.
-
-        Args:
-            args: List of arguments to parse.
-            namespace: Namespace to populate.
-
-        Returns:
-            Tuple of (namespace, remaining_args).
-        """
-        if namespace is None:
-            namespace = argparse.Namespace()
-
-        # Initialize kwargs dict
-        if not hasattr(namespace, "kwargs"):
-            namespace.kwargs = {}
-
-        # First pass: normal parsing
-        namespace, remaining = super().parse_known_args(args, namespace)
-
-        # Second pass: capture --key=value patterns from remaining args
-        filtered_remaining = []
-        i = 0
-        while i < len(remaining):
-            arg = remaining[i]
-
-            # Check if it's a --key=value format
-            if arg.startswith("--") and "=" in arg:
-                key, value = arg.split("=", 1)
-                key = key.lstrip("-")
-                namespace.kwargs[key] = value
-                i += 1
-            # Check if it's a --key value format (two separate args)
-            elif (
-                arg.startswith("--")
-                and i + 1 < len(remaining)
-                and not remaining[i + 1].startswith("-")
-            ):
-                key = arg.lstrip("-")
-                value = remaining[i + 1]
-                namespace.kwargs[key] = value
-                i += 2
-            else:
-                # Keep this arg as truly unknown
-                filtered_remaining.append(arg)
-                i += 1
-
-        return namespace, filtered_remaining
 
 
 class BaseArgs(BaseModel, abc.ABC):
@@ -128,10 +28,6 @@ class BaseArgs(BaseModel, abc.ABC):
     - Union types
     - Path types
     - Nested subcommands
-    - Dynamic kwargs (--key=value pairs)
-
-    The special 'kwargs' field captures any --key=value arguments that aren't
-    explicitly defined as fields.
 
     Example:
         ```python
@@ -141,26 +37,18 @@ class BaseArgs(BaseModel, abc.ABC):
             verbose: bool = Field(
                 default=False, description="Verbose output"
             )
-            kwargs: dict[str, str] = Field(
-                default_factory=dict,
-                description="Additional key-value pairs",
-            )
 
             def run(self) -> None:
                 print(f"Hello {self.name}, age {self.age}")
-                print(f"Extra params: {self.kwargs}")
 
 
-        # Usage: myapp --name John --age 25 --env=prod --region=us-west
-        # kwargs will contain: {"env": "prod", "region": "us-west"}
+        parser = argparse.ArgumentParser()
+        MyArgs.build_args(parser)
+        parser.set_defaults(func=MyArgs.func)
+        args = parser.parse_args()
+        args.func(args)
         ```
     """
-
-    # Special field to capture dynamic kwargs
-    kwargs: dict[str, str] = Field(
-        default_factory=dict,
-        description="Additional key-value arguments in --key=value format",
-    )
 
     @abc.abstractmethod
     def run(self) -> None:
@@ -188,9 +76,8 @@ class BaseArgs(BaseModel, abc.ABC):
         - bool: Uses store_true/store_false based on default value
         - list[T]: Uses nargs='+' or nargs='*'
         - Optional[T]: Makes argument optional with default None
-        - Literal[...  ]: Uses choices parameter
+        - Literal[... ]: Uses choices parameter
         - Path/pathlib.Path: Uses type=pathlib.Path
-        - dict[str, str]: Special handling for kwargs field (skipped, handled by parser)
 
         Args:
             parser: The argparse parser to add arguments to.
@@ -198,10 +85,6 @@ class BaseArgs(BaseModel, abc.ABC):
         for field, fieldinfo in cls.__pydantic_fields__.items():
             # Skip internal fields
             if field.startswith("_"):
-                continue
-
-            # Skip kwargs field - it's handled specially by KeyValueParser
-            if field == "kwargs":
                 continue
 
             arg_name = f"--{field.replace('_', '-')}"
@@ -348,18 +231,14 @@ class BaseArgs(BaseModel, abc.ABC):
         Raises:
             pydantic.ValidationError: If validation fails.
         """
-        # Convert Namespace to dict
+        # Convert Namespace to dict and filter out None values for optional fields
         args_dict = vars(args)
 
-        # Remove non-field attributes (like 'func', 'command', etc.)
+        # Remove non-field attributes (like 'func')
         field_names = set(cls.__pydantic_fields__.keys())
         filtered_dict = {k: v for k, v in args_dict.items() if k in field_names}
 
-        # Ensure kwargs is present
-        if "kwargs" not in filtered_dict:
-            filtered_dict["kwargs"] = {}
-
-        return cls.model_validate(filtered_dict, strict=False)
+        return cls.model_validate(filtered_dict, by_alias=False, by_name=True, strict=False)
 
     @classmethod
     def register_subparser(
@@ -368,7 +247,6 @@ class BaseArgs(BaseModel, abc.ABC):
         name: str,
         help_text: str | None = None,
         aliases: list[str] | None = None,
-        parser_class: type[argparse.ArgumentParser] = KeyValueParser,
     ) -> argparse.ArgumentParser:
         """Register this command as a subcommand.
 
@@ -380,7 +258,6 @@ class BaseArgs(BaseModel, abc.ABC):
             name: The name of this subcommand.
             help_text: Help text for this subcommand.  If None, uses class docstring.
             aliases: Alternative names for this subcommand.
-            parser_class: The parser class to use (default: KeyValueParser for kwargs support).
 
         Returns:
             The argument parser for this subcommand, which can be used to
@@ -389,7 +266,7 @@ class BaseArgs(BaseModel, abc.ABC):
         Example:
             ```python
             # Create main parser
-            parser = KeyValueParser()
+            parser = argparse.ArgumentParser()
             subparsers = parser.add_subparsers(
                 dest="command", required=True
             )
@@ -416,8 +293,6 @@ class BaseArgs(BaseModel, abc.ABC):
             help=help_text,
             description=help_text,
             aliases=aliases or [],
-            # Use KeyValueParser by default to support kwargs
-            parser_class=parser_class,
         )
         cls.build_args(parser)
         parser.set_defaults(func=cls.func)
@@ -447,32 +322,33 @@ class BaseArgs(BaseModel, abc.ABC):
         extra="ignore",
         frozen=True,
         arbitrary_types_allowed=True,  # Allow types like pathlib.Path
+        populate_by_name=True,  # Allow population by field name
     )
 
 
 def parser_with_version(
-    prog: str | None = None,
-    description: str | None = None,
-) -> KeyValueParser:
+    prog: str = __title__,
+    description: str = __description__,
+) -> argparse.ArgumentParser:
     """Create an argument parser with --version and --help built-in.
 
-    Helper function to create a parser with common options and kwargs support.
+    Helper function to create a parser with common options.
 
     Args:
         prog: Program name.
         description: Program description.
 
     Returns:
-        Configured KeyValueParser with version info and kwargs support.
+        Configured ArgumentParser with version info.
     """
-    parser = KeyValueParser(
+    parser = argparse.ArgumentParser(
         prog=prog,
         description=description,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         "--version",
-        "-V",  # Changed from -v to avoid conflicts
+        "-V",
         action="version",
         version=f"%(prog)s {__version__}",
         help="Show the version number and exit.",

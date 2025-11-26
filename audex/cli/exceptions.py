@@ -9,6 +9,7 @@ from audex.exceptions import AudexError
 
 class CLIError(AudexError):
     exit_code: t.ClassVar[int] = 1
+    code = 0x30
     default_message = "An error occurred in Audex CLI."
 
 
@@ -32,3 +33,12 @@ class InvalidArgumentError(CLIError):
             ),
             reason=errors,
         )
+
+
+class IllegalOperationError(CLIError):
+    default_message = "Illegal operation: {operation}\nReason: {reason}"
+
+    def __init__(self, message: str | None = None, *, operation: str, reason: str) -> None:
+        if message is None:
+            message = self.default_message.format(operation=operation, reason=reason)
+        super().__init__(message)
