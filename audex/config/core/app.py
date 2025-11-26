@@ -32,3 +32,8 @@ class AppConfig(BaseModel):
         default=False,
         description="Enable or disable touch support.",
     )
+
+    fullscreen: bool = Field(
+        default=False,
+        description="Enable or disable fullscreen mode.",
+    )
