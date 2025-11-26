@@ -1,6 +1,6 @@
 # WebSocket Connection Pool (Async)
 
-::: audex.lib.websocket.connection.pool
+::: audex.lib.websocket.pool
 options:
 show_root_heading: true
 show_source: true
