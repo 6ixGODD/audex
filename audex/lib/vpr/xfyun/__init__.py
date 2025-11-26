@@ -21,6 +21,8 @@ from audex import utils
 from audex.helper.mixin import LoggingMixin
 from audex.lib.restful import RESTfulMixin
 from audex.lib.vpr import VPR
+from audex.lib.vpr import GroupAlreadyExistsError
+from audex.lib.vpr import GroupNotFoundError
 from audex.lib.vpr import VPRError
 from audex.lib.vpr.xfyun.types import AudioPayload
 from audex.lib.vpr.xfyun.types import AudioResource
@@ -198,7 +200,7 @@ class XFYunVPR(RESTfulMixin, VPR):
         if self.group_id:
             error_msg = f"Group already exists (group_id={self.group_id}), cannot create a new one."
             self.logger.error(error_msg)
-            raise VPRError(error_msg)
+            raise GroupAlreadyExistsError(error_msg)
 
         group_id = gid or utils.gen_id()
         self.logger.debug(f"Using group_id: {group_id}")
@@ -271,7 +273,7 @@ class XFYunVPR(RESTfulMixin, VPR):
         if not self.group_id:
             error_msg = "Group ID is not set. Cannot enroll feature. Please create a group first."
             self.logger.error(error_msg)
-            raise VPRError(error_msg)
+            raise GroupNotFoundError(error_msg)
 
         uid = uid or utils.gen_id()
         self.logger.debug(f"Using feature_id (uid): {uid}")
@@ -346,7 +348,7 @@ class XFYunVPR(RESTfulMixin, VPR):
         if not self.group_id:
             error_msg = "Group ID is not set. Cannot update feature. Please create a group first."
             self.logger.error(error_msg)
-            raise VPRError(error_msg)
+            raise GroupNotFoundError(error_msg)
 
         self.logger.debug(f"Target group_id: {self.group_id}")
 
@@ -410,7 +412,7 @@ class XFYunVPR(RESTfulMixin, VPR):
         if not self.group_id:
             error_msg = "Group ID is not set. Cannot verify feature. Please create a group first."
             self.logger.error(error_msg)
-            raise VPRError(error_msg)
+            raise GroupNotFoundError(error_msg)
 
         self.logger.debug(f"Target group_id: {self.group_id}")
         self.logger.debug(f"Target dst_feature_id: {uid}")
