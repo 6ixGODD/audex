@@ -40,6 +40,13 @@ def main() -> int:
 def parse_args() -> argparse.Namespace:
     parser = parser_with_version()
 
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Enable verbose output for debugging",
+    )
+
     # Create subparsers for commands
     subparsers = parser.add_subparsers(
         title="Available Commands",
