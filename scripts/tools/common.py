@@ -7,7 +7,7 @@ import pathlib as pl
 import sys
 import typing as t
 
-from audex.helper import ansi
+from audex.cli.helper import ansi
 
 
 def print_separator(char: str = "=", length: int = 76) -> None:
