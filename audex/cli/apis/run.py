@@ -98,7 +98,6 @@ class Args(BaseArgs):
         if cfg.core.app.native:
             display.info("Launching in native window mode")
         else:
-            display.info(f"Starting web server on http://{cfg.app.host}:{cfg.app.port}")
             display.info("Application will open in your default browser")
 
         display.info("Press Ctrl+C to stop")

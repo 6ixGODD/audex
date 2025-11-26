@@ -25,8 +25,8 @@ class XFYunVPRConfig(BaseModel):
         description="The group ID for voiceprint recognition.",
     )
 
-    group_id_path: os.PathLike[str] = Field(
-        default=pathlib.Path(".xfyun.vpr.gid"),
+    group_id_path: os.PathLike[str] | str = Field(
+        default=".xfyun.vpr.gid",
         description="The file path to read the group ID from if not provided directly.",
     )
 
@@ -57,8 +57,8 @@ class UnisoundVPRConfig(BaseModel):
         description="The group ID for voiceprint recognition.",
     )
 
-    group_id_path: os.PathLike[str] = Field(
-        default=pathlib.Path(".unisound.vpr.gid"),
+    group_id_path: os.PathLike[str] | str = Field(
+        default=".unisound.vpr.gid",
         description="The file path to read the group ID from if not provided directly.",
     )
 
