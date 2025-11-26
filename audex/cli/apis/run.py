@@ -13,6 +13,7 @@ from audex.config import Config
 from audex.config import build_config
 from audex.config import setconfig
 from audex.container import Container
+from audex.utils import flatten_dict
 from audex.view import View
 
 
@@ -52,15 +53,7 @@ class Args(BaseArgs):
         # Show configuration summary
         cfg = build_config()
         with display.section("Application Configuration"):
-            config_info = {
-                "App Name": cfg.app.name,
-                "Version": cfg.app.version,
-                "Mode": "Native GUI" if cfg.app.native else "Web Browser",
-                "Debug": "Enabled" if cfg.app.debug else "Disabled",
-                "VPR Provider": cfg.provider.vpr.provider,
-                "Transcription": cfg.provider.transcription.provider,
-            }
-            display.key_value(config_info)
+            display.key_value(flatten_dict(cfg.model_dump()))
 
         # Initialize container
         display.step("Initializing application", step=1)
@@ -102,7 +95,7 @@ class Args(BaseArgs):
         display.step("Launching application", step=2)
         print()
 
-        if cfg.app.native:
+        if cfg.core.app.native:
             display.info("Launching in native window mode")
         else:
             display.info(f"Starting web server on http://{cfg.app.host}:{cfg.app.port}")
