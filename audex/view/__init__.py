@@ -33,13 +33,17 @@ class View(LoggingMixin):
         app.on_shutdown(self.lifespan.__aexit__)
 
     def run(self) -> None:
-        from audex.view.pages import dashboard  # noqa: F401
-        from audex.view.pages import login  # noqa: F401
-        from audex.view.pages import recording  # noqa: F401
-        from audex.view.pages import register  # noqa: F401
-        from audex.view.pages import sessions  # noqa: F401
-        from audex.view.pages import settings  # noqa: F401
-        from audex.view.pages import voiceprint  # noqa: F401
+        import audex.view.pages.dashboard
+        import audex.view.pages.login
+        import audex.view.pages.recording
+        import audex.view.pages.register
+        import audex.view.pages.sessions
+        import audex.view.pages.sessions.details
+        import audex.view.pages.sessions.export
+        import audex.view.pages.settings
+        import audex.view.pages.voiceprint
+        import audex.view.pages.voiceprint.enroll
+        import audex.view.pages.voiceprint.update  # noqa: F401
 
         ui.run(
             title=self.config.core.app.app_name,

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import random
+
 from dependency_injector.wiring import Provide
 from dependency_injector.wiring import inject
 from fastapi import Depends
@@ -8,6 +10,7 @@ from nicegui import ui
 from audex.config import Config
 from audex.container import Container
 from audex.service.doctor import DoctorService
+from audex.service.session import SessionService
 from audex.view.decorators import handle_errors
 
 
@@ -16,6 +19,7 @@ from audex.view.decorators import handle_errors
 @inject
 async def render(
     doctor_service: DoctorService = Depends(Provide[Container.service.doctor]),
+    session_service: SessionService = Depends(Provide[Container.service.session]),
     config: Config = Depends(Provide[Container.config]),
 ) -> None:
     """Render dashboard page with clean Apple-inspired design."""
@@ -63,7 +67,8 @@ async def render(
         with ui.column().classes("gap-8").style("width: 360px; flex-shrink: 0;"):
             # Welcome
             with ui.column().classes("gap-2 mb-6"):
-                ui.label("Hi,").classes("text-h3 font-bold text-grey-9")
+                candidate_words = ["Hi,", "Hello,", "您好,", ":)", "欢迎回来,", "很高兴见到您,"]
+                ui.label(random.choice(candidate_words)).classes("text-h3 font-bold text-grey-9")
                 ui.label(doctor.name).classes("text-h2 gradient-text").style("line-height: 1.2;")
 
                 info_parts = []
@@ -78,21 +83,28 @@ async def render(
                     ui.label(" · ".join(info_parts)).classes("text-body2 text-grey-6 mt-3")
 
             # Overview - fully transparent
+            overview = await session_service.stats()
             with ui.card().classes("glass-card p-5 w-full").style("margin-top: 40px;"):
                 ui.label("概览").classes("text-subtitle2 font-semibold mb-4 text-grey-8")
 
                 with ui.column().classes("gap-3 w-full"):
                     with ui.row().classes("items-center justify-between w-full"):
                         ui.label("本月会话").classes("text-xs text-grey-7")
-                        ui.label("0").classes("text-body1 font-bold text-primary")
+                        ui.label(str(overview.get("sessions_count_in_this_month", 0))).classes(
+                            "text-body1 font-bold text-primary"
+                        )
 
                     with ui.row().classes("items-center justify-between w-full"):
                         ui.label("总会话数").classes("text-xs text-grey-7")
-                        ui.label("0").classes("text-body1 font-bold text-secondary")
+                        ui.label(str(overview.get("total_sessions_count", 0))).classes(
+                            "text-body1 font-bold text-secondary"
+                        )
 
                     with ui.row().classes("items-center justify-between w-full"):
                         ui.label("录音时长").classes("text-xs text-grey-7")
-                        ui.label("0h").classes("text-body1 font-bold text-positive")
+                        ui.label(
+                            f"{(overview.get('total_duration_in_minutes', 0) / 60.0):.2f}" + "h"
+                        ).classes("text-body1 font-bold text-positive")
 
         # Right column - vertically centered
         with ui.element("div").style(
