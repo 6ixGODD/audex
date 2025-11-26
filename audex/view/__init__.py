@@ -50,4 +50,5 @@ class View(LoggingMixin):
             native=self.config.core.app.native,
             language="zh-CN",
             reload=self.config.core.app.debug,
+            fullscreen=self.config.core.app.fullscreen,
         )
