@@ -40,3 +40,8 @@ class SQLiteConfig(BaseModel):
         default=True,
         description="Enable connection health checks before using a connection from the pool.",
     )
+
+    create_all: bool = Field(
+        default=True,
+        description="Whether to create all tables on initialization.",
+    )
