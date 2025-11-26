@@ -57,10 +57,16 @@ class SematicVersion(BaseValueObject):
         return (self.major, self.minor, self.patch) < (other.major, other.minor, other.patch)
 
     def bump_major(self) -> t.Self:
-        return SematicVersion(major=self.major + 1, minor=0, patch=0)
+        self.major += 1
+        self.minor = 0
+        self.patch = 0
+        return self
 
     def bump_minor(self) -> t.Self:
-        return SematicVersion(major=self.major, minor=self.minor + 1, patch=0)
+        self.minor += 1
+        self.patch = 0
+        return self
 
     def bump_patch(self) -> t.Self:
-        return SematicVersion(major=self.major, minor=self.minor, patch=self.patch + 1)
+        self.patch += 1
+        return self

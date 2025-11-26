@@ -219,7 +219,7 @@ class VPRepository(SQLiteRepository[VP]):
     async def delete_many(
         self,
         arg: builtins.list[str] | t.Optional[Filter] = None,  # noqa
-    ) -> builtins.list[str] | int:
+    ) -> builtins.list[str]:
         """Delete multiple utterances by IDs or matching a filter.
 
         Args:
@@ -249,7 +249,7 @@ class VPRepository(SQLiteRepository[VP]):
                 return utterance_ids
 
             spec = self.build_query_spec(arg)
-            stmt = sqlm.select(VPTable.id)
+            stmt = sqlm.select(VPTable.id)  # type: ignore
             for clause in spec.where:
                 stmt = stmt.where(clause)
 
@@ -257,13 +257,13 @@ class VPRepository(SQLiteRepository[VP]):
             utterance_ids = [row[0] for row in result.all()]
 
             if not utterance_ids:
-                return 0
+                return []
 
-            count = len(utterance_ids)
             delete_stmt = sa.delete(VPTable).where(sqlm.col(VPTable.id).in_(utterance_ids))
             await session.execute(delete_stmt)
             await session.commit()
-            return count
+
+            return utterance_ids
 
     async def count(self, filter: t.Optional[Filter] = None) -> int:  # noqa
         """Count utterances matching the filter.

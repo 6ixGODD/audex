@@ -15,6 +15,7 @@ from audex.lib.cache import Empty
 from audex.lib.cache import KeyBuilder
 from audex.lib.cache import KVCache
 from audex.lib.cache import Negative
+from audex.lib.cache import T
 
 
 class TTLEntry:
@@ -73,28 +74,22 @@ class InmemoryCache(KVCache):
         self._lock = asyncio.Lock()
 
         # Initialize the appropriate cache type
+        self._cache: t.MutableMapping[str, TTLEntry]
         if cache_type == "lru":
-            self._cache: t.MutableMapping[str, TTLEntry] = cachetools.LRUCache(maxsize=maxsize)
+            self._cache = cachetools.LRUCache(maxsize=maxsize)
             self.logger.info(f"Initialized LRU cache with maxsize={maxsize}")
         elif cache_type == "lfu":
-            self._cache: t.MutableMapping[str, TTLEntry] = cachetools.LFUCache(maxsize=maxsize)
+            self._cache = cachetools.LFUCache(maxsize=maxsize)
             self.logger.info(f"Initialized LFU cache with maxsize={maxsize}")
         elif cache_type == "ttl":
             cache_ttl = default_ttl
-            self._cache: t.MutableMapping[str, TTLEntry] = cachetools.TTLCache(
-                maxsize=maxsize, ttl=cache_ttl
-            )
+            self._cache = cachetools.TTLCache(maxsize=maxsize, ttl=cache_ttl)
             self.logger.info(f"Initialized TTL cache with maxsize={maxsize}, ttl={cache_ttl}")
         elif cache_type == "fifo":
             # Cachetools doesn't have built-in FIFO, use OrderedDict wrapper
-            self._cache: t.MutableMapping[str, TTLEntry] = collections.OrderedDict()
+            self._cache = collections.OrderedDict()
             self._maxsize = maxsize
             self.logger.info(f"Initialized FIFO cache with maxsize={maxsize}")
-        else:
-            # Default to LRU
-            self._cache: t.MutableMapping[str, TTLEntry] = cachetools.LRUCache(maxsize=maxsize)
-            self.logger.warning(f"Unknown cache type '{cache_type}', defaulting to LRU")
-            self.cache_type = "lru"
 
         self.logger.info(
             f"Cachetools cache initialized with type={self.cache_type}, maxsize={maxsize}",
@@ -171,7 +166,7 @@ class InmemoryCache(KVCache):
                     return NEGATIVE
 
                 self.logger.debug(f"Cache hit for key: {key}")
-                return entry.value
+                return entry.value  # type: ignore
             except Exception as e:
                 self.logger.error(f"Error when getting key {key}: {e}")
                 return EMPTY
@@ -259,12 +254,12 @@ class InmemoryCache(KVCache):
             result.append(key)
         return result
 
-    async def get(self, key: str, default: VT | None = None, /) -> VT | None:
+    async def get(self, key: str, default: VT | T | None = None, /) -> VT | T | None:
         """Get value from cache, return default if not found."""
         result = await self.get_item(key)
         if isinstance(result, Empty):
             return default
-        return result
+        return result  # type: ignore
 
     async def setdefault(self, key: str, default: VT | None = None, /) -> VT | None:
         """Get value or set and return default if key doesn't exist."""
@@ -278,7 +273,7 @@ class InmemoryCache(KVCache):
                         self.logger.debug(f"Key {key} in negative cache")
                         return default
                     self.logger.debug(f"Key {key} exists, returning cached value")
-                    return entry.value
+                    return entry.value  # type: ignore
 
                 # Key doesn't exist or is expired
                 if entry is not None and entry.is_expired():
@@ -314,7 +309,7 @@ class InmemoryCache(KVCache):
             except Exception as e:
                 self.logger.error(f"Failed to clear cache: {e}")
 
-    async def pop(self, key: str, default: VT | None = None, /) -> VT | None:
+    async def pop(self, key: str, default: VT | T | None = None, /) -> VT | T | None:
         """Remove and return value, or return default if not found."""
         async with self._lock:
             try:
@@ -326,7 +321,7 @@ class InmemoryCache(KVCache):
                     if isinstance(entry.value, CacheMiss):
                         return default
                     self.logger.debug(f"Successfully popped key: {key}")
-                    return entry.value
+                    return entry.value  # type: ignore
 
                 self.logger.debug(f"Key not found for pop operation: {key}")
                 return default

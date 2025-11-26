@@ -7,7 +7,6 @@ from audex.entity.vp import VP
 from audex.exceptions import NoActiveSessionError
 from audex.filters.generated import doctor_filter
 from audex.filters.generated import vp_filter
-from audex.helper.mixin import AsyncContextMixin
 from audex.helper.mixin import LoggingMixin
 from audex.lib.cache import KVCache
 from audex.lib.recorder import AudioFormat
@@ -475,7 +474,7 @@ class DoctorService(BaseService):
             raise InternalDoctorServiceError() from e
 
 
-class VPEnrollmentContext(LoggingMixin, AsyncContextMixin, AbstractSession):
+class VPEnrollmentContext(LoggingMixin, AbstractSession):
     """Context for managing voiceprint enrollment with live
     recording."""
 
@@ -546,7 +545,7 @@ class VPEnrollmentContext(LoggingMixin, AsyncContextMixin, AbstractSession):
             vp = VP(
                 doctor_id=self.doctor.id,
                 vpr_uid=vpr_uid,
-                vpr_group_id=self.group_id,
+                vpr_group_id=self.group_id or "",
                 audio_key=segment.key,
                 text_content=self.text_content,
                 sample_rate=self.sample_rate,
@@ -572,7 +571,7 @@ class VPEnrollmentContext(LoggingMixin, AsyncContextMixin, AbstractSession):
             raise InternalDoctorServiceError(ErrorMessages.VOICEPRINT_ENROLL_FAILED) from e
 
 
-class VPUpdateContext(LoggingMixin, AsyncContextMixin, AbstractSession):
+class VPUpdateContext(LoggingMixin, AbstractSession):
     """Context for managing voiceprint update with live recording."""
 
     __logtag__ = "audex.service.doctor:VPUpdateContext"

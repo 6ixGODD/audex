@@ -8,9 +8,6 @@ if t.TYPE_CHECKING:
 
 
 def make_store(config: Config) -> Store:
-    if config.infrastructure.store.type == "localfile":
-        from audex.lib.store.localfile import LocalFileStore
+    from audex.lib.store.localfile import LocalFileStore
 
-        return LocalFileStore(config.infrastructure.store.base_url)
-
-    return NotImplemented
+    return LocalFileStore(config.infrastructure.store.base_url)

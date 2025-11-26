@@ -160,7 +160,7 @@ class Settings(ps.BaseSettings):
         Returns:
             Cleaned dictionary.
         """
-        cleaned = {}
+        cleaned: dict[str, t.Any] = {}
         for key, value in data.items():
             if value is None:
                 if include_none:

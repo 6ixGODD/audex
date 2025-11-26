@@ -61,7 +61,7 @@ class VP(BaseEntity):
     id: str = StringField(default_factory=lambda: utils.gen_id(prefix="vp_reg-"))
     doctor_id: str = StringField()
     vpr_uid: str = StringField()
-    vpr_group_id: str | None = StringField(nullable=True)
+    vpr_group_id: str = StringField()
     audio_key: str = StringField()
     text_content: str = StringField()
     sample_rate: int = IntegerField()

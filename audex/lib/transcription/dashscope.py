@@ -10,13 +10,13 @@ from pydantic import TypeAdapter
 from audex import utils
 from audex.helper.mixin import LoggingMixin
 from audex.helper.stream import AsyncStream
-from audex.lib.transcription import Delta
-from audex.lib.transcription import Done
 from audex.lib.transcription import ReceiveType
-from audex.lib.transcription import Start
 from audex.lib.transcription import Transcription
 from audex.lib.transcription import TranscriptionError
 from audex.lib.transcription import TranscriptSession
+from audex.lib.transcription.events import Delta
+from audex.lib.transcription.events import Done
+from audex.lib.transcription.events import Start
 from audex.lib.websocket.connection import WebsocketConnection
 from audex.lib.websocket.pool import WebsocketConnectionPool
 
@@ -154,7 +154,7 @@ adapter: TypeAdapter[ServerMessage] = TypeAdapter(ServerMessage)
 
 
 def parse_server_message(
-    data: t.AnyStr,
+    data: str | bytes,
 ) -> TaskStarted | ResultGenerated | TaskFinished | TaskFailed:
     try:
         return adapter.validate_json(data)
@@ -272,14 +272,14 @@ class DashscopeParaformer(LoggingMixin, Transcription):
     def session(
         self,
         *,
-        fmt: t.Literal["pcm", "mp3"] = "pcm",
-        sample_rate: int = 16000,
+        fmt: t.Literal["pcm", "mp3"] | None = None,
+        sample_rate: int | None = None,
         silence_duration_ms: int | None = None,
         vocabulary_id: str | None = None,
     ) -> TranscriptSession:
         self.verify(
             model=self.model,
-            sr=self.sample_rate or sample_rate,
+            sr=sample_rate or self.sample_rate,
             has_lang_hints=self.lang_hints is not None,
             semantic_punctuation=self.semantic_punctuation,
             multi_thres_mode=self.multi_thres_mode,
@@ -291,13 +291,13 @@ class DashscopeParaformer(LoggingMixin, Transcription):
         return DashscopeParaformerSession(
             pool=self.pool,
             model=self.model,
-            fmt=self.fmt or fmt,
-            sample_rate=self.sample_rate or sample_rate,
-            vocabulary_id=self.vocabulary_id or vocabulary_id,
+            fmt=fmt or self.fmt,
+            sample_rate=sample_rate or self.sample_rate,
+            vocabulary_id=vocabulary_id or self.vocabulary_id,
             disfluency_removal_enabled=self.disfluency_removal_enabled,
             lang_hints=self.lang_hints,
             semantic_punctuation=self.semantic_punctuation,
-            max_sentence_silence=self.silence_duration_ms or silence_duration_ms,
+            max_sentence_silence=silence_duration_ms or self.silence_duration_ms,
             multi_thres_mode=self.multi_thres_mode,
             punctuation_pred=self.punctuation_pred,
             heartbeat=self.heartbeat,
@@ -390,7 +390,7 @@ class DashscopeParaformerSession(LoggingMixin, TranscriptSession):
             msg = parse_server_message(server_msg)
 
             if not isinstance(msg, TaskStarted):
-                raise TranscriptionError(f"Unexpected server message: {server_msg}")
+                raise TranscriptionError(f"Unexpected server message: {server_msg!s}")
 
             if not msg.header.task_id == self.task_id:
                 raise TranscriptionError(
@@ -521,5 +521,5 @@ class DashscopeParaformerSession(LoggingMixin, TranscriptSession):
                 )
 
             else:
-                self.logger.error(f"Unexpected server message: {server_msg}")
-                raise TranscriptionError(f"Unexpected server message: {server_msg}")
+                self.logger.error(f"Unexpected server message: {server_msg!s}")
+                raise TranscriptionError(f"Unexpected server message: {server_msg!s}")

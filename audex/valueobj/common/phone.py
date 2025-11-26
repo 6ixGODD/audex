@@ -44,7 +44,7 @@ class Phone(BaseValueObject):
         return str(self)
 
     @classmethod
-    def parse(cls, phone_str: str) -> Phone:
+    def parse(cls, phone_str: str) -> t.Self:
         """Create a Telephone object from a string representation.
 
         Args:
@@ -55,7 +55,8 @@ class Phone(BaseValueObject):
         """
         if not re.match(r"^\+\d+ \d+$", phone_str):
             raise ValidationError(
-                "Invalid phone string format. Expected format: '+<country_code> <number>'"
+                "Invalid phone string format. Expected format: '+<country_code> <number>'",
+                reason="invalid_format",
             )
         country_code, number = phone_str[1:].split(" ", 1)
         return cls(country_code=country_code, number=number)
@@ -65,7 +66,10 @@ class CNPhone(Phone):
     @pyd.model_validator(mode="after")
     def validate_chinese_phone(self) -> t.Self:
         if self.country_code != "86":
-            raise ValidationError("Country code must be '86' for Chinese telephone numbers")
+            raise ValidationError(
+                "Country code must be '86' for Chinese telephone numbers",
+                reason="invalid_country_code",
+            )
         if len(self.number) != 11 or not self.number.startswith((
             "13",
             "14",
@@ -74,5 +78,7 @@ class CNPhone(Phone):
             "18",
             "19",
         )):
-            raise ValidationError("Invalid Chinese telephone number format")
+            raise ValidationError(
+                "Invalid Chinese telephone number format", reason="invalid_number_format"
+            )
         return self

@@ -38,9 +38,6 @@ T = t.TypeVar("T")
 class SingleValueObject(BaseValueObject, t.Generic[T]):
     value: T
 
-    def __init__(self, value: T) -> None:
-        super().__init__(value=value)
-
     @classmethod
     def parse(cls, value: T, *, validate: bool = True) -> t.Self:
         return cls(value=value) if validate else cls.model_construct(value=value)
@@ -69,7 +66,8 @@ class EnumValueObject(enum.Enum):
         except ValueError as e:
             raise ValidationError(
                 f"Invalid value '{value}' for enum '{cls.__name__}'. "
-                f"Allowed values are: {cls.list()}"
+                f"Allowed values are: {cls.list()}",
+                reason="invalid_enum_value",
             ) from e
 
     @classmethod

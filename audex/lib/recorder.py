@@ -7,6 +7,7 @@ import io
 import typing as t
 
 import numpy as np
+import numpy.typing as npt
 import pyaudio
 import pydub
 
@@ -129,7 +130,7 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
     __logtag__ = "audex.lib.audio.recorder"
 
     # Mapping PyAudio format to numpy dtype and sample width
-    _FORMAT_MAP: t.ClassVar[dict[int, tuple[np.dtype[t.Any], int]]] = {
+    _FORMAT_MAP: t.ClassVar[dict[object, tuple[npt.DTypeLike, int]]] = {
         pyaudio.paInt8: (np.int8, 1),
         pyaudio.paInt16: (np.int16, 2),
         pyaudio.paInt24: (np.int32, 3),  # Note: 24-bit stored in 32-bit container
@@ -152,7 +153,7 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
         self._stream: pyaudio.Stream | None = None
 
         # Use numpy array for efficient operations
-        self._frames_data: list[np.ndarray] = []  # Store as numpy arrays
+        self._frames_data: list[npt.NDArray[t.Any]] = []  # Store as numpy arrays
         self._frames_timestamps: list[datetime.datetime] = []  # Separate timestamps
 
         self._is_recording = False
@@ -285,11 +286,11 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
                 # Standard conversion
                 audio_array = np.frombuffer(in_data, dtype=self._numpy_dtype)
 
-            self._frames_data.append(audio_array)
+            self._frames_data.append(audio_array)  # type: ignore
             self._frames_timestamps.append(timestamp)
         return None, pyaudio.paContinue
 
-    def _unpack_24bit(self, data: bytes) -> np.ndarray:
+    def _unpack_24bit(self, data: bytes) -> npt.ArrayLike:
         """Unpack 24-bit audio data to 32-bit numpy array.
 
         Args:
@@ -319,7 +320,7 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
 
         return samples
 
-    def _pack_24bit(self, data: np.ndarray) -> bytes:
+    def _pack_24bit(self, data: npt.ArrayLike) -> bytes:
         """Pack 32-bit numpy array to 24-bit audio data.
 
         Args:
@@ -376,12 +377,12 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
 
     def _resample_audio_numpy(
         self,
-        audio_data: np.ndarray,
+        audio_data: npt.NDArray[t.Any],
         src_rate: int,
         dst_rate: int,
         src_channels: int,
         dst_channels: int,
-    ) -> np.ndarray:
+    ) -> npt.NDArray[t.Any]:
         """Resample audio using numpy (fast linear interpolation).
 
         Args:
@@ -453,7 +454,7 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
 
     def _to_pydub_segment(
         self,
-        audio_data: np.ndarray,
+        audio_data: npt.NDArray[t.Any],
         sample_rate: int,
         channels: int,
     ) -> pydub.AudioSegment:
@@ -498,7 +499,7 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
 
     def _encode_audio(
         self,
-        audio_data: np.ndarray,
+        audio_data: npt.NDArray[t.Any],
         sample_rate: int,
         channels: int,
         output_format: AudioFormat,
@@ -645,8 +646,6 @@ class AudioRecorder(LoggingMixin, AsyncContextMixin):
             )
 
             yield encoded_chunk
-
-        self.logger.info("Streaming ended")
 
     async def segment(
         self,

@@ -193,8 +193,8 @@ class CreateGroupResult(BaseModel):
 
 
 class CreateGroupPayload(BaseModel):
-    create_group_res: TextResult | None = Field(
-        default=None,
+    create_group_res: TextResult = Field(
+        ...,
         alias="createGroupRes",
         serialization_alias="createGroupRes",
         description="Base64 encoded group creation result",

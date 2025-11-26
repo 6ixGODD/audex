@@ -220,7 +220,7 @@ class DoctorRepository(SQLiteRepository[Doctor]):
     async def delete_many(
         self,
         arg: builtins.list[str] | t.Optional[Filter] = None,  # noqa
-    ) -> builtins.list[str] | int:
+    ) -> builtins.list[str]:
         """Delete multiple doctors by IDs or matching a filter.
 
         Args:
@@ -250,7 +250,7 @@ class DoctorRepository(SQLiteRepository[Doctor]):
                 return doctor_ids
 
             spec = self.build_query_spec(arg)
-            stmt = sqlm.select(DoctorTable.id)
+            stmt = sqlm.select(DoctorTable.id)  # type: ignore
             for clause in spec.where:
                 stmt = stmt.where(clause)
 
@@ -258,13 +258,12 @@ class DoctorRepository(SQLiteRepository[Doctor]):
             doctor_ids = [row[0] for row in result.all()]
 
             if not doctor_ids:
-                return 0
+                return []
 
-            count = len(doctor_ids)
             delete_stmt = sa.delete(DoctorTable).where(sqlm.col(DoctorTable.id).in_(doctor_ids))
             await session.execute(delete_stmt)
             await session.commit()
-            return count
+            return doctor_ids
 
     async def count(self, filter: t.Optional[Filter] = None) -> int:  # noqa
         """Count doctors matching the filter.

@@ -122,6 +122,24 @@ class Store(LoggingMixin, abc.ABC):
             Exception: If the object doesn't exist or metadata retrieval fails.
         """
 
+    @t.overload
+    async def download(
+        self,
+        key: str,
+        *,
+        stream: t.Literal[False] = False,
+        chunk_size: int = 8192,
+        **kwargs: t.Any,
+    ) -> bytes: ...
+    @t.overload
+    async def download(
+        self,
+        key: str,
+        *,
+        stream: t.Literal[True],
+        chunk_size: int = 8192,
+        **kwargs: t.Any,
+    ) -> bytes: ...
     @abc.abstractmethod
     async def download(
         self,
@@ -158,7 +176,7 @@ class Store(LoggingMixin, abc.ABC):
         """
 
     @abc.abstractmethod
-    async def list(
+    def list(
         self,
         prefix: str = "",
         page_size: int = 10,

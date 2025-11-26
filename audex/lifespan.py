@@ -11,7 +11,7 @@ from audex.helper.mixin import LifecycleMixin
 from audex.helper.mixin import LoggingMixin
 
 
-class LifeSpan(LoggingMixin, t.AsyncContextManager):
+class LifeSpan(LoggingMixin):
     __logtag__ = "audex.lifespan"
 
     def __init__(self, *contexts: object) -> None:

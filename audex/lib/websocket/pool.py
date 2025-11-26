@@ -66,7 +66,7 @@ class PendingConnection:
         self.drain_timeout = drain_timeout
         self.drain_condition = drain_condition
         self.created_at = time.time()
-        self.drain_task: aio.Task | None = None
+        self.drain_task: aio.Task[None] | None = None
         self.pending_id = uuid.uuid4().hex
         self._completed = False
         self._lock = aio.Lock()
@@ -87,7 +87,7 @@ class PendingConnection:
         return f"PendingConnection({self.pending_id}, {self.connection})"
 
 
-class WebsocketConnectionPool(LoggingMixin, t.AsyncContextManager):
+class WebsocketConnectionPool(LoggingMixin):
     """An asynchronous WebSocket connection pool for managing reusable
     connections.
 
@@ -180,7 +180,7 @@ class WebsocketConnectionPool(LoggingMixin, t.AsyncContextManager):
         self._total = 0
         self._lock = aio.Lock()
         self._closed = False
-        self._cleanup_task: aio.Task | None = None
+        self._cleanup_task: aio.Task[None] | None = None
         self._started = False
 
     @staticmethod
@@ -344,7 +344,7 @@ class WebsocketConnectionPool(LoggingMixin, t.AsyncContextManager):
         )
         return await retry(self._acquire)()
 
-    async def _acquire(self) -> WebsocketConnection:
+    async def _acquire(self) -> WebsocketConnection:  # type: ignore
         """Internal method to acquire a connection from the pool.
 
         This method attempts to reuse existing connections or create new ones.
@@ -440,7 +440,6 @@ class WebsocketConnectionPool(LoggingMixin, t.AsyncContextManager):
 
                 await connection.close()
                 raise ConnectionUnavailableError(f"Failed to create connection: {e}") from e
-        return connection_to_test  # for mypy
 
     async def acquire_new(self) -> WebsocketConnection:
         """Force acquire a new connection, avoiding reuse of existing
@@ -636,7 +635,7 @@ class WebsocketConnectionPool(LoggingMixin, t.AsyncContextManager):
                 # Try to receive data with a short timeout
                 try:
                     recv_timeout = min(0.5, self._drain_quiet_period / 2)
-                    message = await aio.wait_for(connection.websocket.recv(), timeout=recv_timeout)
+                    message = await aio.wait_for(connection.websocket.recv(), timeout=recv_timeout)  # type: ignore
 
                     last_message_time = current_time
                     drained_messages += 1
@@ -722,13 +721,6 @@ class WebsocketConnectionPool(LoggingMixin, t.AsyncContextManager):
                     self._total -= 1
                 await connection.close()
                 self.logger.debug(f"Removed connection from pool: {connection}")
-                return
-
-            # Check if connection is healthy
-            if not connection.is_connected:
-                self._total -= 1
-                await connection.close()
-                self.logger.debug(f"Removed unhealthy connection from pool: {connection}")
                 return
 
             # If we don't need to check for server data, directly return to available
@@ -986,7 +978,7 @@ class WebsocketConnectionPool(LoggingMixin, t.AsyncContextManager):
 
     __str__ = __repr__
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> t.Self:
         await self.start()
         return self
 
@@ -995,5 +987,5 @@ class WebsocketConnectionPool(LoggingMixin, t.AsyncContextManager):
         exc_type: type[BaseException] | None,
         exc_value: BaseException | None,
         traceback: types.TracebackType | None,
-    ):
+    ) -> None:
         await self.close_all()

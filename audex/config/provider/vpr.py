@@ -26,7 +26,7 @@ class XFYunVPRConfig(BaseModel):
     )
 
     group_id_path: os.PathLike[str] = Field(
-        default=".xfyun.vpr.gid",
+        default=pathlib.Path(".xfyun.vpr.gid"),
         description="The file path to read the group ID from if not provided directly.",
     )
 
@@ -58,7 +58,7 @@ class UnisoundVPRConfig(BaseModel):
     )
 
     group_id_path: os.PathLike[str] = Field(
-        default=".unisound.vpr.gid",
+        default=pathlib.Path(".unisound.vpr.gid"),
         description="The file path to read the group ID from if not provided directly.",
     )
 

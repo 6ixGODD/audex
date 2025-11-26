@@ -266,7 +266,7 @@ class KVCache(LoggingMixin, AsyncContextMixin, abc.ABC):
         """Delete an item from the cache by key."""
 
     @abc.abstractmethod
-    async def iter_keys(self) -> t.AsyncIterator[str]:
+    def iter_keys(self) -> t.AsyncIterator[str]:
         """Return an async iterator over the keys in the cache."""
 
     @abc.abstractmethod
@@ -277,23 +277,11 @@ class KVCache(LoggingMixin, AsyncContextMixin, abc.ABC):
     async def contains(self, key: str) -> bool:
         """Check if the cache contains a specific key."""
 
-    @t.overload
-    async def get(self, key: str, /) -> VT | None: ...
-    @t.overload
-    async def get(self, key: str, /, default: VT) -> VT: ...
-    @t.overload
-    async def get(self, key: str, /, default: T) -> VT | T: ...
-    @t.overload
-    async def get(self, key: str, /, default: None = None) -> VT | None: ...
     @abc.abstractmethod
     async def get(self, key: str, /, default: VT | T | None = None) -> VT | T | None:
         """Get an item from the cache, returning default if the key does
         not exist."""
 
-    @t.overload
-    async def setdefault(self, key: str, default: None = None, /) -> VT | None: ...
-    @t.overload
-    async def setdefault(self, key: str, default: VT, /) -> VT: ...
     @abc.abstractmethod
     async def setdefault(self, key: str, default: VT | None = None, /) -> VT | None:
         """Set a default value for a key if it does not exist in the
@@ -303,16 +291,8 @@ class KVCache(LoggingMixin, AsyncContextMixin, abc.ABC):
     async def clear(self) -> None:
         """Clear all items from the cache."""
 
-    @t.overload
-    async def pop(self, key: str, /) -> VT: ...
-    @t.overload
-    async def pop(self, key: str, /, default: VT) -> VT: ...
-    @t.overload
-    async def pop(self, key: str, /, default: T) -> VT | T: ...
-    @t.overload
-    async def pop(self, key: str, /, default: None = None) -> VT | None: ...
     @abc.abstractmethod
-    async def pop(self, key: str, /, default: VT | T | None = None) -> VT | T:
+    async def pop(self, key: str, /, default: VT | T | None = None) -> VT | T | None:
         """Remove and return an item from the cache by key."""
 
     @abc.abstractmethod

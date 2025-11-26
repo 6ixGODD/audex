@@ -14,7 +14,7 @@ class VP(BaseEntity):
     updated_at: datetime.datetime | None
     doctor_id: str
     vpr_uid: str
-    vpr_group_id: str | None
+    vpr_group_id: str
     audio_key: str
     text_content: str
     sample_rate: int
@@ -27,7 +27,7 @@ class VP(BaseEntity):
         updated_at: datetime.datetime | None = None,
         doctor_id: str,
         vpr_uid: str,
-        vpr_group_id: str | None = None,
+        vpr_group_id: str,
         audio_key: str,
         text_content: str,
         sample_rate: int,
