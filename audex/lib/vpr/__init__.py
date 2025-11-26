@@ -28,3 +28,11 @@ class VPR(LoggingMixin, abc.ABC):
 
 class VPRError(AudexError):
     default_message = "VPR error occurred"
+
+
+class GroupAlreadyExistsError(VPRError):
+    default_message = "VPR group already exists"
+
+
+class GroupNotFoundError(VPRError):
+    default_message = "VPR group not found"

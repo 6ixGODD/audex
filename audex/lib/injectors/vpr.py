@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import typing as t
 
+from audex.exceptions import ConfigurationError
+from audex.utils import Unset
+
 if t.TYPE_CHECKING:
     from audex.config import Config
     from audex.lib.vpr import VPR
@@ -9,6 +12,22 @@ if t.TYPE_CHECKING:
 
 def make_vpr(config: Config) -> VPR:
     if config.provider.vpr.provider == "xfyun":
+        if isinstance(config.provider.vpr.xfyun.credential.app_id, Unset):
+            raise ConfigurationError(
+                config_key="provider.vpr.xfyun.credential.app_id",
+                reason="missing",
+            )
+        if isinstance(config.provider.vpr.xfyun.credential.api_key, Unset):
+            raise ConfigurationError(
+                config_key="provider.vpr.xfyun.credential.api_key",
+                reason="missing",
+            )
+        if isinstance(config.provider.vpr.xfyun.credential.api_secret, Unset):
+            raise ConfigurationError(
+                config_key="provider.vpr.xfyun.credential.api_secret",
+                reason="missing",
+            )
+
         from audex.lib.vpr.xfyun import XFYunVPR
 
         return XFYunVPR(
@@ -23,6 +42,17 @@ def make_vpr(config: Config) -> VPR:
         )
 
     if config.provider.vpr.provider == "unisound":
+        if isinstance(config.provider.vpr.unisound.credential.appkey, Unset):
+            raise ConfigurationError(
+                config_key="provider.vpr.unisound.credential.appkey",
+                reason="missing",
+            )
+        if isinstance(config.provider.vpr.unisound.credential.secret, Unset):
+            raise ConfigurationError(
+                config_key="provider.vpr.unisound.credential.secret",
+                reason="missing",
+            )
+
         from audex.lib.vpr.unisound import UnisoundVPR
 
         return UnisoundVPR(
