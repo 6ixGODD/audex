@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import functools
-import json
 import traceback
 import typing as t
 
@@ -70,8 +69,15 @@ def show_internal_error_dialog(error: InternalError) -> None:
     error_info = format_error_info(error)
     error_report = format_error_report(error_info)
 
-    # Use JSON encoding for safe clipboard
-    escaped = json.dumps(error_report)[1:-1]
+    def copy_to_clipboard():
+        ui.run_javascript(f"""
+            navigator.clipboard.writeText(`{error_report}`).then(() => {{
+                console.log('复制成功');
+            }}).catch(err => {{
+                console.error('复制失败:', err);
+            }});
+        """)
+        ui.notify("错误详情已复制", type="positive", position="top", timeout=2000)
 
     # Add unified animations and styles
     ui.add_head_html("""
@@ -86,23 +92,23 @@ def show_internal_error_dialog(error: InternalError) -> None:
         left: 0;
         right: 0;
         bottom: 0;
-        background: rgba(0, 0, 0, 0. 5);
+        background: rgba(0, 0, 0, 0.5);
         backdrop-filter: blur(4px);
         -webkit-backdrop-filter: blur(4px);
         z-index: 6000;
         animation: fadeIn 0.2s ease;
     }
-    . error-dialog-card {
+    .error-dialog-card {
         animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     @keyframes slideUp {
         from { transform: translateY(20px); opacity: 0; }
         to { transform: translateY(0); opacity: 1; }
     }
-    . error-action-btn {
-        border-radius: 12px ! important;
+    .error-action-btn {
+        border-radius: 12px !  important;
         font-size: 16px !important;
-        font-weight: 500 !important;
+        font-weight: 500 ! important;
         letter-spacing: 0.02em !important;
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
         min-width: 120px !important;
@@ -135,7 +141,7 @@ def show_internal_error_dialog(error: InternalError) -> None:
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
     }
     .error-code-badge {
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0. 1) 100%);
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
         color: #667eea;
         padding: 8px 16px;
         border-radius: 12px;
@@ -184,10 +190,12 @@ def show_internal_error_dialog(error: InternalError) -> None:
                 "text-body1 text-grey-8"
             ).style("margin-bottom: 20px;")
 
-            # Error code badge - unified purple gradient
+            # Error code badge
             with ui.row().classes("items-center gap-2").style("margin-bottom: 24px;"):
                 ui.label("错误代码:").classes("text-sm text-grey-7")
-                ui.html(f'<div class="error-code-badge">#{error_info.error_code}</div>')
+                ui.html(
+                    f'<div class="error-code-badge">#{error_info.error_code}</div>', sanitize=False
+                )
 
             ui.separator().style("margin-bottom: 20px; background: rgba(0, 0, 0, 0.06);")
 
@@ -209,22 +217,19 @@ def show_internal_error_dialog(error: InternalError) -> None:
                     "font-family: 'Monaco', 'Menlo', 'Consolas', monospace;"
                 )
 
-            # Action buttons - unified style
+            # Action buttons
             with ui.row().classes("w-full gap-3 justify-end").style("margin-top: 24px;"):
                 ui.button(
                     "复制详情",
                     icon="content_copy",
-                    on_click=lambda: (
-                        ui.run_javascript(f"navigator.clipboard.writeText('{escaped}')"),
-                        ui.notify("错误详情已复制", type="positive", position="top", timeout=2000),
-                    ),
+                    on_click=copy_to_clipboard,  # 修改这里
                 ).props("no-caps").classes("error-action-btn error-btn-secondary")
 
                 ui.button("关闭", on_click=lambda: (dialog.close(), backdrop.delete())).props(
                     "unelevated no-caps"
                 ).classes("error-action-btn error-btn-primary")
 
-            # Help hint - unified style
+            # Help hint
             with (
                 ui.element("div").classes("error-help-box").style("margin-top: 20px;"),
                 ui.row().classes("items-center gap-2"),
