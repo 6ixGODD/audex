@@ -45,22 +45,18 @@ async def render(
             ui.element("div")
             .classes("w-full bg-white")
             .style(
-                "min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px 0;"
+                "min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px 0; overflow-y: auto;"
             )
         ),
-        ui.card()
-        .classes("login-card")
-        .style(
-            "width: 420px; max-width: 90vw; max-height: 90vh; overflow-y: auto; padding: 32px 36px;"
-        ),
+        ui.card().classes("login-card").style("width: 420px; max-width: 90vw; padding: 32px 36px;"),
     ):
         # Logo
-        ui.image("/static/images/logo.png").classes("w-16 h-16 mx-auto mb-4")
+        ui.image("/static/images/logo.png").classes("mx-auto mb-3 login-logo")
 
         # Title
         ui.label("欢迎回来").classes("gradient-title text-h5 text-center w-full mb-1")
         ui.label(f"登录 {config.core.app.app_name}").classes(
-            "text-sm text-grey-7 text-center w-full mb-5"
+            "text-sm text-grey-7 text-center w-full mb-4"
         )
 
         # Input fields - only bottom border
