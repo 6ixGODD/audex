@@ -49,8 +49,8 @@ class Args(BaseArgs):
                         arg="config",
                         value=self.config,
                         reason="Unsupported config file format: "
-                        f"{self.config.suffix}.  Supported formats are .yaml, .yml, "
-                        f".json, .jsonc, . json5",
+                        f"{self.config.suffix}. Supported formats are .yaml, .yml, "
+                        f".json, .jsonc, .json5",
                     )
             else:
                 display.info("Using default configuration")
@@ -70,11 +70,14 @@ class Args(BaseArgs):
             display.step("Setting up native environment", step=1)
             with display.section("Environment Configuration"):
                 envsetup(cfg)
+
+                # Inject Qt backend to NiceGUI
                 core.app.native.start_args.update({"gui": "qt"})
+                display.info("NiceGUI backend: qt")
 
         # Initialize container
         display.step("Initializing application", step=2 if cfg.core.app.native else 1)
-        with display.loading("Wiring dependencies... "):
+        with display.loading("Wiring dependencies..."):
             from audex.container import Container
 
             container = Container()
@@ -143,14 +146,9 @@ def envsetup(cfg: Config) -> None:
     env_vars = {}
 
     # === PyQt6 Plugin Path ===
-    try:
-        plugins_path = PyQt6.QtCore.QLibraryInfo.path(
-            PyQt6.QtCore.QLibraryInfo.LibraryPath.PluginsPath
-        )
-        env_vars["QT_PLUGIN_PATH"] = plugins_path
-        display.info(f"Qt plugins path: {plugins_path}")
-    except Exception as e:
-        display.warning(f"Could not set Qt plugin path: {e}")
+    plugins_path = PyQt6.QtCore.QLibraryInfo.path(PyQt6.QtCore.QLibraryInfo.LibraryPath.PluginsPath)
+    env_vars["QT_PLUGIN_PATH"] = plugins_path
+    display.info(f"Qt plugins path: {plugins_path}")
 
     # === Platform-Specific Settings ===
     if system == "Linux":
@@ -165,7 +163,51 @@ def envsetup(cfg: Config) -> None:
         os.environ[key] = value
         display.debug(f"Set {key}={value}")
 
+    # === Configure WebEngine (Fix Rendering) ===
+    display.info("Configuring WebEngine rendering...")
+    _configure_webengine()
+    display.success("WebEngine rendering configured")
+
     display.success("Native environment configured")
+
+
+def _configure_webengine() -> None:
+    """Configure QtWebEngine settings to fix rendering issues
+    (mosaic/blocks).
+
+    Disables GPU acceleration and configures software rendering which
+    fixes the common mosaic/block artifact issue on Linux systems.
+    """
+    import sys
+
+    from PyQt6.QtCore import QCoreApplication
+    from PyQt6.QtWebEngineCore import QWebEngineProfile
+    from PyQt6.QtWebEngineCore import QWebEngineSettings
+    from PyQt6.QtWidgets import QApplication
+
+    # Ensure QApplication exists
+    _app = QCoreApplication.instance()
+    if _app is None:
+        _app = QApplication(sys.argv)
+
+    # Get default profile and its settings
+    profile = QWebEngineProfile.defaultProfile()
+    settings = profile.settings()
+
+    # Disable GPU acceleration (fixes mosaic rendering)
+    settings.setAttribute(QWebEngineSettings.WebAttribute.Accelerated2dCanvasEnabled, False)
+    settings.setAttribute(QWebEngineSettings.WebAttribute.WebGLEnabled, False)
+    settings.setAttribute(QWebEngineSettings.WebAttribute.PluginsEnabled, False)
+
+    # Enable necessary features
+    settings.setAttribute(QWebEngineSettings.WebAttribute.JavascriptEnabled, True)
+    settings.setAttribute(QWebEngineSettings.WebAttribute.LocalStorageEnabled, True)
+    settings.setAttribute(QWebEngineSettings.WebAttribute.LocalContentCanAccessRemoteUrls, True)
+    settings.setAttribute(QWebEngineSettings.WebAttribute.AutoLoadImages, True)
+    settings.setAttribute(QWebEngineSettings.WebAttribute.ErrorPageEnabled, True)
+
+    display.debug("Disabled: GPU acceleration, WebGL, Hardware Canvas")
+    display.debug("Enabled: JavaScript, LocalStorage, Image loading")
 
 
 def _setup_linux(cfg: Config, env_vars: dict[str, str]) -> None:
@@ -178,20 +220,15 @@ def _setup_linux(cfg: Config, env_vars: dict[str, str]) -> None:
     display.info("Configuring for Linux")
 
     # === QT Platform Plugin ===
-    # TODO: Try different platform plugins in order of preference
-    # platform_plugins = ["xcb", "wayland", "offscreen"]
-
-    # Check if specific platform is available
     qt_qpa_platform = os.environ.get("QT_QPA_PLATFORM")
     if qt_qpa_platform:
         display.info(f"Using existing QT_QPA_PLATFORM: {qt_qpa_platform}")
     else:
-        # Detect if running under Wayland
         wayland_display = os.environ.get("WAYLAND_DISPLAY")
         xdg_session_type = os.environ.get("XDG_SESSION_TYPE")
 
         if wayland_display or xdg_session_type == "wayland":
-            env_vars["QT_QPA_PLATFORM"] = "wayland;xcb"  # Fallback to xcb
+            env_vars["QT_QPA_PLATFORM"] = "wayland;xcb"
             display.info("Detected Wayland session, using wayland with xcb fallback")
         else:
             env_vars["QT_QPA_PLATFORM"] = "xcb"
@@ -207,24 +244,25 @@ def _setup_linux(cfg: Config, env_vars: dict[str, str]) -> None:
         env_vars["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
         display.debug("Auto screen scaling enabled")
 
-    # === OpenGL Settings ===
-    # Force software rendering if needed
-    if os.environ.get("LIBGL_ALWAYS_SOFTWARE") == "1":
-        display.warning("Software rendering mode detected")
+    # === WebEngine Chromium Flags (Fix Rendering) ===
+    if not os.environ.get("QTWEBENGINE_CHROMIUM_FLAGS"):
+        chromium_flags = [
+            "--disable-gpu",
+            "--disable-software-rasterizer",
+            "--disable-gpu-compositing",
+            "--num-raster-threads=1",
+        ]
+        env_vars["QTWEBENGINE_CHROMIUM_FLAGS"] = " ".join(chromium_flags)
+        display.debug(f"Chromium flags: {env_vars['QTWEBENGINE_CHROMIUM_FLAGS']}")
 
-    # Set OpenGL to desktop for better compatibility
+    # === Disable Sandbox ===
+    env_vars["QTWEBENGINE_DISABLE_SANDBOX"] = "1"
+    display.debug("WebEngine sandbox disabled")
+
+    # === OpenGL Settings ===
     if not os.environ.get("QT_XCB_GL_INTEGRATION"):
         env_vars["QT_XCB_GL_INTEGRATION"] = "xcb_egl"
         display.debug("OpenGL integration: xcb_egl")
-
-    # === Accessibility ===
-    # Disable accessibility bridge if causing issues
-    # env_vars["QT_LINUX_ACCESSIBILITY_ALWAYS_ON"] = "0"
-
-    # === Font Rendering ===
-    if not os.environ.get("QT_SCALE_FACTOR"):
-        # Let system handle DPI
-        pass
 
 
 def _setup_windows(cfg: Config, env_vars: dict[str, str]) -> None:
@@ -247,9 +285,8 @@ def _setup_windows(cfg: Config, env_vars: dict[str, str]) -> None:
         display.debug("High DPI scaling enabled")
 
     # === DirectX vs OpenGL ===
-    # Windows defaults to ANGLE (DirectX), but can force OpenGL
     if not os.environ.get("QT_OPENGL"):
-        env_vars["QT_OPENGL"] = "angle"  # or "desktop" or "software"
+        env_vars["QT_OPENGL"] = "angle"
         display.debug("OpenGL backend: ANGLE (DirectX)")
 
     # === Touch Support ===
@@ -258,7 +295,6 @@ def _setup_windows(cfg: Config, env_vars: dict[str, str]) -> None:
         display.info("Touch events enabled")
 
     # === Media Foundation ===
-    # Enable Windows Media Foundation for multimedia
     if not os.environ.get("QT_MULTIMEDIA_PREFERRED_PLUGINS"):
         env_vars["QT_MULTIMEDIA_PREFERRED_PLUGINS"] = "windowsmediafoundation"
         display.debug("Multimedia backend: Windows Media Foundation")
