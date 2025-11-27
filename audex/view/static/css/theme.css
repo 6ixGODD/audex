@@ -1,0 +1,152 @@
+
+/* ==================== Rich Mode ==================== */
+:root {
+    /* Border Radius */
+    --radius-card: 28px;
+    --radius-button: 24px;
+    --radius-input: 0px;
+
+    /* Shadows */
+    --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.05), 0 0 1px rgba(0, 0, 0, 0.1);
+    --shadow-card-hover: 0 24px 70px rgba(0, 0, 0, 0.1), 0 10px 28px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.1);
+    --shadow-button-primary: 0 4px 16px rgba(102, 126, 234, 0.25), 0 2px 8px rgba(118, 75, 162, 0.15);
+    --shadow-button-primary-hover: 0 8px 24px rgba(102, 126, 234, 0.35), 0 4px 12px rgba(118, 75, 162, 0.25);
+    --shadow-button-secondary: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-button-secondary-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+    /* Backgrounds */
+    --bg-page: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
+    --bg-card: rgba(255, 255, 255, 0.98);
+    --bg-button-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --bg-button-primary-hover: linear-gradient(135deg, #7c8ef0 0%, #8a5db0 100%);
+    --bg-button-secondary: rgba(248, 249, 250, 0.6);
+    --bg-button-secondary-hover: rgba(243, 244, 246, 0.8);
+
+    /* Title */
+    --title-background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    --title-background-size: 200% 200%;
+    --title-clip: text;
+    --title-fill: transparent;
+    --title-color: transparent;
+
+    /* Blur Effects */
+    --blur-card: blur(20px);
+    --use-backdrop-filter: 1;
+
+    /* Borders */
+    --border-card: none;
+    --border-input-default: 1px solid rgba(0, 0, 0, 0.12);
+    --border-input-hover: 1px solid rgba(0, 0, 0, 0.2);
+    --border-input-focus: 2px solid #667eea;
+    --border-button-secondary: 1px solid rgba(0, 0, 0, 0.08);
+    --border-button-secondary-hover: 1px solid rgba(0, 0, 0, 0.12);
+
+    /* Transitions */
+    --transition-all: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-color: color 0.2s ease;
+    --transition-border: border-color 0.3s ease;
+    --transition-transform: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Transforms */
+    --transform-button-hover: translateY(-2px);
+    --transform-button-active: translateY(0);
+    --transform-input-focus: scaleX(1);
+    --transform-input-unfocus: scaleX(0);
+
+    /* Separator */
+    --separator-color: rgba(0, 0, 0, 0.08);
+}
+
+/* ==================== Performance Mode ==================== */
+:root[data-theme="performance"] {
+    /* Border Radius */
+    --radius-card: 24px;
+    --radius-button: 999px;
+    --radius-input: 0px;
+
+    /* Shadows */
+    --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.12);
+    --shadow-button-primary: 0 2px 4px rgba(102, 126, 234, 0.2);
+    --shadow-button-primary-hover: 0 4px 8px rgba(102, 126, 234, 0.3);
+    --shadow-button-secondary: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-button-secondary-hover: 0 2px 6px rgba(0, 0, 0, 0.12);
+
+    /* Backgrounds */
+    --bg-page: #ffffff;
+    --bg-card: #ffffff;
+    --bg-button-primary: #667eea;
+    --bg-button-primary-hover: #5568d3;
+    --bg-button-secondary: #f9fafb;
+    --bg-button-secondary-hover: #f3f4f6;
+
+    /* Title */
+    --title-background: #667eea;
+    --title-background-size: 100% 100%;
+    --title-clip: unset;
+    --title-fill: unset;
+    --title-color: #667eea;
+
+    /* Blur Effects - 完全禁用 */
+    --blur-card: none;
+    --use-backdrop-filter: 0;
+
+    /* Borders */
+    --border-card: 1px solid #e5e7eb;
+    --border-input-default: 1px solid rgba(0, 0, 0, 0.2);
+    --border-input-hover: 1px solid rgba(0, 0, 0, 0.3);
+    --border-input-focus: 2px solid #667eea;
+    --border-button-secondary: 1px solid #d1d5db;
+    --border-button-secondary-hover: 1px solid #9ca3af;
+
+    /* Transitions */
+    --transition-all: all 0.15s ease;
+    --transition-color: color 0.1s ease;
+    --transition-border: border-color 0.15s ease;
+    --transition-transform: transform 0.15s ease;
+
+    /* Transforms */
+    --transform-button-hover: translateY(-1px);
+    --transform-button-active: translateY(0);
+    --transform-input-focus: scaleX(1);
+    --transform-input-unfocus: scaleX(1);
+
+    /* Separator */
+    --separator-color: #e5e7eb;
+}
+
+/* ==================== Base Styles ==================== */
+
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden ! important;
+    height: 100vh;
+    width: 100vw;
+    background: #ffffff;
+}
+
+/* ==================== Performance Mode ==================== */
+
+:root[data-theme="performance"] * {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme="performance"] * {
+    filter: none !important;
+    -webkit-filter: none !important;
+}
+
+:root[data-theme="performance"] *:not(.login-button):not(.register-button) {
+    transform: none !important;
+}
+
+:root[data-theme="performance"] * {
+    animation-duration: 0.2s !important;
+}
