@@ -54,12 +54,6 @@ async def render(
     current_utterance_element: dict[str, t.Any] = {"element": None}
     current_sequence: dict[str, int] = {"value": 0}
 
-    # Loading overlay
-    loading_overlay = ui.element("div").classes("loading-overlay")
-    with loading_overlay:
-        ui.element("div").classes("loading-spinner-large")
-    loading_overlay.visible = False
-
     # Header with glass effect
     with (
         ui.header().classes("header-glass items-center justify-between px-6 py-3"),
@@ -214,7 +208,7 @@ async def render(
         if not is_recording["value"]:
             if is_session_completed["value"] and session_id_state["value"]:
                 # Continue existing session
-                loading_overlay.visible = True
+                record_btn.props("loading")
                 try:
                     ctx = await session_service.session(session_id_state["value"])
                     session_context["value"] = ctx
@@ -232,7 +226,7 @@ async def render(
                     asyncio_tasks.setdefault("transcription", transcription_task)
 
                 finally:
-                    loading_overlay.visible = False
+                    record_btn.props(remove="loading")
 
             else:
                 # Create new session
@@ -278,7 +272,7 @@ async def render(
                     @handle_errors
                     async def do_start():
                         dialog.close()
-                        loading_overlay.visible = True
+                        record_btn.props("loading")
 
                         try:
                             session = await session_service.create(
@@ -310,7 +304,7 @@ async def render(
                             asyncio_tasks.setdefault("transcription", transcription_task)
 
                         finally:
-                            loading_overlay.visible = False
+                            record_btn.props(remove="loading")
 
                     with ui.row().classes("w-full justify-end gap-2 mt-6"):
                         ui.button("取消", on_click=dialog.close).props("flat no-caps").classes(
@@ -324,7 +318,7 @@ async def render(
 
         else:
             # Stop recording
-            loading_overlay.visible = True
+            record_btn.props("loading")
 
             try:
                 ctx = session_context["value"]
@@ -341,7 +335,7 @@ async def render(
                 ui.notify("录音已保存，可继续添加内容", type="positive", timeout=3000)
 
             finally:
-                loading_overlay.visible = False
+                record_btn.props(remove="loading")
 
     # Recording button
     record_btn = (

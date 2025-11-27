@@ -1,53 +1,243 @@
-
+/* Smooth rendering */
 * {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
 html, body {
-    overflow: hidden !important;
+    margin: 0;
+    padding: 0;
+    overflow: hidden ! important;
     height: 100vh;
     width: 100vw;
-}
-
-.header-glass {
-    backdrop-filter: blur(80px) saturate(200%) !important;
-    background: rgba(255, 255, 255, 0.5) !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
-}
-
-.bg-white {
     background: #ffffff;
 }
 
-/* Tab button */
+/* ==================== Layout Classes ==================== */
+
+/* Flex */
+.items-center {
+    align-items: center;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.justify-end {
+    justify-content: flex-end;
+}
+
+.flex-1 {
+    flex: 1;
+}
+
+/* Spacing */
+.gap-0 {
+    gap: 0;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.gap-3 {
+    gap: 0.75rem;
+}
+
+.gap-4 {
+    gap: 1rem;
+}
+
+.gap-8 {
+    gap: 2rem;
+}
+
+/* Margin */
+.mb-1 {
+    margin-bottom: 0.25rem;
+}
+
+.mb-2 {
+    margin-bottom: 0.5rem;
+}
+
+.mb-3 {
+    margin-bottom: 0.75rem;
+}
+
+.mb-4 {
+    margin-bottom: 1rem;
+}
+
+.mb-6 {
+    margin-bottom: 1.5rem;
+}
+
+.mt-4 {
+    margin-top: 1rem;
+}
+
+.mt-8 {
+    margin-top: 2rem;
+}
+
+.my-8 {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+}
+
+/* Padding */
+.px-6 {
+    padding-left: 3rem ! important;
+    padding-right: 3rem !important;
+}
+
+.py-3 {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+/* Width */
+.w-full {
+    width: 100%;
+}
+
+/* ==================== Typography ==================== */
+
+/* Font Size */
+.text-xs {
+    font-size: 0.75rem;
+    line-height: 1rem;
+}
+
+.text-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+.text-body1 {
+    font-size: 1rem;
+    line-height: 1.5rem;
+}
+
+.text-body2 {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+.text-h6 {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+}
+
+.text-h5 {
+    font-size: 1.5rem;
+    line-height: 2rem;
+}
+
+.text-h4 {
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+}
+
+/* Font Weight */
+.font-medium {
+    font-weight: 500;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+/* Text Color */
+.text-grey-6 {
+    color: #757575;
+}
+
+.text-grey-7 {
+    color: #616161;
+}
+
+.text-grey-9 {
+    color: #212121;
+}
+
+.text-negative {
+    color: #c10015;
+}
+
+/* ==================== Header ==================== */
+
+.header-glass {
+    backdrop-filter: blur(80px) saturate(200%) !important;
+    -webkit-backdrop-filter: blur(80px) saturate(200%) !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+    padding-top: 1.5rem ! important;
+    padding-bottom: 1.5rem !important;
+    margin-top: 1.5rem !important;
+    min-height: 80px ! important;
+    position: fixed ! important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+}
+
+/* ==================== Background ==================== */
+
+.bg-white {
+    background: #ffffff ! important;
+    padding: 40px 60px ! important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+    margin-top: 20px !important;
+    overflow: visible !important;
+    min-height: auto !important;
+    height: auto !important;
+}
+
+/* ==================== Tab Buttons ==================== */
+
 .tab-button {
     padding: 12px 24px;
     border-radius: 12px;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     cursor: pointer;
     font-weight: 500;
+    font-size: 15px;
     color: #6b7280;
+    user-select: none;
 }
 
 .tab-button:hover {
     background: rgba(0, 0, 0, 0.04);
+    color: #4b5563;
 }
 
 .tab-button-active {
     padding: 12px 24px;
     border-radius: 12px;
     cursor: pointer;
-    font-weight: 500;
-    background: rgba(37, 99, 235, 0.1);
-    color: #2563eb;
+    font-weight: 600;
+    font-size: 15px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%);
+    color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+    user-select: none;
 }
 
-/* Clean input */
+/* ==================== Clean Input ==================== */
+
 .clean-input .q-field__control {
     background: transparent !important;
     border: none !important;
-    border-radius: 0 !important;
+    border-radius: 0 ! important;
     box-shadow: none !important;
     height: 48px !important;
 }
@@ -56,6 +246,7 @@ html, body {
 .clean-input input {
     color: #1f2937 !important;
     font-size: 15px !important;
+    font-weight: 400 !important;
 }
 
 .clean-input .q-field__native::placeholder,
@@ -76,7 +267,7 @@ html, body {
 
 .clean-input .q-field__control:after {
     border: none !important;
-    border-bottom: 2px solid rgba(37, 99, 235, 0.8) !important;
+    border-bottom: 2px solid #667eea !important;
     transform: scaleX(0);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
@@ -89,20 +280,28 @@ html, body {
     height: 48px !important;
     display: flex !important;
     align-items: center !important;
+    justify-content: center !important;
 }
 
 .clean-input .q-field__append .q-icon {
+    color: #9ca3af !important;
+    transition: color 0.2s ease !important;
+}
+
+.clean-input .q-field__append .q-icon:hover {
     color: #6b7280 !important;
 }
 
-/* Button */
+/* ==================== Action Button ==================== */
+
 .action-button {
     border-radius: 12px !important;
-    font-size: 16px !important;
+    font-size: 16px ! important;
     font-weight: 500 !important;
     letter-spacing: 0.02em !important;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
     min-width: 120px !important;
+    text-transform: none !important;
 }
 
 .action-button:hover {
@@ -113,8 +312,78 @@ html, body {
     transform: translateY(0);
 }
 
-/* Info display */
+/* Primary button variant */
+.action-button[color="primary"] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    box-shadow:
+    0 4px 16px rgba(102, 126, 234, 0.25),
+    0 2px 8px rgba(118, 75, 162, 0.15) !important;
+}
+
+.action-button[color="primary"]:hover {
+    background: linear-gradient(135deg, #7c8ef0 0%, #8a5db0 100%) ! important;
+    box-shadow:
+    0 8px 24px rgba(102, 126, 234, 0.35),
+    0 4px 12px rgba(118, 75, 162, 0.25) !important;
+}
+
+/* Negative button variant */
+.action-button[color="negative"]:hover {
+    box-shadow: 0 4px 16px rgba(193, 0, 21, 0.25) ! important;
+}
+
+/* ==================== Info Display ==================== */
+
 .info-field {
-    padding: 12px 0;
+    padding: 16px 0;
     border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    transition: background 0.2s ease;
+}
+
+.info-field:hover {
+    background: rgba(0, 0, 0, 0.01);
+}
+
+.info-field:last-child {
+    border-bottom: none;
+}
+
+/* ==================== Separator ==================== */
+
+.q-separator {
+    background-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+.my-8 .q-separator {
+    background-color: rgba(0, 0, 0, 0.06) !important;
+}
+
+/* ==================== Dialog ==================== */
+
+.q-dialog__backdrop {
+    backdrop-filter: blur(4px) !important;
+}
+
+/* ==================== Responsive ==================== */
+
+@media (max-width: 1400px) {
+    .bg-white {
+        padding: 40px 60px !important;
+    }
+
+    .px-6 {
+        padding-left: 2.5rem !important;
+        padding-right: 2.5rem !important;
+    }
+}
+
+@media (max-width: 1024px) {
+    .bg-white {
+        padding: 30px 40px !important;
+    }
+
+    .px-6 {
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
 }

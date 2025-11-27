@@ -66,45 +66,95 @@ Stack Trace:
 
 
 def show_internal_error_dialog(error: InternalError) -> None:
-    """Show a modern dialog for internal errors with optimized
-    performance."""
+    """Show a modern dialog for internal errors with unified style."""
     error_info = format_error_info(error)
     error_report = format_error_report(error_info)
 
-    # Use JSON encoding for safe clipboard (faster than manual escaping)
+    # Use JSON encoding for safe clipboard
     escaped = json.dumps(error_report)[1:-1]
 
-    # Lighter backdrop without blur for performance
-    backdrop = ui.element("div").style(
-        "position: fixed; top: 0; left: 0; right: 0; bottom: 0; "
-        "background: rgba(0, 0, 0, 0.5); "
-        "z-index: 6000; "
-        "animation: fadeIn 0.2s ease;"
-    )
-
-    # Add animations and button hover effects
+    # Add unified animations and styles
     ui.add_head_html("""
     <style>
     @keyframes fadeIn {
         from { opacity: 0; }
         to { opacity: 1; }
     }
-    .error-dialog-card {
-        animation: slideUp 0.3s ease;
+    .error-dialog-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0. 5);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 6000;
+        animation: fadeIn 0.2s ease;
+    }
+    . error-dialog-card {
+        animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     @keyframes slideUp {
         from { transform: translateY(20px); opacity: 0; }
         to { transform: translateY(0); opacity: 1; }
     }
-    .error-action-btn {
-        transition: all 0.2s ease !important;
+    . error-action-btn {
+        border-radius: 12px ! important;
+        font-size: 16px !important;
+        font-weight: 500 !important;
+        letter-spacing: 0.02em !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        min-width: 120px !important;
+        height: 44px !important;
+        text-transform: none !important;
     }
     .error-action-btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .error-action-btn:active {
+        transform: translateY(0);
+    }
+    .error-btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.25), 0 2px 8px rgba(118, 75, 162, 0.15) !important;
+    }
+    .error-btn-primary:hover {
+        background: linear-gradient(135deg, #7c8ef0 0%, #8a5db0 100%) !important;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.35), 0 4px 12px rgba(118, 75, 162, 0.25) !important;
+    }
+    .error-btn-secondary {
+        background: rgba(248, 249, 250, 0.8) !important;
+        color: #6b7280 !important;
+        border: 1px solid rgba(0, 0, 0, 0.08) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    }
+    .error-btn-secondary:hover {
+        background: rgba(243, 244, 246, 0.9) !important;
+        border-color: rgba(0, 0, 0, 0.12) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+    }
+    .error-code-badge {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0. 1) 100%);
+        color: #667eea;
+        padding: 8px 16px;
+        border-radius: 12px;
+        font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+        font-size: 0.875rem;
+        font-weight: 600;
+        border: 1px solid rgba(102, 126, 234, 0.2);
+    }
+    .error-help-box {
+        background: linear-gradient(135deg, #f8f9fa 0%, #f5f6f7 100%);
+        border-radius: 12px;
+        padding: 16px;
+        border: 1px solid rgba(0, 0, 0, 0.06);
     }
     </style>
     """)
+
+    # Backdrop
+    backdrop = ui.element("div").classes("error-dialog-backdrop")
 
     with ui.dialog() as dialog:
         dialog.props("persistent")
@@ -113,77 +163,71 @@ def show_internal_error_dialog(error: InternalError) -> None:
             ui.card()
             .classes("error-dialog-card")
             .style(
-                "width: 560px; max-width: 90vw; padding: 28px; "
-                "border-radius: 16px; "
-                "box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);"
+                "width: 560px; max-width: 90vw; padding: 32px; "
+                "border-radius: 20px; "
+                "box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15), 0 8px 24px rgba(0, 0, 0, 0.1);"
             )
         ):
             # Header
             with ui.row().classes("w-full items-center mb-6 no-wrap"):
                 ui.icon("error_outline", size="xl").classes("text-negative")
-                ui.label("出错了").classes("text-h5 font-bold text-grey-9 q-ml-sm")
+                ui.label("出错了").classes("text-h5 font-bold text-grey-9").style(
+                    "margin-left: 12px;"
+                )
                 ui.space()
                 ui.button(icon="close", on_click=lambda: (dialog.close(), backdrop.delete())).props(
                     "flat round dense"
-                )
+                ).style("margin: -8px;")
 
             # Message
             ui.label("系统遇到了一个问题，我们正在努力解决").classes(
-                "text-body1 text-grey-8 q-mb-md"
-            )
+                "text-body1 text-grey-8"
+            ).style("margin-bottom: 20px;")
 
-            # Error code badge - styled like original
-            with ui.row().classes("items-center gap-2 q-mb-lg"):
+            # Error code badge - unified purple gradient
+            with ui.row().classes("items-center gap-2").style("margin-bottom: 24px;"):
                 ui.label("错误代码:").classes("text-sm text-grey-7")
-                ui.label(f"#{error_info.error_code}").style(
-                    "background: #f5f5f5; "
-                    "color: #666; "
-                    "padding: 6px 12px; "
-                    "border-radius: 8px; "
-                    "font-family: 'Monaco', 'Menlo', 'Consolas', monospace; "
-                    "font-size: 0.875rem; "
-                    "font-weight: 600;"
-                )
+                ui.html(f'<div class="error-code-badge">#{error_info.error_code}</div>')
 
-            ui.separator().classes("q-mb-md")
+            ui.separator().style("margin-bottom: 20px; background: rgba(0, 0, 0, 0.06);")
 
             # Expandable details
             with (
                 ui.expansion("查看技术详情", icon="code")
                 .classes("w-full")
-                .props("dense header-class='bg-grey-2 rounded'"),
+                .style(
+                    "background: rgba(248, 249, 250, 0.5); "
+                    "border-radius: 12px; "
+                    "border: 1px solid rgba(0, 0, 0, 0.06);"
+                ),
                 ui.scroll_area().style("max-height: 200px;"),
             ):
                 ui.code(error_report).classes("text-xs").style(
-                    "background: #f8f9fa; padding: 12px; border-radius: 8px;"
+                    "background: #f8f9fa; "
+                    "padding: 16px; "
+                    "border-radius: 8px; "
+                    "font-family: 'Monaco', 'Menlo', 'Consolas', monospace;"
                 )
 
-            # Action buttons - original style with hover effects
-            with ui.row().classes("w-full gap-3 q-mt-lg justify-end"):
+            # Action buttons - unified style
+            with ui.row().classes("w-full gap-3 justify-end").style("margin-top: 24px;"):
                 ui.button(
-                    "Copy Details",
+                    "复制详情",
                     icon="content_copy",
                     on_click=lambda: (
                         ui.run_javascript(f"navigator.clipboard.writeText('{escaped}')"),
-                        ui.notify(
-                            "Error details copied", type="positive", position="top", timeout=2000
-                        ),
+                        ui.notify("错误详情已复制", type="positive", position="top", timeout=2000),
                     ),
-                ).props("outline color=grey-8 no-caps").classes("error-action-btn").style(
-                    "border-radius: 10px; min-width: 120px; height: 40px; padding: 0 20px;"
-                )
+                ).props("no-caps").classes("error-action-btn error-btn-secondary")
 
-                ui.button("Close", on_click=lambda: (dialog.close(), backdrop.delete())).props(
-                    "unelevated color=primary no-caps"
-                ).classes("error-action-btn").style(
-                    "border-radius: 10px; min-width: 120px; height: 40px; padding: 0 20px;"
-                )
+                ui.button("关闭", on_click=lambda: (dialog.close(), backdrop.delete())).props(
+                    "unelevated no-caps"
+                ).classes("error-action-btn error-btn-primary")
 
-            # Help hint - grey background with more padding
+            # Help hint - unified style
             with (
-                ui.row()
-                .classes("w-full items-center gap-2 q-mt-lg")
-                .style("background: #f5f5f5; border-radius: 12px; padding: 16px;")
+                ui.element("div").classes("error-help-box").style("margin-top: 20px;"),
+                ui.row().classes("items-center gap-2"),
             ):
                 ui.icon("lightbulb", size="sm").classes("text-grey-6")
                 ui.label("如果问题持续出现，请将错误代码提供给技术支持").classes(
