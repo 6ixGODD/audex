@@ -58,6 +58,7 @@ async def render(
         ui.element("div").classes("voiceprint-container"),
         ui.element("div").classes("voiceprint-content"),
     ):
+        # Left side: Steps
         with ui.column().classes("voiceprint-steps"):
             ui.label("操作流程").classes("text-h5 font-bold text-grey-9 mb-2")
 
