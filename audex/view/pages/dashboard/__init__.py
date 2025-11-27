@@ -9,9 +9,11 @@ from nicegui import ui
 
 from audex.config import Config
 from audex.container import Container
+from audex.lib.wifi import WiFiManager
 from audex.service.doctor import DoctorService
 from audex.service.session import SessionService
 from audex.view.decorators import handle_errors
+from audex.view.pages.dashboard.wifi import WiFiIndicator
 
 
 @ui.page("/")
@@ -20,15 +22,16 @@ from audex.view.decorators import handle_errors
 async def render(
     doctor_service: DoctorService = Depends(Provide[Container.service.doctor]),
     session_service: SessionService = Depends(Provide[Container.service.session]),
+    wifi_manager: WiFiManager = Depends(Provide[Container.infrastructure.wifi]),
     config: Config = Depends(Provide[Container.config]),
 ) -> None:
     """Render dashboard page with clean Apple-inspired design."""
 
-    # Get current doctor (service will check auth)
+    # Get current doctor
     doctor = await doctor_service.current_doctor()
     has_vp = await doctor_service.has_voiceprint()
 
-    # Add minimal CSS for clean design
+    # Add CSS
     ui.add_head_html('<link rel="stylesheet" href="/static/css/dashboard.css">')
     if config.core.app.theme == "performance":
         ui.add_head_html(
@@ -42,6 +45,11 @@ async def render(
             ui.label(config.core.app.app_name).classes("text-h6 font-semibold text-grey-9")
 
         with ui.row().classes("items-center gap-4"):
+            # WiFi indicator
+            wifi_indicator = WiFiIndicator(wifi_manager)
+            wifi_indicator.render()
+
+            # Doctor info
             with (
                 ui.card()
                 .classes("px-4 py-2")
