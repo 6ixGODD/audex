@@ -28,6 +28,7 @@ class Container(containers.DeclarativeContainer):
         lifespan,
         config,
         infrastructure.session_manager,
+        infrastructure.wifi,
         infrastructure.cache,
         infrastructure.sqlite,
         infrastructure.vpr,
