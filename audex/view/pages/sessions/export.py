@@ -105,11 +105,27 @@ async def render(
         ui.button(icon="arrow_back", on_click=go_back).props("flat round").tooltip("返回历史会话")
         ui.label("导出会话").classes("text-h6 font-semibold text-grey-9")
 
-    # Main content
+    # Main content - 完全垂直居中于整个视口
     with (
         ui.element("div")
         .classes("w-full bg-white")
-        .style("display: flex; padding: 60px 80px; gap: 60px; min-height: calc(100vh - 64px);")
+        .style(
+            "position: fixed; "
+            "top: 0; "
+            "left: 0; "
+            "right: 0; "
+            "bottom: 0; "
+            "display: flex; "
+            "align-items: center; "
+            "justify-content: center; "
+            "padding: 60px 80px; "
+            "padding-top: calc(108px + 30px); "
+            "box-sizing: border-box; "
+            "overflow: auto;"
+        ),
+        ui.element("div").style(
+            "display: flex; gap: 60px; align-items: center; max-width: 100%; width: 100%;"
+        ),
     ):
         # Left column
         with ui.column().classes("gap-8").style("width: 360px; flex-shrink: 0;"):
@@ -134,32 +150,47 @@ async def render(
                             "text-body1 font-bold text-grey-6"
                         )
 
-        # Right column - export options
+        # Right column - 2x2 grid
         with ui.element("div").style(
             "flex: 1; "
             "display: grid; "
             "grid-template-columns: repeat(2, 1fr); "
-            "gap: 24px; "
-            "align-content: center; "
+            "gap: 20px; "
             "max-width: 850px; "
             "margin-left: auto;"
         ):
             # Card 1: Server export
             server_card = (
                 ui.card()
-                .classes("super-card cursor-pointer p-7")
-                .style("height: 220px; display: flex; flex-direction: column;")
+                .classes("super-card cursor-pointer")
+                .style(
+                    "height: 220px; "
+                    "display: flex; "
+                    "flex-direction: column; "
+                    "padding: 1.5rem; "
+                    "box-sizing: border-box;"
+                )
             )
 
             with server_card:
-                server_icon = ui.icon("cloud", size="3em").classes("text-primary rotate-icon mb-3")
-                with ui.column().classes("gap-2 mb-auto"):
+                server_icon = (
+                    ui.icon("cloud", size="3em")
+                    .classes("text-primary rotate-icon")
+                    .style("flex-shrink: 0; margin-bottom: 0.75rem;")
+                )
+                with ui.column().classes("gap-2").style("flex: 1;"):
                     ui.label("服务器导出").classes("text-h6 font-bold text-grey-9")
                     ui.label("通过浏览器访问导出页面").classes("text-sm text-grey-7")
                 server_btn = (
                     ui.button("启动", icon="arrow_forward")
                     .props("color=primary flat dense")
-                    .classes("press-button self-end mt-3")
+                    .classes("press-button")
+                    .style(
+                        "align-self: flex-end; "
+                        "flex-shrink: 0; "
+                        "background: transparent ! important; "
+                        "box-shadow: none !important;"
+                    )
                 )
 
             async def start_server_export():
@@ -273,8 +304,8 @@ async def render(
 
                     success_dialog.open()
 
-                except Exception as e:
-                    ui.notify(f"启动失败: {e!s}", type="negative", position="top")
+                except Exception:
+                    ui.notify("启动失败", type="negative", position="top")
 
             server_card.on("click", start_server_export)
 
@@ -376,8 +407,8 @@ async def render(
                                     position="top",
                                 )
 
-                        except Exception as e:
-                            ui.notify(f"导出失败: {e!s}", type="negative", position="top")
+                        except Exception:
+                            ui.notify("导出失败", type="negative", position="top")
                         finally:
                             export_btn.props(remove="loading")
 
@@ -392,14 +423,27 @@ async def render(
 
             with (
                 ui.card()
-                .classes("super-card cursor-pointer p-7")
+                .classes("super-card cursor-pointer")
                 .on("click", start_usb_export)
-                .style("height: 220px; display: flex; flex-direction: column;")
+                .style(
+                    "height: 220px; "
+                    "display: flex; "
+                    "flex-direction: column; "
+                    "padding: 1.5rem; "
+                    "box-sizing: border-box;"
+                )
             ):
-                ui.icon("usb", size="3em").classes("text-secondary rotate-icon mb-3")
-                with ui.column().classes("gap-2 mb-auto"):
+                ui.icon("usb", size="3em").classes("text-secondary rotate-icon").style(
+                    "flex-shrink: 0; margin-bottom: 0.75rem;"
+                )
+                with ui.column().classes("gap-2").style("flex: 1;"):
                     ui.label("U盘导出").classes("text-h6 font-bold text-grey-9")
                     ui.label("直接导出到U盘设备").classes("text-sm text-grey-7")
                 ui.button("开始", icon="arrow_forward").props("color=secondary flat dense").classes(
-                    "press-button self-end mt-3"
+                    "press-button"
+                ).style(
+                    "align-self: flex-end; "
+                    "flex-shrink: 0; "
+                    "background: transparent !important; "
+                    "box-shadow: none !important;"
                 )

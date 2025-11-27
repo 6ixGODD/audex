@@ -53,11 +53,27 @@ async def render(
         ).tooltip("返回主面板")
         ui.label("声纹注册").classes("text-h6 font-semibold text-grey-9")
 
-    # Main container
+    # Main container - 完全垂直居中
     with (
         ui.element("div")
         .classes("w-full bg-white")
-        .style("height: calc(100vh - 64px); display: flex; padding: 60px 80px; gap: 80px;")
+        .style(
+            "position: fixed; "
+            "top: 0; "
+            "left: 0; "
+            "right: 0; "
+            "bottom: 0; "
+            "display: flex; "
+            "align-items: center; "
+            "justify-content: center; "
+            "padding: 60px 80px; "
+            "padding-top: calc(108px + 30px); "
+            "box-sizing: border-box; "
+            "overflow: auto;"
+        ),
+        ui.element("div").style(
+            "display: flex; gap: 80px; align-items: center; max-width: 100%; width: 100%;"
+        ),
     ):
         # Left side: Steps
         with ui.column().classes("gap-8").style("width: 320px; flex-shrink: 0;"):
@@ -88,18 +104,28 @@ async def render(
                         ui.label("点击停止完成").classes("text-sm font-medium text-grey-9")
                         ui.label("时长 5-20 秒").classes("text-xs text-grey-6")
 
-        # Center: Text to read
-        with ui.column().classes("flex-1 justify-center gap-4").style("margin-top: -20px;"):
+        # Center: Text to read - 设置最小和最大宽度，确保文字不会过度换行
+        with (
+            ui.column()
+            .classes("flex-1 justify-center gap-4")
+            .style("min-width: 450px; max-width: 700px; padding: 0 20px;")
+        ):
             ui.label("请朗读：").classes("text-body1 text-grey-6")
             ui.label(doctor_service.config.vpr_text_content).classes(
                 "text-h4 text-grey-9 font-semibold leading-relaxed"
-            ).style("line-height: 1.8; max-width: 600px;")
+            ).style(
+                "line-height: 1.8; "
+                "word-break: keep-all; "  # 防止单词中间断开
+                "overflow-wrap: break-word; "  # 只在必要时换行
+                "white-space: normal; "  # 允许正常换行
+                "width: 100%;"
+            )
 
         # Right side: Recording button
         with (
             ui.column()
             .classes("items-center justify-center gap-8")
-            .style("width: 300px; margin-top: -20px;")
+            .style("width: 300px; flex-shrink: 0;")
         ):
             # Timer (sans-serif, bold)
             timer_label = ui.label("00:00").classes("timer")
@@ -163,7 +189,7 @@ async def render(
                             is_recording["value"] = False
 
                             ui.notify(
-                                f"声纹注册成功！录音时长: {result.duration_ms / 1000:.1f}秒",
+                                f"声纹注册成功！录音时长: {result.duration_ms / 1000:. 1f}秒",
                                 type="positive",
                             )
 
