@@ -31,10 +31,10 @@ async def render(
         return
 
     # Add CSS
-    ui.add_head_html('<link rel="stylesheet" href="/static/css/voiceprint/enroll. css">')
+    ui.add_head_html('<link rel="stylesheet" href="/static/css/voiceprint/enroll.css">')
     if config.core.app.theme == "performance":
         ui.add_head_html(
-            "<script>document.documentElement.setAttribute('data-theme', 'performance');</script>"
+            "<script>document. documentElement.setAttribute('data-theme', 'performance');</script>"
         )
 
     # State
@@ -53,30 +53,13 @@ async def render(
         ).tooltip("返回主面板")
         ui.label("声纹注册").classes("text-h6 font-semibold text-grey-9")
 
-    # Main container - 完全垂直居中
+    # Main container
     with (
-        ui.element("div")
-        .classes("w-full bg-white")
-        .style(
-            "position: fixed; "
-            "top: 0; "
-            "left: 0; "
-            "right: 0; "
-            "bottom: 0; "
-            "display: flex; "
-            "align-items: center; "
-            "justify-content: center; "
-            "padding: 60px 80px; "
-            "padding-top: calc(108px + 30px); "
-            "box-sizing: border-box; "
-            "overflow: auto;"
-        ),
-        ui.element("div").style(
-            "display: flex; gap: 80px; align-items: center; max-width: 100%; width: 100%;"
-        ),
+        ui.element("div").classes("voiceprint-container"),
+        ui.element("div").classes("voiceprint-content"),
     ):
         # Left side: Steps
-        with ui.column().classes("gap-8").style("width: 320px; flex-shrink: 0;"):
+        with ui.column().classes("voiceprint-steps"):
             ui.label("操作流程").classes("text-h5 font-bold text-grey-9 mb-2")
 
             with ui.column().classes("gap-4"):
@@ -104,30 +87,21 @@ async def render(
                         ui.label("点击停止完成").classes("text-sm font-medium text-grey-9")
                         ui.label("时长 5-20 秒").classes("text-xs text-grey-6")
 
-        # Center: Text to read - 设置最小和最大宽度，确保文字不会过度换行
-        with (
-            ui.column()
-            .classes("flex-1 justify-center gap-4")
-            .style("min-width: 450px; max-width: 700px; padding: 0 20px;")
-        ):
+        # Center: Text to read
+        with ui.column().classes("voiceprint-text"):
             ui.label("请朗读：").classes("text-body1 text-grey-6")
             ui.label(doctor_service.config.vpr_text_content).classes(
                 "text-h4 text-grey-9 font-semibold leading-relaxed"
             ).style(
-                "line-height: 1.8; "
-                "word-break: keep-all; "  # 防止单词中间断开
-                "overflow-wrap: break-word; "  # 只在必要时换行
-                "white-space: normal; "  # 允许正常换行
-                "width: 100%;"
+                "line-height: 1. 8; "
+                "word-break: keep-all; "
+                "overflow-wrap: break-word; "
+                "white-space: normal;"
             )
 
         # Right side: Recording button
-        with (
-            ui.column()
-            .classes("items-center justify-center gap-8")
-            .style("width: 300px; flex-shrink: 0;")
-        ):
-            # Timer (sans-serif, bold)
+        with ui.column().classes("voiceprint-button"):
+            # Timer
             timer_label = ui.label("00:00").classes("timer")
 
             # Button container
@@ -136,7 +110,7 @@ async def render(
             )
 
             with button_container:
-                # Rings (soft glow)
+                # Rings
                 ring1 = ui.element("div").classes("recording-ring")
                 ring1.visible = False
                 ring2 = ui.element("div").classes("recording-ring").style("animation-delay: 0.8s;")
@@ -144,7 +118,6 @@ async def render(
                 ring3 = ui.element("div").classes("recording-ring").style("animation-delay: 1.6s;")
                 ring3.visible = False
 
-                # Button
                 @handle_errors
                 async def toggle_recording():
                     """Toggle recording state."""
@@ -157,7 +130,6 @@ async def render(
                         is_recording["value"] = True
                         elapsed_time["value"] = 0
 
-                        # Change to stop icon (square)
                         record_btn.props("icon=stop color=negative")
 
                         ring1.visible = True
@@ -189,7 +161,7 @@ async def render(
                             is_recording["value"] = False
 
                             ui.notify(
-                                f"声纹注册成功！录音时长: {result.duration_ms / 1000:. 1f}秒",
+                                f"声纹注册成功！录音时长: {result.duration_ms / 1000:.1f}秒",
                                 type="positive",
                             )
 
@@ -203,7 +175,6 @@ async def render(
                             raise
 
                 async def update_timer():
-                    """Update timer every second."""
                     try:
                         while is_recording["value"]:
                             await asyncio.sleep(1)
@@ -219,12 +190,11 @@ async def render(
                     except asyncio.CancelledError:
                         pass
 
-                # Button with only icon
                 record_btn = (
                     ui.button(icon="mic", on_click=toggle_recording)
                     .props("round unelevated color=warning size=xl")
                     .classes("record-button")
-                    .style("font-size: 3em !important;")
+                    .style("font-size: 3em ! important;")
                 )
 
             # Hint
