@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import pathlib
 import platform
 
@@ -67,10 +66,7 @@ class Args(BaseArgs):
 
         # Setup native environment if needed
         if cfg.core.app.native:
-            display.step("Setting up native environment", step=1)
-            with display.section("Environment Configuration"):
-                envsetup(cfg)
-                core.app.native.start_args.update({"gui": "qt"})
+            core.app.native.start_args.update({"gui": "qt"})
 
         # Initialize container
         display.step("Initializing application", step=2 if cfg.core.app.native else 1)
@@ -104,134 +100,6 @@ class Args(BaseArgs):
 
         # Start application
         run()
-
-
-def envsetup(cfg: Config) -> None:
-    """Setup environment variables for native Qt application.
-
-    Args:
-        cfg: Application configuration
-    """
-    import PyQt6.QtCore
-
-    system = platform.system()
-    env_vars = {}
-
-    # === PyQt6 Plugin Path ===
-    plugins_path = PyQt6.QtCore.QLibraryInfo.path(PyQt6.QtCore.QLibraryInfo.LibraryPath.PluginsPath)
-    env_vars["QT_PLUGIN_PATH"] = plugins_path
-    display.info(f"Qt plugins path: {plugins_path}")
-
-    # === Platform-Specific Settings ===
-    if system == "Linux":
-        _setup_linux(cfg, env_vars)
-    elif system == "Windows":
-        _setup_windows(cfg, env_vars)
-    else:
-        display.warning(f"Unsupported platform: {system}")
-
-    # === Apply Environment Variables ===
-    for key, value in env_vars.items():
-        os.environ[key] = value
-        display.debug(f"Set {key}={value}")
-
-    display.success("Native environment configured")
-
-
-def _setup_linux(cfg: Config, env_vars: dict[str, str]) -> None:
-    """Setup Linux-specific environment variables.
-
-    Args:
-        cfg: Application configuration
-        env_vars: Dictionary to store environment variables
-    """
-    display.info("Configuring for Linux")
-
-    # === QT Platform Plugin ===
-    # TODO: Try different platform plugins in order of preference
-    # platform_plugins = ["xcb", "wayland", "offscreen"]
-
-    # Check if specific platform is available
-    qt_qpa_platform = os.environ.get("QT_QPA_PLATFORM")
-    if qt_qpa_platform:
-        display.info(f"Using existing QT_QPA_PLATFORM: {qt_qpa_platform}")
-    else:
-        # Detect if running under Wayland
-        wayland_display = os.environ.get("WAYLAND_DISPLAY")
-        xdg_session_type = os.environ.get("XDG_SESSION_TYPE")
-
-        if wayland_display or xdg_session_type == "wayland":
-            env_vars["QT_QPA_PLATFORM"] = "wayland;xcb"  # Fallback to xcb
-            display.info("Detected Wayland session, using wayland with xcb fallback")
-        else:
-            env_vars["QT_QPA_PLATFORM"] = "xcb"
-            display.info("Using X11 (xcb) platform")
-
-    # === Touch Support ===
-    if hasattr(cfg.core.app, "touch") and cfg.core.app.touch:
-        env_vars["QT_ENABLE_TOUCH_EVENTS"] = "1"
-        display.info("Touch events enabled")
-
-    # === High DPI Support ===
-    if not os.environ.get("QT_AUTO_SCREEN_SCALE_FACTOR"):
-        env_vars["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
-        display.debug("Auto screen scaling enabled")
-
-    # === OpenGL Settings ===
-    # Force software rendering if needed
-    if os.environ.get("LIBGL_ALWAYS_SOFTWARE") == "1":
-        display.warning("Software rendering mode detected")
-
-    # Set OpenGL to desktop for better compatibility
-    if not os.environ.get("QT_XCB_GL_INTEGRATION"):
-        env_vars["QT_XCB_GL_INTEGRATION"] = "xcb_egl"
-        display.debug("OpenGL integration: xcb_egl")
-
-    # === Accessibility ===
-    # Disable accessibility bridge if causing issues
-    # env_vars["QT_LINUX_ACCESSIBILITY_ALWAYS_ON"] = "0"
-
-    # === Font Rendering ===
-    if not os.environ.get("QT_SCALE_FACTOR"):
-        # Let system handle DPI
-        pass
-
-
-def _setup_windows(cfg: Config, env_vars: dict[str, str]) -> None:
-    """Setup Windows-specific environment variables.
-
-    Args:
-        cfg: Application configuration
-        env_vars: Dictionary to store environment variables
-    """
-    display.info("Configuring for Windows")
-
-    # === QT Platform Plugin ===
-    env_vars["QT_QPA_PLATFORM"] = "windows"
-    display.info("Using Windows platform plugin")
-
-    # === High DPI Support ===
-    if not os.environ.get("QT_AUTO_SCREEN_SCALE_FACTOR"):
-        env_vars["QT_AUTO_SCREEN_SCALE_FACTOR"] = "1"
-        env_vars["QT_ENABLE_HIGHDPI_SCALING"] = "1"
-        display.debug("High DPI scaling enabled")
-
-    # === DirectX vs OpenGL ===
-    # Windows defaults to ANGLE (DirectX), but can force OpenGL
-    if not os.environ.get("QT_OPENGL"):
-        env_vars["QT_OPENGL"] = "angle"  # or "desktop" or "software"
-        display.debug("OpenGL backend: ANGLE (DirectX)")
-
-    # === Touch Support ===
-    if hasattr(cfg.core.app, "touch") and cfg.core.app.touch:
-        env_vars["QT_ENABLE_TOUCH_EVENTS"] = "1"
-        display.info("Touch events enabled")
-
-    # === Media Foundation ===
-    # Enable Windows Media Foundation for multimedia
-    if not os.environ.get("QT_MULTIMEDIA_PREFERRED_PLUGINS"):
-        env_vars["QT_MULTIMEDIA_PREFERRED_PLUGINS"] = "windowsmediafoundation"
-        display.debug("Multimedia backend: Windows Media Foundation")
 
 
 from audex.container import Container  # noqa: E402
