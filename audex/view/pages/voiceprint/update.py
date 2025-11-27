@@ -34,7 +34,7 @@ async def render(
     ui.add_head_html('<link rel="stylesheet" href="/static/css/voiceprint/update.css">')
     if config.core.app.theme == "performance":
         ui.add_head_html(
-            "<script>document.documentElement. setAttribute('data-theme', 'performance');</script>"
+            "<script>document. documentElement.setAttribute('data-theme', 'performance');</script>"
         )
 
     # State
@@ -53,30 +53,12 @@ async def render(
         ).tooltip("返回主面板")
         ui.label("更新声纹").classes("text-h6 font-semibold text-grey-9")
 
-    # Main container - 完全垂直居中
+    # Main container
     with (
-        ui.element("div")
-        .classes("w-full bg-white")
-        .style(
-            "position: fixed; "
-            "top: 0; "
-            "left: 0; "
-            "right: 0; "
-            "bottom: 0; "
-            "display: flex; "
-            "align-items: center; "
-            "justify-content: center; "
-            "padding: 60px 80px; "
-            "padding-top: calc(108px + 30px); "
-            "box-sizing: border-box; "
-            "overflow: auto;"
-        ),
-        ui.element("div").style(
-            "display: flex; gap: 80px; align-items: center; max-width: 100%; width: 100%;"
-        ),
+        ui.element("div").classes("voiceprint-container"),
+        ui.element("div").classes("voiceprint-content"),
     ):
-        # Left: Steps
-        with ui.column().classes("gap-8").style("width: 320px; flex-shrink: 0;"):
+        with ui.column().classes("voiceprint-steps"):
             ui.label("操作流程").classes("text-h5 font-bold text-grey-9 mb-2")
 
             with ui.column().classes("gap-4"):
@@ -104,12 +86,8 @@ async def render(
                         ui.label("点击停止完成").classes("text-sm font-medium text-grey-9")
                         ui.label("时长 5-20 秒").classes("text-xs text-grey-6")
 
-        # Center: Text - 设置最小和最大宽度
-        with (
-            ui.column()
-            .classes("flex-1 justify-center gap-4")
-            .style("min-width: 450px; max-width: 700px; padding: 0 20px;")
-        ):
+        # Center: Text to read
+        with ui.column().classes("voiceprint-text"):
             ui.label("请朗读：").classes("text-body1 text-grey-6")
             ui.label(doctor_service.config.vpr_text_content).classes(
                 "text-h4 text-grey-9 font-semibold leading-relaxed"
@@ -117,25 +95,21 @@ async def render(
                 "line-height: 1.8; "
                 "word-break: keep-all; "
                 "overflow-wrap: break-word; "
-                "white-space: normal; "
-                "width: 100%;"
+                "white-space: normal;"
             )
 
-        # Right: Button
-        with (
-            ui.column()
-            .classes("items-center justify-center gap-8")
-            .style("width: 300px; flex-shrink: 0;")
-        ):
-            # Timer (sans-serif, bold)
+        # Right side: Recording button
+        with ui.column().classes("voiceprint-button"):
+            # Timer
             timer_label = ui.label("00:00").classes("timer")
 
+            # Button container
             button_container = ui.element("div").style(
                 "position: relative; display: flex; align-items: center; justify-content: center;"
             )
 
             with button_container:
-                # Rings (soft purple glow)
+                # Rings
                 ring1 = ui.element("div").classes("recording-ring")
                 ring1.visible = False
                 ring2 = ui.element("div").classes("recording-ring").style("animation-delay: 0.8s;")
@@ -219,7 +193,8 @@ async def render(
                     ui.button(icon="mic", on_click=toggle_recording)
                     .props("round unelevated color=purple size=xl")
                     .classes("record-button")
-                    .style("font-size: 3em !important;")
+                    .style("font-size: 3em ! important;")
                 )
 
+            # Hint
             ui.label("点击按钮开始录音").classes("text-sm text-grey-6")
