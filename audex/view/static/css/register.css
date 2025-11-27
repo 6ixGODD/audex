@@ -1,3 +1,63 @@
+/* ==================== CSS Variables Theme Switch ==================== */
+
+/* Rich Mode (默认) */
+:root {
+    /* Border Radius */
+    --radius-card: 28px;
+    --radius-button: 12px;
+
+    /* Shadows */
+    --shadow-card: 0 20px 60px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.05), 0 0 1px rgba(0, 0, 0, 0.1);
+    --shadow-card-hover: 0 24px 70px rgba(0, 0, 0, 0.1), 0 10px 28px rgba(0, 0, 0, 0.06), 0 0 1px rgba(0, 0, 0, 0.1);
+    --shadow-button-primary: 0 4px 16px rgba(102, 126, 234, 0.25), 0 2px 8px rgba(118, 75, 162, 0.15);
+    --shadow-button-primary-hover: 0 8px 24px rgba(102, 126, 234, 0.35), 0 4px 12px rgba(118, 75, 162, 0.25);
+    --shadow-button-secondary: 0 2px 8px rgba(0, 0, 0, 0.04);
+    --shadow-button-secondary-hover: 0 4px 12px rgba(0, 0, 0, 0.08);
+
+    /* Backgrounds */
+    --bg-card: rgba(255, 255, 255, 0.98);
+    --bg-page: linear-gradient(135deg, #fafafa 0%, #ffffff 100%);
+    --bg-gradient-title: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    --bg-button-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --bg-button-primary-hover: linear-gradient(135deg, #7c8ef0 0%, #8a5db0 100%);
+    --bg-button-secondary: rgba(248, 249, 250, 0.6);
+    --bg-button-secondary-hover: rgba(243, 244, 246, 0.8);
+
+    /* Transitions */
+    --transition-all: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transform-button-hover: translateY(-2px);
+}
+
+/* Performance Mode */
+:root[data-theme="performance"] {
+    /* Border Radius - 拉满！ */
+    --radius-card: 20px;
+    --radius-button: 50%;
+
+    /* Shadows - 全部移除 */
+    --shadow-card: none;
+    --shadow-card-hover: none;
+    --shadow-button-primary: none;
+    --shadow-button-primary-hover: none;
+    --shadow-button-secondary: none;
+    --shadow-button-secondary-hover: none;
+
+    /* Backgrounds - 纯色 */
+    --bg-card: #ffffff;
+    --bg-page: #ffffff;
+    --bg-gradient-title: #667eea;
+    --bg-button-primary: #667eea;
+    --bg-button-primary-hover: #5568d3;
+    --bg-button-secondary: #f9fafb;
+    --bg-button-secondary-hover: #f3f4f6;
+
+    /* Transitions - 全部移除 */
+    --transition-all: none;
+    --transform-button-hover: none;
+}
+
+/* ==================== Base Styles ==================== */
+
 /* Smooth rendering */
 * {
     -webkit-font-smoothing: antialiased;
@@ -11,305 +71,80 @@ html, body {
     overflow-y: auto !important;
     min-height: 100vh;
     width: 100vw;
-    background: #ffffff;
+    background: var(--bg-page);
 }
-
-/* ==================== Layout Classes ==================== */
-
-/* Flex */
-.items-center {
-    align-items: center;
-}
-
-.justify-center {
-    justify-content: center;
-}
-
-/* Spacing */
-.gap-4 {
-    gap: 1rem;
-}
-
-/* Margin */
-.mx-auto {
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.mb-1 {
-    margin-bottom: 0.25rem;
-}
-
-.mb-3 {
-    margin-bottom: 0.75rem;
-}
-
-.mb-5 {
-    margin-bottom: 1.25rem;
-}
-
-.mt-4 {
-    margin-top: 1rem;
-}
-
-.my-3 {
-    margin-top: 0.75rem;
-    margin-bottom: 0.75rem;
-}
-
-.my-4 {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-}
-
-/* Width */
-.w-full {
-    width: 100%;
-}
-
-.w-16 {
-    width: 4rem;
-}
-
-.flex-1 {
-    flex: 1;
-}
-
-/* Height */
-.h-16 {
-    height: 4rem;
-}
-
-/* ==================== Typography ==================== */
-
-/* Font Size */
-.text-xs {
-    font-size: 0.75rem;
-    line-height: 1rem;
-}
-
-.text-sm {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-}
-
-.text-subtitle2 {
-    font-size: 0.875rem;
-    line-height: 1.375rem;
-    font-weight: 500;
-}
-
-.text-h5 {
-    font-size: 1.5rem;
-    line-height: 2rem;
-}
-
-/* Text Align */
-.text-center {
-    text-align: center;
-}
-
-/* Font Weight */
-.font-semibold {
-    font-weight: 600;
-}
-
-/* Text Color */
-.text-grey-6 {
-    color: #757575;
-}
-
-.text-grey-7 {
-    color: #616161;
-}
-
-.text-grey-8 {
-    color: #424242;
-}
-
-/* ==================== Register Card ==================== */
 
 .register-card {
-    border-radius: 28px ! important;
-    background: rgba(255, 255, 255, 0.98) !important;
-    backdrop-filter: blur(20px) ! important;
-    box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.08),
-    0 8px 24px rgba(0, 0, 0, 0.05),
-    0 0 1px rgba(0, 0, 0, 0.1) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-radius: var(--radius-card) !important;
+    background: var(--bg-card) !important;
+    box-shadow: var(--shadow-card) !important;
+    transition: var(--transition-all) !important;
 }
 
+/* Card hover effect */
 .register-card:hover {
-    box-shadow:
-    0 24px 70px rgba(0, 0, 0, 0.1),
-    0 10px 28px rgba(0, 0, 0, 0.06),
-    0 0 1px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: var(--shadow-card-hover) !important;
 }
-
-/* ==================== Background ==================== */
-
-.bg-white {
-    background: linear-gradient(135deg, #fafafa 0%, #ffffff 100%) !important;
-}
-
-/* ==================== Gradient Title ==================== */
 
 .gradient-title {
-    background: linear-gradient(
-        135deg,
-        #667eea 0%,
-        #764ba2 50%,
-        #f093fb 100%
-    );
+    background: var(--bg-gradient-title);
     background-size: 200% 200%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     font-weight: 700;
+}
+
+/* Rich mode animation */
+:root:not([data-theme="performance"]) .gradient-title {
     animation: gradient-shift 6s ease infinite;
 }
 
+/* Performance mode - static color */
+:root[data-theme="performance"] .gradient-title {
+    background: none;
+    color: #667eea;
+}
+
 @keyframes gradient-shift {
-    0%, 100% {
-        background-position: 0% 50%;
-    }
-    50% {
-        background-position: 100% 50%;
-    }
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
 }
 
-/* ==================== Clean Input ==================== */
-
-.clean-input .q-field__control {
-    background: transparent !important;
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    height: 48px !important;
-}
-
-/* Input text color */
-.clean-input .q-field__native,
-.clean-input input {
-    color: #1f2937 !important;
-    font-size: 15px !important;
-    font-weight: 400 !important;
-}
-
-/* Placeholder color */
-.clean-input .q-field__native::placeholder,
-.clean-input input::placeholder {
-    color: #9ca3af !important;
-    opacity: 1 !important;
-}
-
-/* Bottom border - default state */
-.clean-input .q-field__control:before {
-    border: none !important;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
-    transition: border-color 0.3s ease !important;
-}
-
-/* Bottom border - hover state */
-.clean-input .q-field__control:hover:before {
-    border-bottom-color: rgba(0, 0, 0, 0.2) !important;
-}
-
-/* Bottom border - focused state (animated) */
-.clean-input .q-field__control:after {
-    border: none !important;
-    border-bottom: 2px solid #667eea !important;
-    transform: scaleX(0);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-}
-
-.clean-input.q-field--focused .q-field__control:after {
-    transform: scaleX(1);
-}
-
-/* Password toggle button */
-.clean-input .q-field__append {
-    height: 48px !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-}
-
-.clean-input .q-field__append .q-icon {
-    color: #9ca3af !important;
-    transition: color 0.2s ease !important;
-}
-
-.clean-input .q-field__append .q-icon:hover {
-    color: #6b7280 !important;
-}
-
-/* ==================== Buttons ==================== */
-
-/* Register button */
+/* Buttons */
 .register-button {
-    border-radius: 12px !important;
+    border-radius: var(--radius-button) !important;
     font-size: 16px !important;
     font-weight: 500 !important;
-    letter-spacing: 0.02em !important;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    box-shadow:
-    0 4px 16px rgba(102, 126, 234, 0.25),
-    0 2px 8px rgba(118, 75, 162, 0.15) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    background: var(--bg-button-primary) !important;
+    box-shadow: var(--shadow-button-primary) !important;
+    transition: var(--transition-all) !important;
     text-transform: none !important;
 }
 
 .register-button:hover {
-    transform: translateY(-2px);
-    box-shadow:
-    0 8px 24px rgba(102, 126, 234, 0.35),
-    0 4px 12px rgba(118, 75, 162, 0.25) !important;
-    background: linear-gradient(135deg, #7c8ef0 0%, #8a5db0 100%) !important;
+    background: var(--bg-button-primary-hover) !important;
+    box-shadow: var(--shadow-button-primary-hover) !important;
+    transform: var(--transform-button-hover);
 }
 
 .register-button:active {
     transform: translateY(0);
-    box-shadow:
-    0 2px 8px rgba(102, 126, 234, 0.3),
-    0 1px 4px rgba(118, 75, 162, 0.2) !important;
 }
 
-/* Back button */
 .back-button {
-    border-radius: 12px !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    font-size: 16px !important;
-    font-weight: 500 !important;
-    letter-spacing: 0.02em !important;
-    background: rgba(248, 249, 250, 0.6) !important;
-    color: #6b7280 ! important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    text-transform: none !important;
+    border-radius: var(--radius-button) !important;
+    background: var(--bg-button-secondary) !important;
+    box-shadow: var(--shadow-button-secondary) !important;
+    transition: var(--transition-all) !important;
 }
 
 .back-button:hover {
-    background: rgba(243, 244, 246, 0.8) !important;
-    border-color: rgba(0, 0, 0, 0.12) !important;
-    color: #4b5563 ! important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
-    transform: translateY(-2px);
+    background: var(--bg-button-secondary-hover) !important;
+    box-shadow: var(--shadow-button-secondary-hover) !important;
+    transform: var(--transform-button-hover);
 }
 
 .back-button:active {
     transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06) !important;
-}
-
-/* ==================== Separator ==================== */
-
-.q-separator {
-    background-color: rgba(0, 0, 0, 0.08) !important;
-}
-
-/* Section separator */
-.my-4 .q-separator {
-    background-color: rgba(0, 0, 0, 0.06) !important;
 }

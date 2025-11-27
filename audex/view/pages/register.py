@@ -36,6 +36,10 @@ async def render(
 
     # Add consistent CSS (same as login)
     ui.add_head_html('<link rel="stylesheet" href="/static/css/register.css">')
+    if config.core.app.theme == "performance":
+        ui.add_head_html(
+            "<script>document.documentElement.setAttribute('data-theme', 'performance');</script>"
+        )
 
     # Full screen container - allow scrolling
     with (
