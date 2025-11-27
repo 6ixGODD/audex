@@ -39,16 +39,20 @@ async def render(
             "<script>document.documentElement.setAttribute('data-theme', 'performance');</script>"
         )
 
-    # Full screen container - no scrolling
+    # Full screen container
     with (
         (
             ui.element("div")
             .classes("w-full bg-white")
             .style(
-                "height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden;"
+                "min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px 0;"
             )
         ),
-        ui.card().classes("login-card").style("width: 420px; padding: 32px 36px;"),
+        ui.card()
+        .classes("login-card")
+        .style(
+            "width: 420px; max-width: 90vw; max-height: 90vh; overflow-y: auto; padding: 32px 36px;"
+        ),
     ):
         # Logo
         ui.image("/static/images/logo.png").classes("w-16 h-16 mx-auto mb-4")
