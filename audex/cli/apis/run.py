@@ -6,6 +6,7 @@ import platform
 
 from dependency_injector.wiring import Provide
 from dependency_injector.wiring import inject
+from nicegui import core
 from pydantic import Field
 
 from audex.cli.args import BaseArgs
@@ -69,6 +70,7 @@ class Args(BaseArgs):
             display.step("Setting up native environment", step=1)
             with display.section("Environment Configuration"):
                 envsetup(cfg)
+                core.app.native.start_args.update({"gui": "qt"})
 
         # Initialize container
         display.step("Initializing application", step=2 if cfg.core.app.native else 1)
@@ -149,10 +151,6 @@ def envsetup(cfg: Config) -> None:
         display.info(f"Qt plugins path: {plugins_path}")
     except Exception as e:
         display.warning(f"Could not set Qt plugin path: {e}")
-
-    # === PyWebView GUI Backend ===
-    env_vars["PYWEBVIEW_GUI"] = "qt"
-    display.info("PyWebView backend: qt")
 
     # === Platform-Specific Settings ===
     if system == "Linux":
