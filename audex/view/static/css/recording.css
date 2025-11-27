@@ -1,14 +1,193 @@
-@import "./theme.css";
+/* ==================== CSS Variables Theme Switch ==================== */
 
-/* Recording page specific background */
-html, body {
-    background: var(--bg-page-recording);
+/* Rich Mode (默认) */
+:root {
+    /* Border Radius */
+    --radius-button: 50%;
+    --radius-bubble: 20px;
+
+    /* Shadows */
+    --shadow-header: 0 1px 3px rgba(0, 0, 0, 0.03);
+    --shadow-scroll-btn: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-scroll-btn-hover: 0 6px 24px rgba(0, 0, 0, 0.18);
+    --shadow-record-btn: 0 8px 32px rgba(102, 126, 234, 0.25), 0 4px 16px rgba(118, 75, 162, 0.15);
+    --shadow-record-btn-hover: 0 12px 40px rgba(102, 126, 234, 0.35), 0 6px 20px rgba(118, 75, 162, 0.25);
+    --shadow-bubble-doctor: 0 4px 20px rgba(102, 126, 234, 0.25), 0 2px 10px rgba(118, 75, 162, 0.15);
+    --shadow-bubble-patient: 0 4px 20px rgba(0, 0, 0, 0.08), 0 2px 10px rgba(0, 0, 0, 0.05);
+
+    /* Backgrounds */
+    --bg-page: linear-gradient(135deg, #fafbfc 0%, #f8fafc 100%);
+    --bg-header: rgba(255, 255, 255, 0.5);
+    --bg-footer: linear-gradient(to top, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.65) 20%, rgba(255, 255, 255, 0.35) 40%, rgba(255, 255, 255, 0.12) 60%, rgba(255, 255, 255, 0.04) 80%, rgba(255, 255, 255, 0) 100%);
+    --bg-scroll-btn-hover: rgba(255, 255, 255, 0.6);
+    --bg-record-btn: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --bg-bubble-doctor: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --bg-bubble-patient: #ffffff;
+    --bg-button-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --bg-button-primary-hover: linear-gradient(135deg, #7c8ef0 0%, #8a5db0 100%);
+
+    /* Blur Effects */
+    --blur-header: blur(80px) saturate(200%);
+    --blur-footer: blur(200px) saturate(400%);
+    --blur-scroll-btn: blur(12px);
+
+    /* Borders */
+    --border-header: none;
+    --border-bubble-patient: 1px solid rgba(0, 0, 0, 0.08);
+
+    /* Transitions */
+    --transition-all: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-text: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-border: border-color 0.3s ease;
+    --transition-transform: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Transforms */
+    --transform-scroll-btn-hover: scale(1.1);
+    --transform-record-btn-hover: translateX(-50%) scale(1.08);
+    --transform-button-hover: translateY(-2px);
+    --transform-button-active: translateY(0);
+    --transform-input-focus: scaleX(1);
+    --transform-input-unfocus: scaleX(0);
+
+    /* Animations */
+    --animation-slide-up: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    --animation-pulse: pulse-recording 2s ease-out infinite;
 }
 
-/* ==================== Footer Glass (recording 特有) ==================== */
+/* Performance Mode */
+:root[data-theme="performance"] {
+    /* Border Radius - 拉满！ */
+    --radius-button: 50%;
+    --radius-bubble: 20px;
+
+    /* Shadows - 全部移除 */
+    --shadow-header: none;
+    --shadow-scroll-btn: none;
+    --shadow-scroll-btn-hover: none;
+    --shadow-record-btn: none;
+    --shadow-record-btn-hover: none;
+    --shadow-bubble-doctor: none;
+    --shadow-bubble-patient: none;
+
+    /* Backgrounds - 纯色/简化 */
+    --bg-page: #fafbfc;
+    --bg-header: #ffffff;
+    --bg-footer: linear-gradient(to top, #ffffff 0%, rgba(255, 255, 255, 0.8) 40%, rgba(255, 255, 255, 0) 100%);
+    --bg-scroll-btn-hover: #f5f5f5;
+    --bg-record-btn: #667eea;
+    --bg-bubble-doctor: #667eea;
+    --bg-bubble-patient: #ffffff;
+    --bg-button-primary: #667eea;
+    --bg-button-primary-hover: #5568d3;
+
+    /* Blur Effects - 移除 */
+    --blur-header: none;
+    --blur-footer: none;
+    --blur-scroll-btn: none;
+
+    /* Borders - 添加边框作为分隔 */
+    --border-header: 1px solid #e0e0e0;
+    --border-bubble-patient: 1px solid #e0e0e0;
+
+    /* Transitions - 全部移除 */
+    --transition-all: none;
+    --transition-fast: none;
+    --transition-text: none;
+    --transition-border: none;
+    --transition-transform: none;
+
+    /* Transforms - 全部移除 */
+    --transform-scroll-btn-hover: none;
+    --transform-record-btn-hover: translateX(-50%);
+    --transform-button-hover: none;
+    --transform-button-active: none;
+    --transform-input-focus: scaleX(1);
+    --transform-input-unfocus: scaleX(1);
+
+    /* Animations - 移除 */
+    --animation-slide-up: none;
+    --animation-pulse: none;
+}
+
+/* ==================== Base Styles ==================== */
+
+/* Smooth rendering */
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    height: 100vh;
+    width: 100vw;
+    background: var(--bg-page);
+}
+
+/* Hide scrollbars completely */
+::-webkit-scrollbar { display: none !important; }
+* {
+    -ms-overflow-style: none ! important;
+    scrollbar-width: none !important;
+}
+
+.nicegui-content { padding: 0 !important; margin: 0 !important; }
+.q-page { padding: 0 ! important; margin: 0 ! important; }
+
+/* ==================== Layout Classes ==================== */
+
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.justify-end { justify-content: flex-end; }
+.flex-1 { flex: 1; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+.px-6 { padding-left: 3rem ! important; padding-right: 3rem !important; }
+.py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mt-3 { margin-top: 0.75rem; }
+.mt-6 { margin-top: 1.5rem; }
+.w-full { width: 100%; }
+
+/* ==================== Typography ==================== */
+
+.text-body2 { font-size: 0.875rem; line-height: 1.25rem; }
+.text-h6 { font-size: 1.25rem; line-height: 1.75rem; }
+.text-h5 { font-size: 1.5rem; line-height: 2rem; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+.text-grey-7 { color: #616161; }
+.text-grey-8 { color: #424242; }
+.text-grey-9 { color: #212121; }
+
+/* ==================== Header Glass ==================== */
+
+.header-glass {
+    backdrop-filter: var(--blur-header) ! important;
+    -webkit-backdrop-filter: var(--blur-header) !important;
+    background: var(--bg-header) !important;
+    box-shadow: var(--shadow-header) !important;
+    border-bottom: var(--border-header) !important;
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+    margin-top: 1.5rem !important;
+    min-height: 80px !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000 !important;
+}
+
+/* ==================== Footer Glass ==================== */
 
 .footer-glass {
-    position: fixed ! important;
+    position: fixed !important;
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
@@ -21,15 +200,15 @@ html, body {
     pointer-events: none !important;
 }
 
-/* ==================== Scroll Button (recording 特有) ==================== */
+/* ==================== Scroll Button ==================== */
 
 .scroll-bottom-btn {
-    position: fixed ! important;
+    position: fixed !important;
     top: 130px !important;
     right: 20px !important;
     width: 48px !important;
     height: 48px !important;
-    border-radius: var(--radius-button-round) !important;
+    border-radius: var(--radius-button) !important;
     z-index: 1002 !important;
     box-shadow: var(--shadow-scroll-btn) !important;
     transition: var(--transition-all) !important;
@@ -43,23 +222,24 @@ html, body {
     -webkit-backdrop-filter: var(--blur-scroll-btn) !important;
 }
 
+/* Performance mode - add border */
 :root[data-theme="performance"] .scroll-bottom-btn {
     border: 1px solid #e0e0e0 ! important;
 }
 
-/* ==================== Record Button (recording 特有) ==================== */
+/* ==================== Record Button ==================== */
 
 .record-btn {
     width: 80px !important;
     height: 80px !important;
-    border-radius: var(--radius-button-round) !important;
+    border-radius: var(--radius-button) !important;
     transition: var(--transition-all) !important;
     position: fixed !important;
     bottom: 60px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     z-index: 1001 !important;
-    box-shadow: var(--shadow-record-btn) !important;
+    box-shadow: var(--shadow-record-btn) ! important;
     pointer-events: auto !important;
     background: var(--bg-record-btn) !important;
 }
@@ -74,6 +254,7 @@ html, body {
     cursor: not-allowed !important;
 }
 
+/* Recording pulse animation */
 .recording-pulse {
     animation: var(--animation-pulse);
 }
@@ -87,7 +268,7 @@ html, body {
     }
 }
 
-/* ==================== Lyrics Container (recording 特有) ==================== */
+/* ==================== Lyrics Container ==================== */
 
 .lyrics-container {
     position: fixed !important;
@@ -96,16 +277,16 @@ html, body {
     right: 0 !important;
     bottom: 0 !important;
     width: 100vw !important;
-    height: 100vh !important;
+    height: 100vh ! important;
     padding: 130px 20px 170px 20px !important;
-    overflow-y: auto !important;
+    overflow-y: auto ! important;
     overflow-x: hidden !important;
     scroll-behavior: smooth !important;
     background: transparent !important;
     z-index: 1 !important;
 }
 
-/* ==================== Utterances (recording 特有) ==================== */
+/* ==================== Utterances ==================== */
 
 .utterance-item {
     width: 100%;
@@ -155,6 +336,7 @@ html, body {
     letter-spacing: 1px;
 }
 
+/* Chat bubbles */
 .bubble-doctor {
     background: var(--bg-bubble-doctor);
     color: white;
@@ -186,6 +368,7 @@ html, body {
     font-weight: 400;
 }
 
+/* Slide up animation */
 .slide-up {
     animation: var(--animation-slide-up);
 }
@@ -195,9 +378,99 @@ html, body {
     to { transform: translateY(0); opacity: 1; }
 }
 
+/* ==================== Clean Input ==================== */
+
+.clean-input .q-field__control {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    height: 48px !important;
+}
+
+.clean-input .q-field__native,
+.clean-input input,
+.clean-input textarea {
+    color: #1f2937 !important;
+    font-size: 15px !important;
+}
+
+.clean-input .q-field__native::placeholder,
+.clean-input input::placeholder,
+.clean-input textarea::placeholder {
+    color: #9ca3af !important;
+    opacity: 1 !important;
+}
+
+.clean-input .q-field__control:before {
+    border: none !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
+    transition: var(--transition-border) !important;
+}
+
+.clean-input .q-field__control:hover:before {
+    border-bottom-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+.clean-input .q-field__control:after {
+    border: none !important;
+    border-bottom: 2px solid #667eea !important;
+    transform: var(--transform-input-unfocus);
+    transition: var(--transition-transform) !important;
+}
+
+.clean-input.q-field--focused .q-field__control:after {
+    transform: var(--transform-input-focus);
+}
+
+.notes-textarea .q-field__control { height: 100px !important; }
+.notes-textarea textarea { min-height: 70px !important; resize: none !important; }
+
+/* ==================== Action Button ==================== */
+
+.action-button {
+    border-radius: 24px !important;
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.02em !important;
+    transition: var(--transition-fast) !important;
+    min-width: 120px !important;
+    text-transform: none !important;
+}
+
+.action-button:hover {
+    transform: var(--transform-button-hover);
+}
+
+.action-button:active {
+    transform: var(--transform-button-active);
+}
+
+.action-button[size="lg"] {
+    background: var(--bg-button-primary) !important;
+    box-shadow: var(--shadow-record-btn) !important;
+}
+
+.action-button[size="lg"]:hover {
+    background: var(--bg-button-primary-hover) !important;
+    box-shadow: var(--shadow-record-btn-hover) !important;
+}
+
 /* ==================== Responsive ==================== */
 
+@media (max-width: 1400px) {
+    .px-6 {
+        padding-left: 2.5rem !important;
+        padding-right: 2.5rem !important;
+    }
+}
+
 @media (max-width: 1024px) {
+    .px-6 {
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
+
     .lyrics-container {
         padding: 130px 15px 170px 15px ! important;
     }
