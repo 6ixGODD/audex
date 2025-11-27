@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import typing as t
-
 from pydantic import Field
 
 from audex import __title__
@@ -30,17 +28,7 @@ class AppConfig(BaseModel):
         description="Indicates if the application is running in native mode.",
     )
 
-    touch: bool = Field(
-        default=False,
-        description="Enable or disable touch support.",
-    )
-
     fullscreen: bool = Field(
         default=False,
         description="Enable or disable fullscreen mode.",
-    )
-
-    theme: t.Literal["rich", "performance"] = Field(
-        default="rich",
-        description="The theme of the application, can be 'rich' or 'performance'.",
     )
