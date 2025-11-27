@@ -311,7 +311,11 @@ async def render(
 
                 ui.label("请输入当前密码和新密码").classes("text-body2 text-grey-7 mb-6")
 
-                with ui.column().classes("gap-4").style("max-width: 100%; width: 700px;"):
+                with (
+                    ui.column()
+                    .classes("gap-4")
+                    .style("max-width: 100%; width: 25vw; min-width: 300px;")
+                ):
                     old_password_input = (
                         ui.input(
                             "",

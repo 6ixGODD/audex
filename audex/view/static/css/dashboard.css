@@ -10,7 +10,7 @@
 body, html {
     margin: 0;
     padding: 0;
-    overflow: hidden !important;
+    overflow-y: auto;
     height: 100vh;
     width: 100vw;
 }
