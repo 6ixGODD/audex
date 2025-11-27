@@ -473,18 +473,31 @@ class WindowsWiFiBackend(WiFiBackend):
             return False
 
     def _parse_security(self, auth: str, cipher: str) -> WiFiSecurity:
-        """Parse security type from Windows output."""
+        """Parse security type from Windows output (supports
+        Chinese)."""
         auth = auth.upper()
+        cipher = cipher.upper()
+
+        # WPA3
         if "WPA3" in auth:
             return WiFiSecurity.WPA3
-        if "WPA2" in auth:
+
+        # WPA2 (中英文)
+        if "WPA2" in auth or "WPA2 - 个人" in auth or "WPA2-PERSONAL" in auth:
             return WiFiSecurity.WPA2
-        if "WPA" in auth:
+
+        # WPA (中英文)
+        if "WPA" in auth and "WPA2" not in auth:
             return WiFiSecurity.WPA
-        if "WEP" in cipher.upper():
+
+        # WEP
+        if "WEP" in cipher or "WEP" in auth:
             return WiFiSecurity.WEP
-        if "OPEN" in auth or not auth:
+
+        # Open (中英文)
+        if "OPEN" in auth or "开放" in auth or not auth or auth == "--":
             return WiFiSecurity.OPEN
+
         return WiFiSecurity.UNKNOWN
 
     def _signal_to_dbm(self, quality: int) -> int:
@@ -532,6 +545,7 @@ class WindowsWiFiBackend(WiFiBackend):
             for line in output.split("\n"):
                 line = line.strip()
 
+                # SSID (中英文兼容)
                 if line.startswith("SSID"):
                     # Save previous network
                     if current_ssid and current_bssid:
@@ -552,7 +566,7 @@ class WindowsWiFiBackend(WiFiBackend):
                         networks.append(network)
 
                     # Start new network
-                    match = re.search(r"SSID \d+ : (.+)", line)
+                    match = re.search(r"SSID \d+\s*[:：]\s*(.+)", line)
                     if match:
                         current_ssid = match.group(1).strip()
                         current_bssid = None
@@ -561,28 +575,34 @@ class WindowsWiFiBackend(WiFiBackend):
                         current_cipher = ""
                         current_channel = None
 
-                elif line.startswith("BSSID"):
-                    match = re.search(r"BSSID \d+\s+:\s+(.+)", line)
+                # BSSID (中英文兼容)
+                elif line.startswith("BSSID") or line.strip().startswith("BSSID"):
+                    match = re.search(r"BSSID \d+\s*[:：]\s*([0-9a-fA-F:]+)", line)
                     if match:
                         current_bssid = match.group(1).strip()
 
-                elif line.startswith("Signal"):
-                    match = re.search(r"Signal\s+:\s+(\d+)%", line)
+                # Signal / 信号 (中英文兼容)
+                elif "Signal" in line or "信号" in line:
+                    # 匹配 "信号 : 88%" 或 "Signal : 88%"
+                    match = re.search(r"[:：]\s*(\d+)%", line)
                     if match:
                         current_signal = int(match.group(1))
 
-                elif line.startswith("Authentication"):
-                    match = re.search(r"Authentication\s+:\s+(.+)", line)
+                # Authentication / 身份验证 (中英文兼容)
+                elif "Authentication" in line or "身份验证" in line:
+                    match = re.search(r"[:：]\s*(.+)", line)
                     if match:
                         current_auth = match.group(1).strip()
 
-                elif line.startswith("Cipher"):
-                    match = re.search(r"Cipher\s+:\s+(.+)", line)
+                # Encryption / 加密 (中英文兼容)
+                elif "Cipher" in line or "Encryption" in line or "加密" in line or "密码" in line:
+                    match = re.search(r"[:：]\s*(. +)", line)
                     if match:
                         current_cipher = match.group(1).strip()
 
-                elif line.startswith("Channel"):
-                    match = re.search(r"Channel\s+:\s+(\d+)", line)
+                # Channel / 频道 (中英文兼容)
+                elif "Channel" in line or "频道" in line or "波段" in line:
+                    match = re.search(r"[:：]\s*(\d+)", line)
                     if match:
                         current_channel = int(match.group(1))
 
@@ -605,6 +625,14 @@ class WindowsWiFiBackend(WiFiBackend):
                 networks.append(network)
 
             self.logger.debug(f"Found {len(networks)} WiFi networks")
+
+            # Debug: Print first few networks
+            for net in networks[:3]:
+                self.logger.debug(
+                    f"Network: {net.ssid}, Signal: {net.signal_quality}%, "
+                    f"Security: {net.security.value}, Auth: {current_auth}"
+                )
+
             return networks
 
         except Exception as e:
