@@ -1,8 +1,16 @@
 @import "./styles.css";
 
+/* ==================== Update Theme Variables ==================== */
+
+:root {
+    --color-update-primary: #8b5cf6;
+    --color-update-secondary: #7c3aed;
+    --color-update-light: #a78bfa;
+}
+
 /* Recording button - elegant purple theme */
 .record-button {
-    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%) !important;
+    background: linear-gradient(135deg, var(--color-update-primary) 0%, var(--color-update-secondary) 100%) !important;
     box-shadow:
     0 8px 32px rgba(139, 92, 246, 0.3),
     0 4px 16px rgba(124, 58, 237, 0.2),
@@ -10,7 +18,7 @@
 }
 
 .record-button:hover:not(:disabled) {
-    background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%) !important;
+    background: linear-gradient(135deg, var(--color-update-light) 0%, var(--color-update-primary) 100%) !important;
     box-shadow:
     0 12px 40px rgba(139, 92, 246, 0.4),
     0 6px 20px rgba(124, 58, 237, 0.25),
@@ -22,4 +30,18 @@
     0 6px 24px rgba(139, 92, 246, 0.35),
     0 3px 12px rgba(124, 58, 237, 0.2),
     inset 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Performance mode - pure purple */
+:root[data-theme="performance"] .record-button {
+    background: var(--color-update-primary) !important;
+    box-shadow: none !important;
+}
+
+:root[data-theme="performance"] .record-button:hover:not(:disabled) {
+    background: var(--color-update-secondary) !important;
+}
+
+:root[data-theme="performance"] .record-button:active:not(:disabled) {
+    background: #6d28d9 !important;
 }

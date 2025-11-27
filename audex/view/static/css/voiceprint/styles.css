@@ -1,3 +1,75 @@
+/* ==================== CSS Variables Theme Switch ==================== */
+
+/* Rich Mode (默认) */
+:root {
+    /* Border Radius */
+    --radius-button: 50%;
+
+    /* Shadows */
+    --shadow-header: 0 1px 3px rgba(0, 0, 0, 0.03);
+    --shadow-button: 0 8px 32px rgba(0, 0, 0, 0.15);
+
+    /* Backgrounds */
+    --bg-page: #ffffff;
+    --bg-header: rgba(255, 255, 255, 0.5);
+
+    /* Blur Effects */
+    --blur-header: blur(80px) saturate(200%);
+
+    /* Borders */
+    --border-header: none;
+
+    /* Transitions */
+    --transition-button: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Transforms */
+    --transform-button-hover: scale(1.05);
+    --transform-button-active: scale(0.98);
+
+    /* Ring Animation */
+    --ring-opacity-start: 0.4;
+    --ring-opacity-end: 0;
+    --ring-scale-end: 1.6;
+    --ring-blur: blur(8px);
+    --ring-animation: pulse-ring 2.4s ease-out infinite;
+}
+
+/* Performance Mode */
+:root[data-theme="performance"] {
+    /* Border Radius - 保持圆形 */
+    --radius-button: 50%;
+
+    /* Shadows - 移除 */
+    --shadow-header: none;
+    --shadow-button: none;
+
+    /* Backgrounds - 纯色 */
+    --bg-page: #ffffff;
+    --bg-header: #ffffff;
+
+    /* Blur Effects - 移除 */
+    --blur-header: none;
+
+    /* Borders - 添加边框 */
+    --border-header: 1px solid #e0e0e0;
+
+    /* Transitions - 移除 */
+    --transition-button: none;
+
+    /* Transforms - 移除 */
+    --transform-button-hover: none;
+    --transform-button-active: none;
+
+    /* Ring Animation - 移除 */
+    --ring-opacity-start: 0;
+    --ring-opacity-end: 0;
+    --ring-scale-end: 1;
+    --ring-blur: none;
+    --ring-animation: none;
+}
+
+/* ==================== Base Styles ==================== */
+
 /* Smooth rendering */
 * {
     -webkit-font-smoothing: antialiased;
@@ -10,155 +82,56 @@ html, body {
     overflow: hidden !important;
     height: 100vh;
     width: 100vw;
-    background: #ffffff;
+    background: var(--bg-page);
 }
 
 /* ==================== Layout Classes ==================== */
 
-/* Flex */
-.items-center {
-    align-items: center;
-}
-
-.items-start {
-    align-items: flex-start;
-}
-
-.justify-between {
-    justify-content: space-between;
-}
-
-.justify-center {
-    justify-content: center;
-}
-
-.flex-1 {
-    flex: 1;
-}
-
-/* Spacing */
-.gap-1 {
-    gap: 0.25rem;
-}
-
-.gap-3 {
-    gap: 0.75rem;
-}
-
-.gap-4 {
-    gap: 1rem;
-}
-
-.gap-8 {
-    gap: 2rem;
-}
-
-/* Padding */
-.px-6 {
-    padding-left: 3rem ! important;
-    padding-right: 3rem !important;
-}
-
-.py-3 {
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
-}
-
-/* Margin */
-.mb-2 {
-    margin-bottom: 0.5rem;
-}
-
-/* Width */
-.w-full {
-    width: 100%;
-}
-
-.w-6 {
-    width: 1.5rem;
-}
-
-/* Height */
-.h-6 {
-    height: 1.5rem;
-}
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-between { justify-content: space-between; }
+.justify-center { justify-content: center; }
+.flex-1 { flex: 1; }
+.gap-1 { gap: 0.25rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+.gap-8 { gap: 2rem; }
+.px-6 { padding-left: 3rem !important; padding-right: 3rem ! important; }
+.py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.w-full { width: 100%; }
+.w-6 { width: 1.5rem; }
+.h-6 { height: 1.5rem; }
 
 /* ==================== Typography ==================== */
 
-/* Font Size */
-.text-xs {
-    font-size: 0.75rem;
-    line-height: 1rem;
-}
-
-.text-sm {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-}
-
-.text-body1 {
-    font-size: 1rem;
-    line-height: 1.5rem;
-}
-
-.text-h6 {
-    font-size: 1.25rem;
-    line-height: 1.75rem;
-}
-
-.text-h5 {
-    font-size: 1.5rem;
-    line-height: 2rem;
-}
-
-.text-h4 {
-    font-size: 1.875rem;
-    line-height: 2.25rem;
-}
-
-/* Font Weight */
-.font-medium {
-    font-weight: 500;
-}
-
-.font-semibold {
-    font-weight: 600;
-}
-
-.font-bold {
-    font-weight: 700;
-}
-
-/* Text Color */
-.text-white {
-    color: #ffffff;
-}
-
-.text-grey-6 {
-    color: #757575;
-}
-
-.text-grey-9 {
-    color: #212121;
-}
-
-/* Line Height */
-.leading-relaxed {
-    line-height: 1.625;
-}
+.text-xs { font-size: 0.75rem; line-height: 1rem; }
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-body1 { font-size: 1rem; line-height: 1.5rem; }
+.text-h6 { font-size: 1.25rem; line-height: 1.75rem; }
+.text-h5 { font-size: 1.5rem; line-height: 2rem; }
+.text-h4 { font-size: 1.875rem; line-height: 2.25rem; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+.text-white { color: #ffffff; }
+.text-grey-6 { color: #757575; }
+.text-grey-9 { color: #212121; }
+.leading-relaxed { line-height: 1.625; }
 
 /* ==================== Header ==================== */
 
 .header-glass {
-    backdrop-filter: blur(80px) saturate(200%) !important;
-    -webkit-backdrop-filter: blur(80px) saturate(200%) !important;
-    background: rgba(255, 255, 255, 0.5) !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
-    padding-top: 1.5rem ! important;
+    backdrop-filter: var(--blur-header) ! important;
+    -webkit-backdrop-filter: var(--blur-header) !important;
+    background: var(--bg-header) !important;
+    box-shadow: var(--shadow-header) !important;
+    border-bottom: var(--border-header) !important;
+    padding-top: 1.5rem !important;
     padding-bottom: 1.5rem !important;
     margin-top: 1.5rem !important;
-    min-height: 80px ! important;
-    position: fixed ! important;
+    min-height: 80px !important;
+    position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
@@ -168,7 +141,7 @@ html, body {
 /* ==================== Background ==================== */
 
 .bg-white {
-    background: #ffffff !important;
+    background: var(--bg-page) !important;
     padding: 40px 60px !important;
     margin: 0 !important;
     box-sizing: border-box !important;
@@ -194,34 +167,39 @@ html, body {
 .record-button {
     width: 180px !important;
     height: 180px !important;
-    border-radius: 50% !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+    border-radius: var(--radius-button) !important;
+    transition: var(--transition-button) !important;
+    box-shadow: var(--shadow-button) !important;
 }
 
 .record-button:hover:not(:disabled) {
-    transform: scale(1.05);
+    transform: var(--transform-button-hover);
 }
 
 .record-button:active:not(:disabled) {
-    transform: scale(0.98);
+    transform: var(--transform-button-active);
 }
 
 .record-button:disabled {
-    opacity: 0.7 !important;
+    opacity: 0.7 ! important;
     cursor: not-allowed !important;
 }
 
-/* ==================== Recording Rings (浅灰色模糊) ==================== */
+/* Performance mode - add border */
+:root[data-theme="performance"] .record-button {
+    border: 2px solid currentColor !important;
+}
+
+/* ==================== Recording Rings ==================== */
 
 @keyframes pulse-ring {
     0% {
         transform: scale(1);
-        opacity: 0.4;
+        opacity: var(--ring-opacity-start);
     }
     100% {
-        transform: scale(1.6);
-        opacity: 0;
+        transform: scale(var(--ring-scale-end));
+        opacity: var(--ring-opacity-end);
     }
 }
 
@@ -238,30 +216,52 @@ html, body {
         rgba(160, 160, 160, 0.15) 55%,
         transparent 60%
     );
-    filter: blur(8px);
-    animation: pulse-ring 2.4s ease-out infinite;
+    filter: var(--ring-blur);
+    animation: var(--ring-animation);
+}
+
+/* ==================== Loading Overlay ==================== */
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.loading-spinner-large {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255, 255, 255, 0.15);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 /* ==================== Responsive ==================== */
 
 @media (max-width: 1400px) {
-    .bg-white {
-        padding: 40px 60px !important;
-    }
-
-    .px-6 {
-        padding-left: 2.5rem !important;
-        padding-right: 2.5rem !important;
-    }
+    .bg-white { padding: 40px 60px !important; }
+    .px-6 { padding-left: 2.5rem !important; padding-right: 2.5rem !important; }
 }
 
 @media (max-width: 1024px) {
-    .bg-white {
-        padding: 30px 40px !important;
-    }
-
-    .px-6 {
-        padding-left: 2rem !important;
-        padding-right: 2rem !important;
-    }
+    .bg-white { padding: 30px 40px !important; }
+    .px-6 { padding-left: 2rem !important; padding-right: 2rem !important; }
 }

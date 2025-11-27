@@ -1,3 +1,107 @@
+/* ==================== CSS Variables Theme Switch ==================== */
+
+/* Rich Mode (默认) */
+:root {
+    /* Border Radius */
+    --radius-tab: 12px;
+    --radius-button: 24px;
+
+    /* Shadows */
+    --shadow-header: 0 1px 3px rgba(0, 0, 0, 0.03);
+    --shadow-tab-active: 0 2px 8px rgba(102, 126, 234, 0.15);
+    --shadow-button-primary: 0 4px 16px rgba(102, 126, 234, 0.25), 0 2px 8px rgba(118, 75, 162, 0.15);
+    --shadow-button-primary-hover: 0 8px 24px rgba(102, 126, 234, 0.35), 0 4px 12px rgba(118, 75, 162, 0.25);
+    --shadow-button-negative-hover: 0 4px 16px rgba(193, 0, 21, 0.25);
+
+    /* Backgrounds */
+    --bg-page: #ffffff;
+    --bg-header: rgba(255, 255, 255, 0.5);
+    --bg-tab-hover: rgba(0, 0, 0, 0.04);
+    --bg-tab-active: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%);
+    --bg-info-field-hover: rgba(0, 0, 0, 0.01);
+    --bg-button-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --bg-button-primary-hover: linear-gradient(135deg, #7c8ef0 0%, #8a5db0 100%);
+
+    /* Blur Effects */
+    --blur-header: blur(80px) saturate(200%);
+    --blur-dialog: blur(4px);
+
+    /* Borders */
+    --border-header: none;
+    --border-input-default: 1px solid rgba(0, 0, 0, 0.12);
+    --border-input-hover: 1px solid rgba(0, 0, 0, 0.2);
+    --border-input-focus: 2px solid #667eea;
+    --border-info-field: 1px solid rgba(0, 0, 0, 0.06);
+    --border-separator: rgba(0, 0, 0, 0.08);
+    --border-separator-light: rgba(0, 0, 0, 0.06);
+
+    /* Transitions */
+    --transition-tab: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-button: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-field: background 0.2s ease;
+    --transition-icon: color 0.2s ease;
+    --transition-border: border-color 0.3s ease;
+    --transition-transform: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Transforms */
+    --transform-button-hover: translateY(-2px);
+    --transform-button-active: translateY(0);
+    --transform-input-focus: scaleX(1);
+    --transform-input-unfocus: scaleX(0);
+}
+
+/* Performance Mode */
+:root[data-theme="performance"] {
+    /* Border Radius - 拉满！ */
+    --radius-tab: 16px;
+    --radius-button: 999px;  /* 完全圆形！ */
+
+    /* Shadows - 全部移除 */
+    --shadow-header: none;
+    --shadow-tab-active: none;
+    --shadow-button-primary: none;
+    --shadow-button-primary-hover: none;
+    --shadow-button-negative-hover: none;
+
+    /* Backgrounds - 纯色 */
+    --bg-page: #ffffff;
+    --bg-header: #ffffff;
+    --bg-tab-hover: #f5f5f5;
+    --bg-tab-active: #e8eaf6;
+    --bg-info-field-hover: #fafafa;
+    --bg-button-primary: #667eea;
+    --bg-button-primary-hover: #5568d3;
+
+    /* Blur Effects - 移除 */
+    --blur-header: none;
+    --blur-dialog: none;
+
+    /* Borders - 添加/加强边框 */
+    --border-header: 1px solid #e0e0e0;
+    --border-input-default: 1px solid rgba(0, 0, 0, 0.2);
+    --border-input-hover: 1px solid rgba(0, 0, 0, 0.3);
+    --border-input-focus: 2px solid #667eea;
+    --border-info-field: 1px solid #e5e5e5;
+    --border-separator: #e0e0e0;
+    --border-separator-light: #e5e5e5;
+
+    /* Transitions - 全部移除 */
+    --transition-tab: none;
+    --transition-button: none;
+    --transition-field: none;
+    --transition-icon: none;
+    --transition-border: none;
+    --transition-transform: none;
+
+    /* Transforms - 全部移除 */
+    --transform-button-hover: none;
+    --transform-button-active: none;
+    --transform-input-focus: scaleX(1);
+    --transform-input-unfocus: scaleX(1);
+}
+
+/* ==================== Base Styles ==================== */
+
 /* Smooth rendering */
 * {
     -webkit-font-smoothing: antialiased;
@@ -10,181 +114,64 @@ html, body {
     overflow: hidden ! important;
     height: 100vh;
     width: 100vw;
-    background: #ffffff;
+    background: var(--bg-page);
 }
 
 /* ==================== Layout Classes ==================== */
 
-/* Flex */
-.items-center {
-    align-items: center;
-}
-
-.justify-between {
-    justify-content: space-between;
-}
-
-.justify-end {
-    justify-content: flex-end;
-}
-
-.flex-1 {
-    flex: 1;
-}
-
-/* Spacing */
-.gap-0 {
-    gap: 0;
-}
-
-.gap-2 {
-    gap: 0.5rem;
-}
-
-.gap-3 {
-    gap: 0.75rem;
-}
-
-.gap-4 {
-    gap: 1rem;
-}
-
-.gap-8 {
-    gap: 2rem;
-}
-
-/* Margin */
-.mb-1 {
-    margin-bottom: 0.25rem;
-}
-
-.mb-2 {
-    margin-bottom: 0.5rem;
-}
-
-.mb-3 {
-    margin-bottom: 0.75rem;
-}
-
-.mb-4 {
-    margin-bottom: 1rem;
-}
-
-.mb-6 {
-    margin-bottom: 1.5rem;
-}
-
-.mt-4 {
-    margin-top: 1rem;
-}
-
-.mt-8 {
-    margin-top: 2rem;
-}
-
-.my-8 {
-    margin-top: 2rem;
-    margin-bottom: 2rem;
-}
-
-/* Padding */
-.px-6 {
-    padding-left: 3rem ! important;
-    padding-right: 3rem !important;
-}
-
-.py-3 {
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
-}
-
-/* Width */
-.w-full {
-    width: 100%;
-}
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.justify-end { justify-content: flex-end; }
+.flex-1 { flex: 1; }
+.gap-0 { gap: 0; }
+.gap-2 { gap: 0.5rem; }
+.gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; }
+.gap-8 { gap: 2rem; }
+.mb-1 { margin-bottom: 0.25rem; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-3 { margin-bottom: 0.75rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mb-6 { margin-bottom: 1.5rem; }
+.mt-4 { margin-top: 1rem; }
+.mt-8 { margin-top: 2rem; }
+.my-8 { margin-top: 2rem; margin-bottom: 2rem; }
+.px-6 { padding-left: 3rem ! important; padding-right: 3rem !important; }
+.py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+.w-full { width: 100%; }
 
 /* ==================== Typography ==================== */
 
-/* Font Size */
-.text-xs {
-    font-size: 0.75rem;
-    line-height: 1rem;
-}
-
-.text-sm {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-}
-
-.text-body1 {
-    font-size: 1rem;
-    line-height: 1.5rem;
-}
-
-.text-body2 {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-}
-
-.text-h6 {
-    font-size: 1.25rem;
-    line-height: 1.75rem;
-}
-
-.text-h5 {
-    font-size: 1.5rem;
-    line-height: 2rem;
-}
-
-.text-h4 {
-    font-size: 1.875rem;
-    line-height: 2.25rem;
-}
-
-/* Font Weight */
-.font-medium {
-    font-weight: 500;
-}
-
-.font-semibold {
-    font-weight: 600;
-}
-
-.font-bold {
-    font-weight: 700;
-}
-
-/* Text Color */
-.text-grey-6 {
-    color: #757575;
-}
-
-.text-grey-7 {
-    color: #616161;
-}
-
-.text-grey-9 {
-    color: #212121;
-}
-
-.text-negative {
-    color: #c10015;
-}
+.text-xs { font-size: 0.75rem; line-height: 1rem; }
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-body1 { font-size: 1rem; line-height: 1.5rem; }
+.text-body2 { font-size: 0.875rem; line-height: 1.25rem; }
+.text-h6 { font-size: 1.25rem; line-height: 1.75rem; }
+.text-h5 { font-size: 1.5rem; line-height: 2rem; }
+.text-h4 { font-size: 1.875rem; line-height: 2.25rem; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+.text-grey-6 { color: #757575; }
+.text-grey-7 { color: #616161; }
+.text-grey-9 { color: #212121; }
+.text-negative { color: #c10015; }
 
 /* ==================== Header ==================== */
 
 .header-glass {
-    backdrop-filter: blur(80px) saturate(200%) !important;
-    -webkit-backdrop-filter: blur(80px) saturate(200%) !important;
-    background: rgba(255, 255, 255, 0.5) !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
-    padding-top: 1.5rem ! important;
+    backdrop-filter: var(--blur-header) !important;
+    -webkit-backdrop-filter: var(--blur-header) !important;
+    background: var(--bg-header) !important;
+    box-shadow: var(--shadow-header) !important;
+    border-bottom: var(--border-header) !important;
+    padding-top: 1.5rem !important;
     padding-bottom: 1.5rem !important;
     margin-top: 1.5rem !important;
-    min-height: 80px ! important;
-    position: fixed ! important;
+    min-height: 80px !important;
+    position: fixed !important;
     top: 0 !important;
-    left: 0 !important;
+    left: 0 ! important;
     right: 0 !important;
     z-index: 1000 !important;
 }
@@ -192,8 +179,8 @@ html, body {
 /* ==================== Background ==================== */
 
 .bg-white {
-    background: #ffffff ! important;
-    padding: 40px 60px ! important;
+    background: var(--bg-page) !important;
+    padding: 40px 60px !important;
     margin: 0 !important;
     box-sizing: border-box !important;
     margin-top: 20px !important;
@@ -206,8 +193,8 @@ html, body {
 
 .tab-button {
     padding: 12px 24px;
-    border-radius: 12px;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: var(--radius-tab);
+    transition: var(--transition-tab);
     cursor: pointer;
     font-weight: 500;
     font-size: 15px;
@@ -216,20 +203,34 @@ html, body {
 }
 
 .tab-button:hover {
-    background: rgba(0, 0, 0, 0.04);
+    background: var(--bg-tab-hover);
     color: #4b5563;
+}
+
+/* Performance mode - add border for tab */
+:root[data-theme="performance"] .tab-button {
+    border: 1px solid transparent;
+}
+
+:root[data-theme="performance"] .tab-button:hover {
+    border-color: #e0e0e0;
 }
 
 .tab-button-active {
     padding: 12px 24px;
-    border-radius: 12px;
+    border-radius: var(--radius-tab);
     cursor: pointer;
     font-weight: 600;
     font-size: 15px;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.12) 0%, rgba(118, 75, 162, 0.12) 100%);
+    background: var(--bg-tab-active);
     color: #667eea;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+    box-shadow: var(--shadow-tab-active);
     user-select: none;
+}
+
+/* Performance mode - add border for active tab */
+:root[data-theme="performance"] .tab-button-active {
+    border: 1px solid #667eea;
 }
 
 /* ==================== Clean Input ==================== */
@@ -237,14 +238,14 @@ html, body {
 .clean-input .q-field__control {
     background: transparent !important;
     border: none !important;
-    border-radius: 0 ! important;
+    border-radius: 0 !important;
     box-shadow: none !important;
     height: 48px !important;
 }
 
 .clean-input .q-field__native,
 .clean-input input {
-    color: #1f2937 !important;
+    color: #1f2937 ! important;
     font-size: 15px !important;
     font-weight: 400 !important;
 }
@@ -257,23 +258,23 @@ html, body {
 
 .clean-input .q-field__control:before {
     border: none !important;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
-    transition: border-color 0.3s ease !important;
+    border-bottom: var(--border-input-default) !important;
+    transition: var(--transition-border) !important;
 }
 
 .clean-input .q-field__control:hover:before {
-    border-bottom-color: rgba(0, 0, 0, 0.2) !important;
+    border-bottom: var(--border-input-hover) !important;
 }
 
 .clean-input .q-field__control:after {
     border: none !important;
-    border-bottom: 2px solid #667eea !important;
-    transform: scaleX(0);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-bottom: var(--border-input-focus) !important;
+    transform: var(--transform-input-unfocus);
+    transition: var(--transition-transform) !important;
 }
 
 .clean-input.q-field--focused .q-field__control:after {
-    transform: scaleX(1);
+    transform: var(--transform-input-focus);
 }
 
 .clean-input .q-field__append {
@@ -285,7 +286,7 @@ html, body {
 
 .clean-input .q-field__append .q-icon {
     color: #9ca3af !important;
-    transition: color 0.2s ease !important;
+    transition: var(--transition-icon) !important;
 }
 
 .clean-input .q-field__append .q-icon:hover {
@@ -295,53 +296,47 @@ html, body {
 /* ==================== Action Button ==================== */
 
 .action-button {
-    border-radius: 12px !important;
-    font-size: 16px ! important;
+    border-radius: var(--radius-button) !important;
+    font-size: 16px !important;
     font-weight: 500 !important;
     letter-spacing: 0.02em !important;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition: var(--transition-button) !important;
     min-width: 120px !important;
     text-transform: none !important;
 }
 
 .action-button:hover {
-    transform: translateY(-2px);
+    transform: var(--transform-button-hover);
 }
 
 .action-button:active {
-    transform: translateY(0);
+    transform: var(--transform-button-active);
 }
 
-/* Primary button variant */
 .action-button[color="primary"] {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-    box-shadow:
-    0 4px 16px rgba(102, 126, 234, 0.25),
-    0 2px 8px rgba(118, 75, 162, 0.15) !important;
+    background: var(--bg-button-primary) !important;
+    box-shadow: var(--shadow-button-primary) !important;
 }
 
 .action-button[color="primary"]:hover {
-    background: linear-gradient(135deg, #7c8ef0 0%, #8a5db0 100%) ! important;
-    box-shadow:
-    0 8px 24px rgba(102, 126, 234, 0.35),
-    0 4px 12px rgba(118, 75, 162, 0.25) !important;
+    background: var(--bg-button-primary-hover) !important;
+    box-shadow: var(--shadow-button-primary-hover) !important;
 }
 
-/* Negative button variant */
 .action-button[color="negative"]:hover {
-    box-shadow: 0 4px 16px rgba(193, 0, 21, 0.25) ! important;
+    box-shadow: var(--shadow-button-negative-hover) !important;
 }
 
 /* ==================== Info Display ==================== */
 
 .info-field {
     padding: 16px 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-    transition: background 0.2s ease;
+    border-bottom: var(--border-info-field);
+    transition: var(--transition-field);
 }
 
 .info-field:hover {
-    background: rgba(0, 0, 0, 0.01);
+    background: var(--bg-info-field-hover);
 }
 
 .info-field:last-child {
@@ -351,17 +346,17 @@ html, body {
 /* ==================== Separator ==================== */
 
 .q-separator {
-    background-color: rgba(0, 0, 0, 0.08) !important;
+    background-color: var(--border-separator) !important;
 }
 
 .my-8 .q-separator {
-    background-color: rgba(0, 0, 0, 0.06) !important;
+    background-color: var(--border-separator-light) !important;
 }
 
 /* ==================== Dialog ==================== */
 
 .q-dialog__backdrop {
-    backdrop-filter: blur(4px) !important;
+    backdrop-filter: var(--blur-dialog) !important;
 }
 
 /* ==================== Responsive ==================== */

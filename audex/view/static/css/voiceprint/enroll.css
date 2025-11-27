@@ -1,8 +1,16 @@
 @import "./styles.css";
 
+/* ==================== Enroll Theme Variables ==================== */
+
+:root {
+    --color-enroll-primary: #f59e0b;
+    --color-enroll-secondary: #d97706;
+    --color-enroll-light: #fbbf24;
+}
+
 /* Recording button - warm amber theme */
 .record-button {
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    background: linear-gradient(135deg, var(--color-enroll-primary) 0%, var(--color-enroll-secondary) 100%) !important;
     box-shadow:
     0 8px 32px rgba(245, 158, 11, 0.3),
     0 4px 16px rgba(217, 119, 6, 0.2),
@@ -10,7 +18,7 @@
 }
 
 .record-button:hover:not(:disabled) {
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) ! important;
+    background: linear-gradient(135deg, var(--color-enroll-light) 0%, var(--color-enroll-primary) 100%) !important;
     box-shadow:
     0 12px 40px rgba(245, 158, 11, 0.4),
     0 6px 20px rgba(217, 119, 6, 0.25),
@@ -22,4 +30,18 @@
     0 6px 24px rgba(245, 158, 11, 0.35),
     0 3px 12px rgba(217, 119, 6, 0.2),
     inset 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Performance mode - pure amber */
+:root[data-theme="performance"] .record-button {
+    background: var(--color-enroll-primary) !important;
+    box-shadow: none !important;
+}
+
+:root[data-theme="performance"] .record-button:hover:not(:disabled) {
+    background: var(--color-enroll-secondary) !important;
+}
+
+:root[data-theme="performance"] .record-button:active:not(:disabled) {
+    background: #b45309 !important;
 }
