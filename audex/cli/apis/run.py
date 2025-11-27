@@ -79,34 +79,9 @@ class Args(BaseArgs):
 
             container = Container()
 
-            import audex.view.pages.dashboard
-            import audex.view.pages.login
-            import audex.view.pages.recording
-            import audex.view.pages.register
-            import audex.view.pages.sessions
-            import audex.view.pages.sessions.details
-            import audex.view.pages.sessions.export
-            import audex.view.pages.settings
-            import audex.view.pages.voiceprint
-            import audex.view.pages.voiceprint.enroll
-            import audex.view.pages.voiceprint.update
+            import audex.view.pages
 
-            container.wire(
-                modules=[
-                    __name__,
-                    audex.view.pages.dashboard,
-                    audex.view.pages.login,
-                    audex.view.pages.recording,
-                    audex.view.pages.register,
-                    audex.view.pages.sessions,
-                    audex.view.pages.sessions.details,
-                    audex.view.pages.sessions.export,
-                    audex.view.pages.settings,
-                    audex.view.pages.voiceprint,
-                    audex.view.pages.voiceprint.enroll,
-                    audex.view.pages.voiceprint.update,
-                ]
-            )
+            container.wire(modules=[__name__], packages=[audex.view.pages])
 
         display.success("Application initialized")
 
