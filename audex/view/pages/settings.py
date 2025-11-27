@@ -47,7 +47,7 @@ async def render(
     with (
         ui.element("div")
         .classes("w-full bg-white")
-        .style("height: calc(100vh - 64px); display: flex; padding: 40px 80px; gap: 40px;")
+        .style("display: flex; padding: 40px 80px; gap: 40px;")
     ):
         # Left sidebar: Tabs
         with ui.column().classes("gap-2").style("width: 200px; flex-shrink: 0;"):
@@ -81,7 +81,7 @@ async def render(
             )
 
         # Right content area (scrollable)
-        content_scroll = ui.scroll_area().classes("flex-1").style("height: 100%;")
+        content_scroll = ui.scroll_area().classes("flex-1").style("height: calc(100vh - 190px);")
         with content_scroll:
             # Profile content
             profile_content = ui.column().classes("w-full")

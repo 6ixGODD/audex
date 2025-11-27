@@ -1,21 +1,25 @@
 @import "./styles.css";
 
-
-/* Recording button */
+/* Recording button - warm amber theme */
 .record-button {
-    box-shadow: 0 8px 32px rgba(251, 191, 36, 0.25) !important;
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    box-shadow:
+    0 8px 32px rgba(245, 158, 11, 0.3),
+    0 4px 16px rgba(217, 119, 6, 0.2),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.1) ! important;
 }
 
 .record-button:hover:not(:disabled) {
-    box-shadow: 0 12px 40px rgba(251, 191, 36, 0.35) !important;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%) ! important;
+    box-shadow:
+    0 12px 40px rgba(245, 158, 11, 0.4),
+    0 6px 20px rgba(217, 119, 6, 0.25),
+    inset 0 -2px 8px rgba(0, 0, 0, 0.1) !important;
 }
 
-.recording-ring {
-    background: radial-gradient(
-        circle,
-        transparent 50%,
-        rgba(251, 191, 36, 0.4) 50%,
-        transparent 52%
-    );
-    box-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+.record-button:active:not(:disabled) {
+    box-shadow:
+    0 6px 24px rgba(245, 158, 11, 0.35),
+    0 3px 12px rgba(217, 119, 6, 0.2),
+    inset 0 2px 8px rgba(0, 0, 0, 0.15) !important;
 }

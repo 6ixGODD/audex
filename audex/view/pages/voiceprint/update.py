@@ -47,12 +47,6 @@ async def render(
         ).tooltip("返回主面板")
         ui.label("更新声纹").classes("text-h6 font-semibold text-grey-9")
 
-    # Loading overlay
-    loading_overlay = ui.element("div").classes("loading-overlay")
-    with loading_overlay:
-        ui.element("div").classes("loading-spinner")
-    loading_overlay.visible = False
-
     # Main container
     with (
         ui.element("div")
@@ -67,7 +61,7 @@ async def render(
                 with ui.row().classes("items-start gap-3"):
                     ui.label("1").classes(
                         "text-sm font-bold text-white w-6 h-6 flex items-center justify-center"
-                    ).style("background: #7c3aed; border-radius: 50%;")
+                    ).style("background: #8b5cf6; border-radius: 50%;")
                     with ui.column().classes("gap-1"):
                         ui.label("点击按钮开始").classes("text-sm font-medium text-grey-9")
                         ui.label("启动录音功能").classes("text-xs text-grey-6")
@@ -75,7 +69,7 @@ async def render(
                 with ui.row().classes("items-start gap-3"):
                     ui.label("2").classes(
                         "text-sm font-bold text-white w-6 h-6 flex items-center justify-center"
-                    ).style("background: #7c3aed; border-radius: 50%;")
+                    ).style("background: #8b5cf6; border-radius: 50%;")
                     with ui.column().classes("gap-1"):
                         ui.label("朗读右侧文字").classes("text-sm font-medium text-grey-9")
                         ui.label("清晰完整朗读").classes("text-xs text-grey-6")
@@ -83,13 +77,13 @@ async def render(
                 with ui.row().classes("items-start gap-3"):
                     ui.label("3").classes(
                         "text-sm font-bold text-white w-6 h-6 flex items-center justify-center"
-                    ).style("background: #7c3aed; border-radius: 50%;")
+                    ).style("background: #8b5cf6; border-radius: 50%;")
                     with ui.column().classes("gap-1"):
                         ui.label("点击停止完成").classes("text-sm font-medium text-grey-9")
                         ui.label("时长 5-20 秒").classes("text-xs text-grey-6")
 
-        # Center: Text (moved up more, bold)
-        with ui.column().classes("flex-1 justify-center gap-4").style("margin-top: -60px;"):
+        # Center: Text
+        with ui.column().classes("flex-1 justify-center gap-4").style("margin-top: -20px;"):
             ui.label("请朗读：").classes("text-body1 text-grey-6")
             ui.label(doctor_service.config.vpr_text_content).classes(
                 "text-h4 text-grey-9 font-semibold leading-relaxed"
@@ -99,7 +93,7 @@ async def render(
         with (
             ui.column()
             .classes("items-center justify-center gap-8")
-            .style("width: 300px; margin-top: -60px;")
+            .style("width: 300px; margin-top: -20px;")
         ):
             # Timer (sans-serif, bold)
             timer_label = ui.label("00:00").classes("timer")
@@ -147,9 +141,7 @@ async def render(
                         if timer_task["value"]:
                             timer_task["value"].cancel()
 
-                        loading_overlay.visible = True
-                        record_btn.props("icon=mic color=grey")
-                        record_btn.disable()
+                        record_btn.props("loading icon=mic color=grey")
 
                         ring1.visible = False
                         ring2.visible = False
@@ -169,8 +161,11 @@ async def render(
                             await asyncio.sleep(2)
                             ui.navigate.to("/")
 
-                        finally:
-                            loading_overlay.visible = False
+                        except Exception:
+                            record_btn.props(remove="loading")
+                            record_btn.props("icon=mic color=purple")
+                            is_recording["value"] = False
+                            raise
 
                 async def update_timer():
                     try:

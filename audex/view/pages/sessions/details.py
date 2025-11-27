@@ -56,7 +56,7 @@ async def render(
     with (
         ui.element("div")
         .classes("w-full bg-white")
-        .style("height: calc(100vh - 64px); display: flex; padding: 40px 80px; gap: 40px;")
+        .style("display: flex; padding: 40px 80px; gap: 40px;")
     ):
         # Left sidebar: Details
         with ui.column().classes("gap-2").style("width: 450px; flex-shrink: 0;"):
@@ -180,7 +180,11 @@ async def render(
                 ).classes("action-button").style("height: 48px;")
 
         # Right content area: Utterances (scrollable)
-        content_scroll = ui.scroll_area().classes("flex-1").style("height: 100%; padding: 0 20px;")
+        content_scroll = (
+            ui.scroll_area()
+            .classes("flex-1")
+            .style("height: calc(100vh - 190px); padding: 0 20px;")
+        )
         with content_scroll:
             if not utterances:
                 with (

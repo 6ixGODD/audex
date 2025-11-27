@@ -29,7 +29,7 @@ async def render(
         return
 
     # Add CSS
-    ui.add_head_html('<link rel="stylesheet" href="/static/css/voiceprint/enroll.css">')
+    ui.add_head_html('<link rel="stylesheet" href="/static/css/voiceprint/enroll. css">')
 
     # State
     is_recording = {"value": False}
@@ -46,12 +46,6 @@ async def render(
             "flat round"
         ).tooltip("返回主面板")
         ui.label("声纹注册").classes("text-h6 font-semibold text-grey-9")
-
-    # Loading overlay (hidden initially)
-    loading_overlay = ui.element("div").classes("loading-overlay")
-    with loading_overlay:
-        ui.element("div").classes("loading-spinner")
-    loading_overlay.visible = False
 
     # Main container
     with (
@@ -88,18 +82,18 @@ async def render(
                         ui.label("点击停止完成").classes("text-sm font-medium text-grey-9")
                         ui.label("时长 5-20 秒").classes("text-xs text-grey-6")
 
-        # Center: Text to read (moved up more, bold)
-        with ui.column().classes("flex-1 justify-center gap-4").style("margin-top: -60px;"):
+        # Center: Text to read
+        with ui.column().classes("flex-1 justify-center gap-4").style("margin-top: -20px;"):
             ui.label("请朗读：").classes("text-body1 text-grey-6")
             ui.label(doctor_service.config.vpr_text_content).classes(
                 "text-h4 text-grey-9 font-semibold leading-relaxed"
             ).style("line-height: 1.8; max-width: 600px;")
 
-        # Right side: Recording button (vertically centered)
+        # Right side: Recording button
         with (
             ui.column()
             .classes("items-center justify-center gap-8")
-            .style("width: 300px; margin-top: -60px;")
+            .style("width: 300px; margin-top: -20px;")
         ):
             # Timer (sans-serif, bold)
             timer_label = ui.label("00:00").classes("timer")
@@ -150,10 +144,7 @@ async def render(
                         if timer_task["value"]:
                             timer_task["value"].cancel()
 
-                        # Show loading immediately, change button to mic + grey
-                        loading_overlay.visible = True
-                        record_btn.props("icon=mic color=grey")
-                        record_btn.disable()
+                        record_btn.props("loading icon=mic color=grey")
 
                         ring1.visible = False
                         ring2.visible = False
@@ -173,8 +164,11 @@ async def render(
                             await asyncio.sleep(2)
                             ui.navigate.to("/")
 
-                        finally:
-                            loading_overlay.visible = False
+                        except Exception:
+                            record_btn.props(remove="loading")
+                            record_btn.props("icon=mic color=warning")
+                            is_recording["value"] = False
+                            raise
 
                 async def update_timer():
                     """Update timer every second."""

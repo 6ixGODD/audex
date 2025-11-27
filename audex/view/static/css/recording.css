@@ -1,21 +1,21 @@
-
+/* Smooth rendering */
 * {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
 html, body {
+    margin: 0 !important;
+    padding: 0 !important;
     overflow: hidden !important;
     height: 100vh;
     width: 100vw;
     background: linear-gradient(135deg, #fafbfc 0%, #f8fafc 100%);
-    margin: 0 !important;
-    padding: 0 !important;
 }
 
 /* Hide scrollbars completely */
 ::-webkit-scrollbar {
-    display: none !important;
+    display: none ! important;
 }
 
 * {
@@ -29,30 +29,135 @@ html, body {
 }
 
 .q-page {
-    padding: 0 !important;
+    padding: 0 ! important;
     margin: 0 !important;
 }
 
-/* Header with extreme blur and early fade */
+/* ==================== Layout Classes ==================== */
+
+/* Flex */
+.items-center {
+    align-items: center;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.justify-end {
+    justify-content: flex-end;
+}
+
+.flex-1 {
+    flex: 1;
+}
+
+/* Spacing */
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.gap-3 {
+    gap: 0.75rem;
+}
+
+.gap-4 {
+    gap: 1rem;
+}
+
+/* Padding */
+.px-6 {
+    padding-left: 3rem ! important;
+    padding-right: 3rem !important;
+}
+
+.py-3 {
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+}
+
+/* Margin */
+.mb-2 {
+    margin-bottom: 0.5rem;
+}
+
+.mb-6 {
+    margin-bottom: 1.5rem;
+}
+
+.mt-3 {
+    margin-top: 0.75rem;
+}
+
+.mt-6 {
+    margin-top: 1.5rem;
+}
+
+/* Width */
+.w-full {
+    width: 100%;
+}
+
+/* ==================== Typography ==================== */
+
+/* Font Size */
+.text-body2 {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+.text-h6 {
+    font-size: 1.25rem;
+    line-height: 1.75rem;
+}
+
+.text-h5 {
+    font-size: 1.5rem;
+    line-height: 2rem;
+}
+
+/* Font Weight */
+.font-semibold {
+    font-weight: 600;
+}
+
+.font-bold {
+    font-weight: 700;
+}
+
+/* Text Color */
+.text-grey-7 {
+    color: #616161;
+}
+
+.text-grey-8 {
+    color: #424242;
+}
+
+.text-grey-9 {
+    color: #212121;
+}
+
+/* ==================== Header Glass (统一样式) ==================== */
+
 .header-glass {
-    backdrop-filter: blur(120px) saturate(400%) !important;
-    -webkit-backdrop-filter: blur(120px) saturate(400%) !important;
-    background: linear-gradient(to bottom,
-        rgba(255, 255, 255, 0) 0%,
-        rgba(255, 255, 255, 0.05) 20%,
-        rgba(255, 255, 255, 0.15) 50%,
-        rgba(255, 255, 255, 0.4) 80%,
-        rgba(255, 255, 255, 0.8) 100%) !important;
-    border: none !important;
+    backdrop-filter: blur(80px) saturate(200%) ! important;
+    -webkit-backdrop-filter: blur(80px) saturate(200%) !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+    padding-top: 1.5rem !important;
+    padding-bottom: 1.5rem !important;
+    margin-top: 1.5rem !important;
+    min-height: 80px !important;
     position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
     z-index: 1000 !important;
-    height: 64px !important;
 }
 
-/* Footer with extreme blur and early fade */
+/* ==================== Footer Glass ==================== */
+
 .footer-glass {
     position: fixed !important;
     bottom: 0 !important;
@@ -60,72 +165,221 @@ html, body {
     right: 0 !important;
     height: 150px !important;
     backdrop-filter: blur(200px) saturate(400%) !important;
-    -webkit-backdrop-filter: blur(200px) saturate(400%) !important;
+    -webkit-backdrop-filter: blur(200px) saturate(400%) ! important;
     background: linear-gradient(to top,
-        rgba(255, 255, 255, 0.9) 0%,
-        rgba(255, 255, 255, 0.6) 20%,
-        rgba(255, 255, 255, 0.3) 40%,
-        rgba(255, 255, 255, 0.1) 60%,
-        rgba(255, 255, 255, 0.03) 80%,
+        rgba(255, 255, 255, 0.92) 0%,
+        rgba(255, 255, 255, 0.65) 20%,
+        rgba(255, 255, 255, 0.35) 40%,
+        rgba(255, 255, 255, 0.12) 60%,
+        rgba(255, 255, 255, 0.04) 80%,
         rgba(255, 255, 255, 0) 100%) !important;
     border: none !important;
     z-index: 999 !important;
     pointer-events: none !important;
 }
 
-/* Scroll to bottom button */
+/* ==================== Scroll Button ==================== */
+
 .scroll-bottom-btn {
     position: fixed !important;
-    top: 80px !important;
+    top: 130px !important;
     right: 20px !important;
     width: 48px !important;
     height: 48px !important;
-    border-radius: 50% !important;
+    border-radius: 50% ! important;
     z-index: 1002 !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-    transition: all 0.2s ease !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .scroll-bottom-btn:hover {
     transform: scale(1.1) !important;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
-    /* transparent background on hover */
-    background: rgba(255, 255, 255, 0.5) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.18) !important;
+    background: rgba(255, 255, 255, 0.6) !important;
+    backdrop-filter: blur(12px) ! important;
+    -webkit-backdrop-filter: blur(12px) !important;
 }
+
+/* ==================== Record Button ==================== */
 
 .record-btn {
     width: 80px !important;
     height: 80px !important;
-    border-radius: 50% !important;
+    border-radius: 50% ! important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     position: fixed !important;
-    bottom: 30px !important;
+    bottom: 60px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     z-index: 1001 !important;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+    box-shadow:
+    0 8px 32px rgba(102, 126, 234, 0.25),
+    0 4px 16px rgba(118, 75, 162, 0.15) !important;
     pointer-events: auto !important;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
 }
 
-.record-btn:hover {
-    transform: translateX(-50%) scale(1.05) !important;
-    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15) !important;
+.record-btn:hover:not(:disabled) {
+    transform: translateX(-50%) scale(1.08) !important;
+    box-shadow:
+    0 12px 40px rgba(102, 126, 234, 0.35),
+    0 6px 20px rgba(118, 75, 162, 0.25) !important;
 }
 
+.record-btn:disabled {
+    opacity: 0.6 !important;
+    cursor: not-allowed !important;
+}
+
+/* Recording pulse animation */
 @keyframes pulse-recording {
     0%, 100% {
-        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3), 0 0 0 0 rgba(239, 68, 68, 0.7);
+        box-shadow:
+        0 8px 32px rgba(239, 68, 68, 0.4),
+        0 4px 16px rgba(239, 68, 68, 0.2),
+        0 0 0 0 rgba(239, 68, 68, 0.7);
     }
     50% {
-        box-shadow: 0 8px 25px rgba(239, 68, 68, 0.3), 0 0 0 20px rgba(239, 68, 68, 0);
+        box-shadow:
+        0 8px 32px rgba(239, 68, 68, 0.4),
+        0 4px 16px rgba(239, 68, 68, 0.2),
+        0 0 0 20px rgba(239, 68, 68, 0);
     }
 }
 
 .recording-pulse {
     animation: pulse-recording 2s ease-out infinite;
 }
+
+/* ==================== Lyrics Container ==================== */
+
+.lyrics-container {
+    position: fixed ! important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    padding: 130px 20px 170px 20px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scroll-behavior: smooth !important;
+    background: transparent !important;
+    z-index: 1 !important;
+}
+
+/* ==================== Utterances ==================== */
+
+/* Current/past utterance (lyrics style) */
+.utterance-item {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px 0;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.utterance-current {
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: #1f2937;
+    text-align: center;
+    line-height: 1.6;
+    padding: 0 20px;
+}
+
+.utterance-past {
+    font-size: 1.2rem;
+    color: #6b7280;
+    opacity: 0.6;
+    text-align: center;
+    line-height: 1.5;
+    padding: 0 20px;
+}
+
+/* Final utterance (chat bubble style) */
+.utterance-final {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 12px 0;
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.utterance-final.is-doctor {
+    align-items: flex-end;
+}
+
+.utterance-final.is-patient {
+    align-items: flex-start;
+}
+
+/* Speaker label */
+.speaker-label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #9ca3af;
+    margin-bottom: 6px;
+    padding: 0 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Chat bubbles */
+.bubble-doctor {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px 20px 6px 20px;
+    padding: 14px 18px;
+    min-width: 120px;
+    max-width: min(450px, 75vw);
+    word-break: break-word;
+    white-space: pre-wrap;
+    box-shadow:
+    0 4px 20px rgba(102, 126, 234, 0.25),
+    0 2px 10px rgba(118, 75, 162, 0.15);
+    font-size: 15px;
+    line-height: 1.5;
+    font-weight: 400;
+}
+
+.bubble-patient {
+    background: #ffffff;
+    color: #1f2937;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 20px 20px 20px 6px;
+    padding: 14px 18px;
+    min-width: 120px;
+    max-width: min(450px, 75vw);
+    word-break: break-word;
+    white-space: pre-wrap;
+    box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.08),
+    0 2px 10px rgba(0, 0, 0, 0.05);
+    font-size: 15px;
+    line-height: 1.5;
+    font-weight: 400;
+}
+
+/* Slide up animation */
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.slide-up {
+    animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ==================== Clean Input ==================== */
 
 .clean-input .q-field__control {
     background: transparent !important;
@@ -161,7 +415,7 @@ html, body {
 
 .clean-input .q-field__control:after {
     border: none !important;
-    border-bottom: 2px solid rgba(37, 99, 235, 0.8) !important;
+    border-bottom: 2px solid #667eea !important;
     transform: scaleX(0);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
@@ -170,6 +424,7 @@ html, body {
     transform: scaleX(1);
 }
 
+/* Notes textarea */
 .notes-textarea .q-field__control {
     height: 100px !important;
 }
@@ -179,6 +434,8 @@ html, body {
     resize: none !important;
 }
 
+/* ==================== Action Button ==================== */
+
 .action-button {
     border-radius: 12px !important;
     font-size: 16px !important;
@@ -186,6 +443,7 @@ html, body {
     letter-spacing: 0.02em !important;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
     min-width: 120px !important;
+    text-transform: none !important;
 }
 
 .action-button:hover {
@@ -196,146 +454,37 @@ html, body {
     transform: translateY(0);
 }
 
-.lyrics-container {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    padding: 80px 20px 170px 20px !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    scroll-behavior: smooth !important;
-    background: transparent !important;
-    z-index: 1 !important;
+/* Primary button variant */
+.action-button[size="lg"] {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    box-shadow:
+    0 4px 16px rgba(102, 126, 234, 0.25),
+    0 2px 8px rgba(118, 75, 162, 0.15) !important;
 }
 
-.utterance-item {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 16px 0;
-    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+.action-button[size="lg"]:hover {
+    background: linear-gradient(135deg, #7c8ef0 0%, #8a5db0 100%) !important;
+    box-shadow:
+    0 8px 24px rgba(102, 126, 234, 0.35),
+    0 4px 12px rgba(118, 75, 162, 0.25) !important;
 }
 
-.utterance-current {
-    font-size: 1.4rem;
-    font-weight: 500;
-    color: #1f2937;
-    text-align: center;
-    line-height: 1.6;
-    padding: 0 20px;
-}
+/* ==================== Responsive ==================== */
 
-.utterance-past {
-    font-size: 1.2rem;
-    color: #6b7280;
-    opacity: 0.6;
-    text-align: center;
-    line-height: 1.5;
-    padding: 0 20px;
-}
-
-.utterance-final {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    padding: 12px 0;
-    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.utterance-final.is-doctor {
-    align-items: flex-end;
-}
-
-.utterance-final.is-patient {
-    align-items: flex-start;
-}
-
-.speaker-label {
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: #9ca3af;
-    margin-bottom: 6px;
-    padding: 0 8px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.bubble-doctor {
-    background: #6366f1;
-    color: white;
-    border-radius: 20px 20px 6px 20px;
-    padding: 14px 18px;
-    min-width: 120px;
-    max-width: min(450px, 75vw);
-    word-break: break-word;
-    white-space: pre-wrap;
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.25);
-    font-size: 15px;
-    line-height: 1.5;
-    font-weight: 400;
-}
-
-.bubble-patient {
-    background: #ffffff;
-    color: #1f2937;
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    border-radius: 20px 20px 20px 6px;
-    padding: 14px 18px;
-    min-width: 120px;
-    max-width: min(450px, 75vw);
-    word-break: break-word;
-    white-space: pre-wrap;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-    font-size: 15px;
-    line-height: 1.5;
-    font-weight: 400;
-}
-
-@keyframes slideUp {
-    from {
-        transform: translateY(30px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
+@media (max-width: 1400px) {
+    .px-6 {
+        padding-left: 2.5rem !important;
+        padding-right: 2.5rem !important;
     }
 }
 
-.slide-up {
-    animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(8px);
-    z-index: 9999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
+@media (max-width: 1024px) {
+    .px-6 {
+        padding-left: 2rem !important;
+        padding-right: 2rem ! important;
     }
-}
 
-.loading-spinner-large {
-    width: 48px;
-    height: 48px;
-    border: 3px solid rgba(255, 255, 255, 0.2);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    .lyrics-container {
+        padding: 130px 15px 170px 15px ! important;
+    }
 }
