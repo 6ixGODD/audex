@@ -61,14 +61,14 @@ class Args(BaseArgs):
                 flatten_dict(cfg.model_dump()),
                 headers=("Config Key", "Value"),
                 max_col_width=50,
-                row_spacing=1,  # 添加行间距
+                row_spacing=1,
             )
 
         # Setup native environment if needed
         if cfg.core.app.native:
             display.step("Setting up native environment", step=1)
             with display.section("Environment Configuration"):
-                _setup_native_environment(cfg)
+                envsetup(cfg)
 
         # Initialize container
         display.step("Initializing application", step=2 if cfg.core.app.native else 1)
@@ -129,7 +129,7 @@ class Args(BaseArgs):
         run()
 
 
-def _setup_native_environment(cfg: Config) -> None:
+def envsetup(cfg: Config) -> None:
     """Setup environment variables for native Qt application.
 
     Args:
@@ -151,14 +151,14 @@ def _setup_native_environment(cfg: Config) -> None:
         display.warning(f"Could not set Qt plugin path: {e}")
 
     # === PyWebView GUI Backend ===
-    env_vars["PYWEBVIEW_GUI"] = "qt6"
-    display.info("PyWebView backend: qt6")
+    env_vars["PYWEBVIEW_GUI"] = "qt"
+    display.info("PyWebView backend: qt")
 
     # === Platform-Specific Settings ===
     if system == "Linux":
-        _setup_linux_env(cfg, env_vars)
+        _setup_linux(cfg, env_vars)
     elif system == "Windows":
-        _setup_windows_env(cfg, env_vars)
+        _setup_windows(cfg, env_vars)
     else:
         display.warning(f"Unsupported platform: {system}")
 
@@ -170,7 +170,7 @@ def _setup_native_environment(cfg: Config) -> None:
     display.success("Native environment configured")
 
 
-def _setup_linux_env(cfg: Config, env_vars: dict[str, str]) -> None:
+def _setup_linux(cfg: Config, env_vars: dict[str, str]) -> None:
     """Setup Linux-specific environment variables.
 
     Args:
@@ -229,7 +229,7 @@ def _setup_linux_env(cfg: Config, env_vars: dict[str, str]) -> None:
         pass
 
 
-def _setup_windows_env(cfg: Config, env_vars: dict[str, str]) -> None:
+def _setup_windows(cfg: Config, env_vars: dict[str, str]) -> None:
     """Setup Windows-specific environment variables.
 
     Args:
