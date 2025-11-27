@@ -1,10 +1,5 @@
-/* ==================== Base Styles ==================== */
-
-/* Smooth rendering */
-* {
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
+@import "global.css";
+@import "glass.css";
 
 html, body {
     margin: 0 !important;
@@ -53,23 +48,6 @@ html, body {
 .text-grey-8 { color: #424242; }
 .text-grey-9 { color: #212121; }
 
-/* ==================== Header Glass ==================== */
-
-.header-glass {
-    backdrop-filter: blur(80px) saturate(200%) ! important;
-    -webkit-backdrop-filter: blur(80px) saturate(200%) !important;
-    background: rgba(255, 255, 255, 0.5) !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
-    padding-top: 1.5rem ! important;
-    padding-bottom: 1.5rem !important;
-    margin-top: 1.5rem !important;
-    min-height: 80px ! important;
-    position: fixed ! important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 1000 !important;
-}
 
 /* ==================== Footer Glass ==================== */
 

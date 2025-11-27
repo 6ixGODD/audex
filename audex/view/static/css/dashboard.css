@@ -266,7 +266,19 @@ body, html {
     width: 100% !important;
     padding: 0 !important;
 }
+.press-button {
+    background: transparent !important;
+    box-shadow: none !important;
+}
 
+.press-button:active {
+    transform: scale(0.95);
+}
+
+/* 确保按钮内部的所有元素也透明 */
+.press-button .q-btn__content {
+    background: transparent ! important;
+}
 /* Button layout */
 .button-layout {
     display: flex !important;

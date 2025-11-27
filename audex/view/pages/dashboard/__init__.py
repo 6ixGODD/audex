@@ -73,7 +73,23 @@ async def render(
     with (
         ui.element("div")
         .classes("w-full bg-white")
-        .style("display: flex; padding: 60px 80px; gap: 60px; min-height: calc(100vh - 64px);")
+        .style(
+            "position: fixed; "
+            "top: 0; "
+            "left: 0; "
+            "right: 0; "
+            "bottom: 0; "
+            "display: flex; "
+            "align-items: center; "
+            "justify-content: center; "
+            "padding: 60px 80px; "
+            "padding-top: calc(108px + 30px); "
+            "box-sizing: border-box; "
+            "overflow: auto;"
+        ),
+        ui.element("div").style(
+            "display: flex; gap: 60px; align-items: center; max-width: 100%; width: 100%;"
+        ),
     ):
         # Left column
         with ui.column().classes("gap-8").style("width: 360px; flex-shrink: 0;"):
@@ -94,7 +110,7 @@ async def render(
                 if info_parts:
                     ui.label(" · ".join(info_parts)).classes("text-body2 text-grey-6 mt-3")
 
-            # Overview - fully transparent
+            # Overview
             overview = await session_service.stats()
             with ui.card().classes("glass-card p-5 w-full").style("margin-top: 40px;"):
                 ui.label("概览").classes("text-subtitle2 font-semibold mb-4 text-grey-8")
@@ -115,63 +131,96 @@ async def render(
                     with ui.row().classes("items-center justify-between w-full"):
                         ui.label("录音时长").classes("text-xs text-grey-7")
                         ui.label(
-                            f"{(overview.get('total_duration_in_minutes', 0) / 60.0):.2f}" + "h"
+                            f"{(overview.get('total_duration_in_minutes', 0) / 60.0):.2f}h"
                         ).classes("text-body1 font-bold text-positive")
 
-        # Right column - vertically centered
+        # Right column - 2x2 grid
         with ui.element("div").style(
             "flex: 1; "
             "display: grid; "
             "grid-template-columns: repeat(2, 1fr); "
-            "gap: 24px; "
-            "align-content: center; "
+            "gap: 20px; "
             "max-width: 850px; "
             "margin-left: auto;"
         ):
             # Card 1: Start new session
             with (
                 ui.card()
-                .classes("super-card cursor-pointer p-7")
+                .classes("super-card cursor-pointer")
                 .on("click", lambda: ui.navigate.to("/recording"))
-                .style("height: 220px; display: flex; flex-direction: column;")
+                .style(
+                    "height: 220px; "
+                    "display: flex; "
+                    "flex-direction: column; "
+                    "padding: 1.5rem; "
+                    "box-sizing: border-box;"
+                )
             ):
-                ui.icon("mic", size="3em").classes("text-primary rotate-icon mb-3")
-                with ui.column().classes("gap-2 mb-auto"):
+                ui.icon("mic", size="3em").classes("text-primary rotate-icon").style(
+                    "flex-shrink: 0; margin-bottom: 0.75rem;"
+                )
+                with ui.column().classes("gap-2").style("flex: 1;"):
                     ui.label("开始新会话").classes("text-h6 font-bold text-grey-9")
                     ui.label("创建新的门诊录音会话").classes("text-sm text-grey-7")
                 ui.button("开始", icon="arrow_forward").props("color=primary flat dense").classes(
-                    "press-button self-end mt-3"
+                    "press-button"
+                ).style(
+                    "align-self: flex-end; "
+                    "flex-shrink: 0; "
+                    "background: transparent !important; "
+                    "box-shadow: none !important;"
                 )
 
             # Card 2: Session history
             with (
                 ui.card()
-                .classes("super-card cursor-pointer p-7")
+                .classes("super-card cursor-pointer")
                 .on("click", lambda: ui.navigate.to("/sessions"))
-                .style("height: 220px; display: flex; flex-direction: column;")
+                .style(
+                    "height: 220px; "
+                    "display: flex; "
+                    "flex-direction: column; "
+                    "padding: 1.5rem; "
+                    "box-sizing: border-box;"
+                )
             ):
-                ui.icon("history", size="3em").classes("text-secondary rotate-icon mb-3")
-                with ui.column().classes("gap-2 mb-auto"):
+                ui.icon("history", size="3em").classes("text-secondary rotate-icon").style(
+                    "flex-shrink: 0; margin-bottom: 0.75rem;"
+                )
+                with ui.column().classes("gap-2").style("flex: 1;"):
                     ui.label("历史会话").classes("text-h6 font-bold text-grey-9")
                     ui.label("查看和管理历史录音").classes("text-sm text-grey-7")
                 ui.button("查看", icon="arrow_forward").props("color=secondary flat dense").classes(
-                    "press-button self-end mt-3"
+                    "press-button"
+                ).style(
+                    "align-self: flex-end; "
+                    "flex-shrink: 0; "
+                    "background: transparent !important; "
+                    "box-shadow: none !important;"
                 )
 
             # Card 3: Voiceprint
             with (
                 ui.card()
-                .classes("super-card cursor-pointer p-7")
+                .classes("super-card cursor-pointer")
                 .on(
                     "click",
                     lambda: ui.navigate.to(
                         "/voiceprint/update" if has_vp else "/voiceprint/enroll"
                     ),
                 )
-                .style("height: 220px; display: flex; flex-direction: column;")
+                .style(
+                    "height: 220px; "
+                    "display: flex; "
+                    "flex-direction: column; "
+                    "padding: 1.5rem; "
+                    "box-sizing: border-box;"
+                )
             ):
-                ui.icon("fingerprint", size="3em").classes("text-warning rotate-icon mb-3")
-                with ui.column().classes("gap-2 mb-auto"):
+                ui.icon("fingerprint", size="3em").classes("text-warning rotate-icon").style(
+                    "flex-shrink: 0; margin-bottom: 0.75rem;"
+                )
+                with ui.column().classes("gap-2").style("flex: 1;"):
                     ui.label("声纹管理").classes("text-h6 font-bold text-grey-9")
                     if has_vp:
                         with ui.row().classes("items-center gap-2"):
@@ -183,19 +232,37 @@ async def render(
                             ui.label("未注册").classes("text-sm text-warning font-medium")
                 ui.button("管理" if has_vp else "注册", icon="arrow_forward").props(
                     "color=warning flat dense"
-                ).classes("press-button self-end mt-3")
+                ).classes("press-button").style(
+                    "align-self: flex-end; "
+                    "flex-shrink: 0; "
+                    "background: transparent !important; "
+                    "box-shadow: none !important;"
+                )
 
             # Card 4: Settings
             with (
                 ui.card()
-                .classes("super-card cursor-pointer p-7")
+                .classes("super-card cursor-pointer")
                 .on("click", lambda: ui.navigate.to("/settings"))
-                .style("height: 220px; display: flex; flex-direction: column;")
+                .style(
+                    "height: 220px; "
+                    "display: flex; "
+                    "flex-direction: column; "
+                    "padding: 1.5rem; "
+                    "box-sizing: border-box;"
+                )
             ):
-                ui.icon("settings", size="3em").classes("text-info rotate-icon mb-3")
-                with ui.column().classes("gap-2 mb-auto"):
+                ui.icon("settings", size="3em").classes("text-info rotate-icon").style(
+                    "flex-shrink: 0; margin-bottom: 0.75rem;"
+                )
+                with ui.column().classes("gap-2").style("flex: 1;"):
                     ui.label("个人设置").classes("text-h6 font-bold text-grey-9")
                     ui.label("修改个人信息和密码").classes("text-sm text-grey-7")
                 ui.button("设置", icon="arrow_forward").props("color=info flat dense").classes(
-                    "press-button self-end mt-3"
+                    "press-button"
+                ).style(
+                    "align-self: flex-end; "
+                    "flex-shrink: 0; "
+                    "background: transparent !important; "
+                    "box-shadow: none !important;"
                 )
