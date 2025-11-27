@@ -14,6 +14,7 @@ from audex.lib.injectors.store import make_store
 from audex.lib.injectors.transcription import make_transcription
 from audex.lib.injectors.usb import make_usb_manager
 from audex.lib.injectors.vpr import make_vpr
+from audex.lib.injectors.wifi import make_wifi_manager
 from audex.lib.repos.container import RepositoryContainer
 
 
@@ -25,6 +26,7 @@ class InfrastructureContainer(containers.DeclarativeContainer):
     session_manager = providers.Singleton(make_session_manager, config=config)
     cache = providers.Singleton(make_cache, config=config)
     usb = providers.Singleton(make_usb_manager)
+    wifi = providers.Singleton(make_wifi_manager)
     sqlite = providers.Singleton(make_sqlite, config=config)
     store = providers.Singleton(make_store, config=config)
     vpr = providers.Singleton(make_vpr, config=config)
