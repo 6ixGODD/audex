@@ -1,135 +1,3 @@
-/* ==================== CSS Variables Theme Switch ==================== */
-
-/* Rich Mode (默认) */
-:root {
-    /* Border Radius */
-    --radius-card: 28px;
-    --radius-button: 12px;
-    --radius-button-round: 50%;
-    --radius-badge: 12px;
-    --radius-bubble: 20px;
-
-    /* Shadows */
-    --shadow-header: 0 1px 3px rgba(0, 0, 0, 0.03);
-    --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
-    --shadow-card-hover: 0 12px 28px rgba(0, 0, 0, 0.12), 0 6px 14px rgba(0, 0, 0, 0.08);
-    --shadow-card-active: 0 4px 20px rgba(193, 0, 21, 0.15);
-    --shadow-card-active-hover: 0 12px 32px rgba(193, 0, 21, 0.25);
-    --shadow-btn-delete: 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-btn-delete-hover: 0 2px 6px rgba(0, 0, 0, 0.15);
-    --shadow-dialog: 0 10px 40px rgba(0, 0, 0, 0.15);
-    --shadow-bubble-doctor: 0 4px 20px rgba(99, 102, 241, 0.25);
-    --shadow-bubble-patient: 0 4px 20px rgba(0, 0, 0, 0.08);
-
-    /* Backgrounds */
-    --bg-page: #ffffff;
-    --bg-header: rgba(255, 255, 255, 0.5);
-    --bg-card: rgba(255, 255, 255, 0.9);
-    --bg-glass-card: transparent;
-    --bg-bubble-doctor: #6366f1;
-    --bg-bubble-patient: #ffffff;
-
-    /* Gradient Animation */
-    --gradient-animation: gradient-shift 8s ease infinite;
-
-    /* Blur Effects */
-    --blur-header: blur(80px) saturate(200%);
-    --blur-card: blur(20px);
-
-    /* Borders */
-    --border-header: none;
-    --border-glass-card: 1px solid rgba(0, 0, 0, 0.08);
-    --border-card-active: 2px solid #c10015;
-    --border-bubble-patient: 1px solid rgba(0, 0, 0, 0.08);
-    --border-input-default: 1px solid rgba(0, 0, 0, 0.12);
-    --border-input-hover: 1px solid rgba(0, 0, 0, 0.2);
-    --border-input-focus: 2px solid rgba(37, 99, 235, 0.8);
-
-    /* Transitions */
-    --transition-card: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-card-fast: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-button: all 0.2s ease;
-    --transition-icon: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-utterance: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-    --transition-border: border-color 0.3s ease;
-    --transition-transform: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-    /* Transforms */
-    --transform-card-hover: translateY(-6px) scale(1.02);
-    --transform-card-active: translateY(-3px) scale(1.01);
-    --transform-button-press: scale(0.95);
-    --transform-button-hover: translateY(-1px);
-    --transform-action-hover: translateY(-2px);
-    --transform-icon-hover: rotate(8deg) scale(1.15);
-    --transform-input-focus: scaleX(1);
-    --transform-input-unfocus: scaleX(0);
-}
-
-/* Performance Mode */
-:root[data-theme="performance"] {
-    /* Border Radius - 拉满！ */
-    --radius-card: 24px;
-    --radius-button: 999px;
-    --radius-button-round: 50%;
-    --radius-badge: 16px;
-    --radius-bubble: 20px;
-
-    /* Shadows - 全部移除 */
-    --shadow-header: none;
-    --shadow-card: none;
-    --shadow-card-hover: none;
-    --shadow-card-active: none;
-    --shadow-card-active-hover: none;
-    --shadow-btn-delete: none;
-    --shadow-btn-delete-hover: none;
-    --shadow-dialog: none;
-    --shadow-bubble-doctor: none;
-    --shadow-bubble-patient: none;
-
-    /* Backgrounds - 纯色 */
-    --bg-page: #ffffff;
-    --bg-header: #ffffff;
-    --bg-card: #ffffff;
-    --bg-glass-card: #ffffff;
-    --bg-bubble-doctor: #6366f1;
-    --bg-bubble-patient: #ffffff;
-
-    /* Gradient Animation - 移除 */
-    --gradient-animation: none;
-
-    /* Blur Effects - 移除 */
-    --blur-header: none;
-    --blur-card: none;
-
-    /* Borders - 添加/加强 */
-    --border-header: 1px solid #e0e0e0;
-    --border-glass-card: 1px solid #e0e0e0;
-    --border-card-active: 2px solid #c10015;
-    --border-bubble-patient: 1px solid #e0e0e0;
-    --border-input-default: 1px solid rgba(0, 0, 0, 0.2);
-    --border-input-hover: 1px solid rgba(0, 0, 0, 0.3);
-    --border-input-focus: 2px solid rgba(37, 99, 235, 0.8);
-
-    /* Transitions - 全部移除 */
-    --transition-card: none;
-    --transition-card-fast: none;
-    --transition-button: none;
-    --transition-icon: none;
-    --transition-utterance: none;
-    --transition-border: none;
-    --transition-transform: none;
-
-    /* Transforms - 全部移除 */
-    --transform-card-hover: none;
-    --transform-card-active: none;
-    --transform-button-press: none;
-    --transform-button-hover: none;
-    --transform-action-hover: none;
-    --transform-icon-hover: none;
-    --transform-input-focus: scaleX(1);
-    --transform-input-unfocus: scaleX(1);
-}
-
 /* ==================== Base Styles ==================== */
 
 * {
@@ -141,7 +9,7 @@ html, body {
     margin: 0;
     padding: 0;
     width: 100vw;
-    background: var(--bg-page);
+    background: #ffffff;
 }
 
 /* ==================== Layout Classes ==================== */
@@ -156,7 +24,7 @@ html, body {
 .gap-3 { gap: 0.75rem; }
 .gap-4 { gap: 1rem; }
 .gap-8 { gap: 2rem; }
-.px-6 { padding-left: 3rem ! important; padding-right: 3rem !important; }
+.px-6 { padding-left: 3rem !  important; padding-right: 3rem !important; }
 .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
 .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
 .p-5 { padding: 1.25rem; }
@@ -211,63 +79,49 @@ html, body {
 .gradient-text {
     background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab, #f093fb, #4facfe);
     background-size: 400% 400%;
-    font-weight: 700;
-}
-
-:root:not([data-theme="performance"]) .gradient-text {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: var(--gradient-animation);
-}
-
-:root[data-theme="performance"] .gradient-text {
-    background: none;
-    color: #23a6d5;
+    animation: gradient-shift 8s ease infinite;
+    font-weight: 700;
 }
 
 @keyframes gradient-shift {
-    0% { background-position: 0% 50%; }
+    0% { background-position: 0 50%; }
     50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    100% { background-position: 0 50%; }
 }
 
 /* ==================== Header ==================== */
 
 .header-glass {
-    backdrop-filter: var(--blur-header) ! important;
-    -webkit-backdrop-filter: var(--blur-header) !important;
-    background: var(--bg-header) !important;
-    box-shadow: var(--shadow-header) !important;
-    border-bottom: var(--border-header) !important;
-    padding-top: 1.5rem ! important;
-    padding-bottom: 1.5rem !important;
-    margin-top: 1.5rem !important;
-    min-height: 80px !important;
-    position: fixed !important;
-    top: 0 !important;
+    backdrop-filter: blur(80px) saturate(200%) ! important;
+    -webkit-backdrop-filter: blur(80px) saturate(200%) !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+    padding-top: 1.5rem !  important;
+    padding-bottom: 1.5rem ! important;
+    margin-top: 1.5rem ! important;
+    min-height: 80px !  important;
+    position: fixed !  important;
+    top: 0 ! important;
     left: 0 !important;
     right: 0 !important;
     z-index: 1000 !important;
 }
 
 .header-btn {
-    border-radius: var(--radius-button) !important;
+    border-radius: 12px !important;
     min-width: 100px !important;
     height: 40px !important;
     font-size: 14px !important;
     font-weight: 500 !important;
-    transition: var(--transition-button) !important;
+    transition: all 0.2s ease !important;
 }
 
 .header-btn:hover {
-    box-shadow: var(--shadow-btn-delete-hover) !important;
-    transform: var(--transform-button-hover);
-}
-
-/* Performance mode - add border */
-:root[data-theme="performance"] .header-btn {
-    border: 1px solid currentColor !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+    transform: translateY(-1px);
 }
 
 .export-btn {
@@ -283,7 +137,7 @@ html, body {
 /* ==================== Background ==================== */
 
 .bg-white {
-    background: var(--bg-page) !important;
+    background: #ffffff ! important;
     padding: 40px 60px !important;
     margin: 0 ! important;
     box-sizing: border-box !important;
@@ -296,65 +150,60 @@ html, body {
 /* ==================== Cards ==================== */
 
 .glass-card {
-    border-radius: var(--radius-card) !important;
-    background: var(--bg-glass-card) !important;
+    border-radius: 28px !important;
+    background: transparent !important;
     box-shadow: none !important;
-    border: var(--border-glass-card) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
 }
 
 .super-card {
-    border-radius: var(--radius-card) !important;
-    background: var(--bg-card) !important;
-    backdrop-filter: var(--blur-card) !important;
-    -webkit-backdrop-filter: var(--blur-card) !important;
-    box-shadow: var(--shadow-card) !important;
-    transition: var(--transition-card) !important;
-    min-height: 220px !important;
-    display: flex !important;
+    border-radius: 28px !important;
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    min-height: 220px ! important;
+    display: flex ! important;
     flex-direction: column !important;
 }
 
 .super-card:hover {
-    transform: var(--transform-card-hover);
-    box-shadow: var(--shadow-card-hover) !important;
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.12), 0 6px 14px rgba(0, 0, 0, 0.08) !important;
 }
 
 .super-card:active {
-    transform: var(--transform-card-active);
-    transition: var(--transition-card-fast) !important;
-}
-
-/* Performance mode - add border for cards */
-:root[data-theme="performance"] .super-card {
-    border: 1px solid #e0e0e0 ! important;
+    transform: translateY(-3px) scale(1.01);
+    transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .super-card-active {
-    border: var(--border-card-active) !important;
-    box-shadow: var(--shadow-card-active) !important;
+    border: 2px solid #c10015 !important;
+    box-shadow: 0 4px 20px rgba(193, 0, 21, 0.15) !important;
 }
 
 .super-card-active:hover {
-    box-shadow: var(--shadow-card-active-hover) !important;
+    box-shadow: 0 12px 32px rgba(193, 0, 21, 0.25) !important;
 }
 
 /* ==================== Buttons ==================== */
 
 .press-button:active {
-    transform: var(--transform-button-press);
+    transform: scale(0.95);
 }
 
 .rotate-icon {
-    transition: var(--transition-icon);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .super-card:hover .rotate-icon {
-    transform: var(--transform-icon-hover);
+    transform: rotate(8deg) scale(1.15);
 }
 
 .action-btn {
-    transition: var(--transition-button) !important;
-    border-radius: var(--radius-button) !important;
+    transition: all 0.2s ease !important;
+    border-radius: 12px !important;
     min-width: 70px !important;
     height: 32px !important;
     padding: 0 12px !important;
@@ -363,45 +212,66 @@ html, body {
 }
 
 .action-btn:hover {
-    transform: var(--transform-button-hover);
-    box-shadow: var(--shadow-btn-delete-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
 }
 
-.btn-primary { background: #3b82f6 !important; color: white !important; border: none !important; }
-.btn-secondary { background: white !important; color: #374151 !important; border: 1px solid #d1d5db !important; }
-.btn-secondary:hover { border-color: #9ca3af !important; }
+.btn-primary {
+    background: #3b82f6 !important;
+    color: white !important;
+    border: none !important;
+}
+
+.btn-secondary {
+    background: white !important;
+    color: #374151 !important;
+    border: 1px solid #d1d5db !important;
+}
+
+.btn-secondary:hover {
+    border-color: #9ca3af !important;
+}
 
 .btn-delete {
     background: white !important;
     border: none !important;
-    box-shadow: var(--shadow-btn-delete) !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
     color: #6b7280 !important;
-    border-radius: var(--radius-button-round) !important;
+    border-radius: 50% !important;
     width: 36px !important;
     height: 36px !important;
     min-width: 36px !important;
-    transition: var(--transition-button) !important;
+    transition: all 0.2s ease ! important;
 }
 
 .btn-delete:hover {
     background: #f3f4f6 !important;
     color: #374151 !important;
-    box-shadow: var(--shadow-btn-delete-hover) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15) !important;
 }
 
-.btn-delete .q-btn__content { min-width: unset !important; width: 100% !important; padding: 0 !important; }
+.btn-delete .q-btn__content {
+    min-width: unset !important;
+    width: 100% !important;
+    padding: 0 !important;
+}
 
 .action-button {
-    border-radius: var(--radius-button) !important;
+    border-radius: 12px !important;
     font-size: 16px !important;
     font-weight: 500 !important;
     letter-spacing: 0.02em !important;
-    transition: var(--transition-button) !important;
-    min-width: 120px ! important;
+    transition: all 0.2s ease !important;
+    min-width: 120px !important;
 }
 
-.action-button:hover { transform: var(--transform-action-hover); }
-.action-button:active { transform: translateY(0); }
+.action-button:hover {
+    transform: translateY(-2px);
+}
+
+.action-button:active {
+    transform: translateY(0);
+}
 
 .button-layout {
     display: flex !important;
@@ -412,21 +282,35 @@ html, body {
     gap: 16px !important;
 }
 
-.right-buttons { display: flex ! important; gap: 12px !important; }
+.right-buttons {
+    display: flex !important;
+    gap: 12px !important;
+}
 
 /* ==================== Status Badges ==================== */
 
 .status-badge {
     padding: 4px 8px;
-    border-radius: var(--radius-badge);
+    border-radius: 12px;
     font-size: 0.75rem;
     font-weight: 500;
     display: inline-block;
 }
 
-.status-completed { background: #dcfce7; color: #166534; }
-.status-in-progress { background: #fef3c7; color: #92400e; }
-.status-cancelled { background: #fee2e2; color: #991b1b; }
+.status-completed {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-in-progress {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
 
 /* ==================== Empty State ==================== */
 
@@ -441,7 +325,7 @@ html, body {
 }
 
 .empty-content {
-    display: flex ! important;
+    display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
@@ -451,35 +335,57 @@ html, body {
 }
 
 .empty-state .q-btn {
-    border-radius: var(--radius-button) !important;
+    border-radius: 12px !important;
     font-size: 16px !important;
     font-weight: 500 !important;
     letter-spacing: 0.02em !important;
-    transition: var(--transition-button) !important;
+    transition: all 0.2s ease !important;
     min-width: 140px !important;
     height: 48px !important;
     text-transform: none !important;
 }
 
 .empty-state .q-btn:hover {
-    transform: var(--transform-action-hover);
-    box-shadow: var(--shadow-bubble-doctor) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(25, 118, 210, 0.25) !important;
 }
 
-.empty-state .q-btn:active { transform: translateY(0); }
+.empty-state .q-btn:active {
+    transform: translateY(0);
+}
 
 /* ==================== Dialog ==================== */
 
 .dialog-card {
     background: white ! important;
     border-radius: 16px !important;
-    box-shadow: var(--shadow-dialog) !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
 }
 
-.info-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; }
-.export-summary-box { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; }
-.divider { height: 1px; background: rgba(0, 0, 0, 0.08); margin: 12px 0; }
-.info-field { padding: 12px 0; border-bottom: 1px solid rgba(0, 0, 0, 0.06); }
+.info-box {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.export-summary-box {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.divider {
+    height: 1px;
+    background: rgba(0, 0, 0, 0.08);
+    margin: 12px 0;
+}
+
+.info-field {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
 
 /* ==================== Form Inputs ==================== */
 
@@ -507,30 +413,35 @@ html, body {
 
 .clean-input .q-field__control:before {
     border: none !important;
-    border-bottom: var(--border-input-default) !important;
-    transition: var(--transition-border) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
+    transition: border-color 0.3s ease !important;
 }
 
 .clean-input .q-field__control:hover:before {
-    border-bottom: var(--border-input-hover) !important;
+    border-bottom-color: rgba(0, 0, 0, 0.2) !important;
 }
 
 .clean-input .q-field__control:after {
     border: none !important;
-    border-bottom: var(--border-input-focus) !important;
-    transform: var(--transform-input-unfocus);
-    transition: var(--transition-transform) !important;
+    border-bottom: 2px solid rgba(37, 99, 235, 0.8) !important;
+    transform: scaleX(0);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .clean-input.q-field--focused .q-field__control:after {
-    transform: var(--transform-input-focus);
+    transform: scaleX(1);
 }
 
 .notes-textarea .q-field__control,
-.notes-input .q-field__control { height: 100px !important; }
+.notes-input .q-field__control {
+    height: 100px !important;
+}
 
 .notes-textarea textarea,
-.notes-input textarea { min-height: 70px !important; resize: none !important; }
+.notes-input textarea {
+    min-height: 70px !important;
+    resize: none !important;
+}
 
 /* ==================== Utterances ==================== */
 
@@ -546,18 +457,32 @@ html, body {
     display: flex;
     flex-direction: column;
     padding: 16px 0;
-    transition: var(--transition-utterance);
+    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .utterance-final.is-doctor { align-items: flex-end; }
 .utterance-final.is-patient { align-items: flex-start; }
 
-.utterance-row { margin-bottom: 16px; width: 100%; display: flex ! important; }
+.utterance-row {
+    margin-bottom: 16px;
+    width: 100%;
+    display: flex ! important;
+}
+
 .utterance-row-doctor { justify-content: flex-end ! important; }
 .utterance-row-patient { justify-content: flex-start !important; }
 
-.utterance-doctor { display: flex !important; flex-direction: column !important; align-items: flex-end ! important; }
-.utterance-patient { display: flex !important; flex-direction: column !important; align-items: flex-start !important; }
+.utterance-doctor {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+}
+
+.utterance-patient {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+}
 
 .speaker-label {
     font-size: 0.75rem;
@@ -577,37 +502,41 @@ html, body {
 }
 
 .utterance-doctor .utterance-meta,
-.utterance-doctor .speaker-label { text-align: right ! important; }
+.utterance-doctor .speaker-label {
+    text-align: right ! important;
+}
 
 .utterance-patient .utterance-meta,
-.utterance-patient .speaker-label { text-align: left !important; }
+.utterance-patient .speaker-label {
+    text-align: left !important;
+}
 
 .bubble-doctor {
-    background: var(--bg-bubble-doctor);
+    background: #6366f1;
     color: white;
-    border-radius: var(--radius-bubble) var(--radius-bubble) 6px var(--radius-bubble);
+    border-radius: 20px 20px 6px 20px;
     padding: 14px 18px;
     min-width: 120px;
     max-width: min(450px, 75vw);
     word-break: break-word;
     white-space: pre-wrap;
-    box-shadow: var(--shadow-bubble-doctor);
+    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.25);
     font-size: 15px;
     line-height: 1.5;
     font-weight: 400;
 }
 
 .bubble-patient {
-    background: var(--bg-bubble-patient);
+    background: #ffffff;
     color: #1f2937;
-    border: var(--border-bubble-patient);
-    border-radius: var(--radius-bubble) var(--radius-bubble) var(--radius-bubble) 6px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 20px 20px 20px 6px;
     padding: 14px 18px;
     min-width: 120px;
     max-width: min(450px, 75vw);
     word-break: break-word;
     white-space: pre-wrap;
-    box-shadow: var(--shadow-bubble-patient);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     font-size: 15px;
     line-height: 1.5;
     font-weight: 400;
@@ -626,11 +555,23 @@ html, body {
 /* ==================== Responsive ==================== */
 
 @media (max-width: 1400px) {
-    .bg-white { padding: 40px 60px !important; }
-    .px-6 { padding-left: 2.5rem !important; padding-right: 2.5rem ! important; }
+    .bg-white {
+        padding: 40px 60px !important;
+    }
+
+    .px-6 {
+        padding-left: 2.5rem !important;
+        padding-right: 2.5rem !important;
+    }
 }
 
 @media (max-width: 1024px) {
-    .bg-white { padding: 30px 40px !important; }
-    .px-6 { padding-left: 2rem !important; padding-right: 2rem !important; }
+    .bg-white {
+        padding: 30px 40px !important;
+    }
+
+    .px-6 {
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
 }
