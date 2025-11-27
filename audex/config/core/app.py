@@ -41,6 +41,6 @@ class AppConfig(BaseModel):
     )
 
     theme: t.Literal["rich", "performance"] = Field(
-        default="performance",
+        default="rich",
         description="The theme of the application, can be 'rich' or 'performance'.",
     )

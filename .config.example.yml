@@ -6,6 +6,7 @@ core: # Core configuration settings.
     native: false # Indicates if the application is running in native mode.
     touch: false # Enable or disable touch support.
     fullscreen: false # Enable or disable fullscreen mode.
+    theme: rich # The theme of the application, can be 'rich' or 'performance'.
   logging: # Logging configuration
     targets: # List of logging targets
       - logname: stdout
@@ -62,7 +63,7 @@ provider: # Provider configuration settings.
         app_id: <UNSET> # XFYun Application ID. Must be provided for authentication.
         api_key: <UNSET> # XFYun API Key. Must be provided for authentication.
         api_secret: <UNSET> # XFYun API Secret. Must be provided for authentication.
-      group_id: ~ # The group ID for voiceprint recognition.
+      group_id: 4e81d0ed1a1341c58476eedc23c5f9d0 # The group ID for voiceprint recognition.
       group_id_path: .xfyun.vpr.gid # The file path to read the group ID from if not provided directly.
       http: # HTTP client configuration for XFYun VPR service.
         proxy: ~ # Proxy URL to route HTTP requests through. Example: 'http://localhost:8080'
