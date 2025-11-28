@@ -98,6 +98,7 @@
     background: #ffffff !important;
     padding: 40px 60px !important;
     margin: 0 !important;
+    margin-top: 120px !important;
     box-sizing: border-box !important;
     overflow: visible !important;
     min-height: auto !important;
@@ -196,10 +197,6 @@
     transform: scale(0.95);
 }
 
-/* 确保按钮内部的所有元素也透明 */
-.press-button .q-btn__content {
-    background: transparent ! important;
-}
 /* Button layout */
 .button-layout {
     display: flex !important;
