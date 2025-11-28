@@ -21,11 +21,7 @@ async def service_worker() -> Response:
 class View(LoggingMixin):
     __logtag__ = "audex.view"
 
-    def __init__(
-        self,
-        lifespan: LifeSpan,
-        config: Config,
-    ):
+    def __init__(self, lifespan: LifeSpan, config: Config):
         super().__init__()
         self.lifespan = lifespan
         self.config = config
@@ -50,6 +46,6 @@ class View(LoggingMixin):
             native=self.config.core.app.native,
             language="zh-CN",
             reload=self.config.core.app.debug,
-            fullscreen=self.config.core.app.fullscreen,
+            fullscreen=self.config.core.app.native,
             tailwind=False,
         )

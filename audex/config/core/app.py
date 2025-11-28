@@ -27,8 +27,3 @@ class AppConfig(BaseModel):
         default=False,
         description="Indicates if the application is running in native mode.",
     )
-
-    fullscreen: bool = Field(
-        default=False,
-        description="Enable or disable fullscreen mode.",
-    )
