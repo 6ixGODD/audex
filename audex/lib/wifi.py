@@ -164,27 +164,34 @@ class LinuxWiFiBackend(WiFiBackend):
 
     def _parse_security(self, security_str: str) -> WiFiSecurity:
         """Parse security type from nmcli output."""
-        security_str = security_str.upper()
-        if not security_str or security_str == "--":
+        if not security_str or security_str == "--" or security_str == "":
             return WiFiSecurity.OPEN
+
+        security_str = security_str.upper()
+
         if "WPA3" in security_str:
             return WiFiSecurity.WPA3
-        if "WPA2" in security_str:
+        if "WPA2" in security_str or "RSN" in security_str:
             return WiFiSecurity.WPA2
         if "WPA" in security_str:
             return WiFiSecurity.WPA
         if "WEP" in security_str:
             return WiFiSecurity.WEP
+
         return WiFiSecurity.UNKNOWN
 
-    def _dbm_to_quality(self, dbm: int) -> int:
-        """Convert dBm to quality percentage."""
-        # Typical range: -90 dBm (poor) to -30 dBm (excellent)
-        if dbm >= -30:
-            return 100
-        if dbm <= -90:
-            return 0
-        return int((dbm + 90) * 100 / 60)
+    def _signal_to_dbm(self, signal: int) -> int:
+        """Convert signal quality (0-100) to dBm.
+
+        Typical WiFi range: -90 dBm (poor) to -30 dBm (excellent)
+        Formula: dBm = -90 + (signal * 0.6)
+        """
+        if signal >= 100:
+            return -30
+        if signal <= 0:
+            return -90
+        # Linear mapping: 0-100 -> -90 to -30
+        return int(-90 + (signal * 0.6))
 
     async def scan(self) -> list[WiFiNetwork]:
         """Scan for available WiFi networks using nmcli."""
@@ -195,7 +202,7 @@ class LinuxWiFiBackend(WiFiBackend):
 
         try:
             # Request rescan
-            await asyncio.create_subprocess_exec(
+            rescan_result = await asyncio.create_subprocess_exec(
                 "nmcli",
                 "device",
                 "wifi",
@@ -203,6 +210,7 @@ class LinuxWiFiBackend(WiFiBackend):
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
+            await rescan_result.communicate()
             await asyncio.sleep(1)  # Wait for scan to complete
 
             # Get scan results
@@ -225,16 +233,30 @@ class LinuxWiFiBackend(WiFiBackend):
                 self.logger.error(f"WiFi scan failed: {stderr.decode('utf-8')}")
                 return []
 
+            raw_output = stdout.decode("utf-8").strip()
             networks: list[WiFiNetwork] = []
             seen_ssids: set[str] = set()
 
-            lines = stdout.decode("utf-8").strip().split("\n")
+            lines = raw_output.split("\n")
             for line in lines:
                 if not line:
                     continue
 
+                # Split by colon, but handle escaped colons in BSSID
+                # Format: SSID:BSSID:MODE:CHAN:FREQ:RATE:SIGNAL:SECURITY:IN-USE
+                # Example: XINNENG-5G:18\:2A\:57\:CE\:97\:C4:Infra:36:5180 MHz:270 Mbit/s:75:WPA2:*
+
+                # First, unescape the BSSID colons
+                line = line.replace("\\:", "<! COLON! >")
                 parts = line.split(":")
+
+                # Restore BSSID colons
+                parts = [p.replace("<!COLON! >", ":") for p in parts]
+
                 if len(parts) < 9:
+                    self.logger.warning(
+                        f"Skipping line with {len(parts)} parts (expected 9): {line}"
+                    )
                     continue
 
                 ssid = parts[0].strip()
@@ -242,23 +264,40 @@ class LinuxWiFiBackend(WiFiBackend):
                     continue
 
                 bssid = parts[1].strip() or None
+                # mode = parts[2].strip()  # Not used
                 channel_str = parts[3].strip()
-                freq_str = parts[4].strip()
+                freq_str = parts[4].strip()  # e.g., "5180 MHz"
+                # rate_str = parts[5].strip()  # e.g., "270 Mbit/s" - not used
                 signal_str = parts[6].strip()
                 security_str = parts[7].strip()
-                is_connected = parts[8].strip() == "*"
+                in_use = parts[8].strip()
+                is_connected = in_use == "*" or in_use == "yes" or in_use == "是"
 
+                # Parse signal (already 0-100 percentage)
                 try:
-                    signal_strength = -100 + int(signal_str)  # Convert to dBm
-                    signal_quality = int(signal_str)
-                    channel = int(channel_str) if channel_str else None
-                    frequency = int(freq_str) if freq_str else None
+                    signal_quality = int(signal_str) if signal_str else 0
+                    signal_strength = self._signal_to_dbm(signal_quality)
                 except ValueError:
-                    signal_strength = -100
+                    self.logger.warning(f"Failed to parse signal: '{signal_str}'")
                     signal_quality = 0
+                    signal_strength = -90
+
+                # Parse channel
+                try:
+                    channel = int(channel_str) if channel_str else None
+                except ValueError:
+                    self.logger.warning(f"Failed to parse channel: '{channel_str}'")
                     channel = None
+
+                # Parse frequency (remove " MHz" suffix)
+                try:
+                    freq_clean = freq_str.replace(" MHz", "").replace("MHz", "").strip()
+                    frequency = int(freq_clean) if freq_clean else None
+                except ValueError:
+                    self.logger.warning(f"Failed to parse frequency: '{freq_str}'")
                     frequency = None
 
+                # Parse security
                 security = self._parse_security(security_str)
 
                 network = WiFiNetwork(
@@ -293,11 +332,12 @@ class LinuxWiFiBackend(WiFiBackend):
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            _, stderr = await result.communicate()
+            stdout, stderr = await result.communicate()
 
             if result.returncode == 0:
                 self.logger.info(f"Successfully connected to {ssid}")
                 return True
+
             error_msg = stderr.decode("utf-8").strip()
             self.logger.error(f"Failed to connect to {ssid}: {error_msg}")
             return False
@@ -340,6 +380,7 @@ class LinuxWiFiBackend(WiFiBackend):
             if result.returncode == 0:
                 self.logger.info("Successfully disconnected from WiFi")
                 return True
+
             self.logger.warning("Failed to disconnect from WiFi")
             return False
 
@@ -354,6 +395,7 @@ class LinuxWiFiBackend(WiFiBackend):
             return None
 
         try:
+            # Get device info
             result = await asyncio.create_subprocess_exec(
                 "nmcli",
                 "-t",
@@ -380,20 +422,22 @@ class LinuxWiFiBackend(WiFiBackend):
                     connection_name = line.split(":", 1)[1].strip()
                 elif "GENERAL.STATE:" in line:
                     state_str = line.split(":", 1)[1].strip()
+                    # Extract state code (e.g., "100 (connected)" -> "100")
                     state = state_str.split()[0] if state_str else None
                 elif "IP4.ADDRESS[1]:" in line:
                     ip_str = line.split(":", 1)[1].strip()
+                    # Remove subnet mask (e.g., "192.168.1.130/24" -> "192.168.1.130")
                     ip_address = ip_str.split("/")[0] if ip_str else None
 
             if not connection_name or connection_name == "--":
                 return None
 
-            # Get detailed connection info
+            # Get detailed WiFi info for connected network
             result = await asyncio.create_subprocess_exec(
                 "nmcli",
                 "-t",
                 "-f",
-                "SSID,BSSID,FREQ,CHAN,SIGNAL",
+                "SSID,BSSID,FREQ,CHAN,SIGNAL,IN-USE",
                 "device",
                 "wifi",
                 "list",
@@ -404,31 +448,45 @@ class LinuxWiFiBackend(WiFiBackend):
             )
             stdout, _ = await result.communicate()
 
-            ssid = connection_name
+            ssid = connection_name.split()[0]  # Remove trailing " 1" if exists
             bssid = None
-            signal_strength = -100
             signal_quality = 0
+            signal_strength = -90
             frequency = None
             channel = None
 
             if result.returncode == 0:
-                lines = stdout.decode("utf-8").strip().split("\n")
-                for line in lines:
-                    parts = line.split(":")
-                    if len(parts) >= 5 and parts[0] == ssid:
-                        bssid = parts[1].strip() or None
-                        freq_str = parts[2].strip()
-                        chan_str = parts[3].strip()
-                        sig_str = parts[4].strip()
+                raw_output = stdout.decode("utf-8").strip()
+                lines = raw_output.split("\n")
 
-                        try:
-                            frequency = int(freq_str) if freq_str else None
-                            channel = int(chan_str) if chan_str else None
-                            signal_quality = int(sig_str) if sig_str else 0
-                            signal_strength = -100 + signal_quality
-                        except ValueError:
-                            pass
-                        break
+                for line in lines:
+                    # Handle escaped colons in BSSID
+                    line = line.replace("\\:", "<!COLON!>")
+                    parts = line.split(":")
+                    parts = [p.replace("<! COLON!>", ":") for p in parts]
+
+                    if len(parts) >= 6:
+                        line_ssid = parts[0].strip()
+                        in_use = parts[5].strip()
+
+                        # Find the connected network (marked with *)
+                        if in_use == "*" or in_use == "yes" or line_ssid == ssid:
+                            bssid = parts[1].strip() or None
+                            freq_str = parts[2].strip()
+                            chan_str = parts[3].strip()
+                            sig_str = parts[4].strip()
+
+                            try:
+                                # Remove " MHz" suffix
+                                freq_clean = freq_str.replace(" MHz", "").replace("MHz", "").strip()
+                                frequency = int(freq_clean) if freq_clean else None
+
+                                channel = int(chan_str) if chan_str else None
+                                signal_quality = int(sig_str) if sig_str else 0
+                                signal_strength = self._signal_to_dbm(signal_quality)
+                            except ValueError as e:
+                                self.logger.warning(f"Failed to parse connection info: {e}")
+                            break
 
             status = WiFiStatus.CONNECTED if state == "100" else WiFiStatus.UNKNOWN
 
@@ -596,7 +654,7 @@ class WindowsWiFiBackend(WiFiBackend):
 
                 # Encryption / 加密 (中英文兼容)
                 elif "Cipher" in line or "Encryption" in line or "加密" in line or "密码" in line:
-                    match = re.search(r"[:：]\s*(. +)", line)
+                    match = re.search(r"[:：]\s*(.+)", line)
                     if match:
                         current_cipher = match.group(1).strip()
 
@@ -866,7 +924,7 @@ class WiFiManager(LoggingMixin, AsyncContextMixin):
     networks.
 
     This manager provides functionality to scan for WiFi networks, connect
-    and disconnect from networks, and monitor connection status. It
+    and disconnect from networks, and monitor connection status.It
     automatically selects the appropriate backend (Linux/Windows) based
     on the platform.
 
@@ -930,8 +988,8 @@ class WiFiManager(LoggingMixin, AsyncContextMixin):
         self._available = await self._backend.is_available()
         if not self._available:
             raise RuntimeError(
-                "WiFi functionality not available. "
-                "On Linux, install NetworkManager (nmcli). "
+                "WiFi functionality not available."
+                "On Linux, install NetworkManager (nmcli)."
                 "On Windows, ensure WiFi adapter is enabled."
             )
         self.logger.info("WiFi manager initialized")
