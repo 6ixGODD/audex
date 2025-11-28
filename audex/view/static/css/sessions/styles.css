@@ -13,9 +13,15 @@
 }
 
 @keyframes gradient-shift {
-    0% { background-position: 0 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0 50%; }
+    0% {
+        background-position: 0 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0 50%;
+    }
 }
 
 /* ==================== Header ==================== */
@@ -46,9 +52,9 @@
 /* ==================== Background ==================== */
 
 .bg-white {
-    background: #ffffff ! important;
+    background: #ffffff !important;
     padding: 40px 60px !important;
-    margin: 0 ! important;
+    margin: 0 !important;
     box-sizing: border-box !important;
     overflow: visible !important;
     min-height: auto !important;
@@ -71,8 +77,8 @@
     -webkit-backdrop-filter: blur(20px) !important;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    min-height: 220px ! important;
-    display: flex ! important;
+    min-height: 220px !important;
+    display: flex !important;
     flex-direction: column !important;
 }
 
@@ -149,7 +155,7 @@
     width: 36px !important;
     height: 36px !important;
     min-width: 36px !important;
-    transition: all 0.2s ease ! important;
+    transition: all 0.2s ease !important;
 }
 
 .btn-delete:hover {
@@ -265,7 +271,7 @@
 /* ==================== Dialog ==================== */
 
 .dialog-card {
-    background: white ! important;
+    background: white !important;
     border-radius: 16px !important;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
 }
@@ -368,17 +374,27 @@
     transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.utterance-final.is-doctor { align-items: flex-end; }
-.utterance-final.is-patient { align-items: flex-start; }
+.utterance-final.is-doctor {
+    align-items: flex-end;
+}
+
+.utterance-final.is-patient {
+    align-items: flex-start;
+}
 
 .utterance-row {
     margin-bottom: 16px;
     width: 100%;
-    display: flex ! important;
+    display: flex !important;
 }
 
-.utterance-row-doctor { justify-content: flex-end ! important; }
-.utterance-row-patient { justify-content: flex-start !important; }
+.utterance-row-doctor {
+    justify-content: flex-end !important;
+}
+
+.utterance-row-patient {
+    justify-content: flex-start !important;
+}
 
 .utterance-doctor {
     display: flex !important;
@@ -411,7 +427,7 @@
 
 .utterance-doctor .utterance-meta,
 .utterance-doctor .speaker-label {
-    text-align: right ! important;
+    text-align: right !important;
 }
 
 .utterance-patient .utterance-meta,
