@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib.resources
 import pathlib
 import typing as t
 
@@ -22,17 +23,13 @@ if t.TYPE_CHECKING:
 class Server(LoggingMixin):
     __logtag__ = "audex.lib.http"
 
-    def __init__(
-        self,
-        doctor_repo: DoctorRepository,
-        exporter: Exporter,
-    ):
+    def __init__(self, doctor_repo: DoctorRepository, exporter: Exporter):
         super().__init__()
         self.doctor_repo = doctor_repo
         self.exporter = exporter
 
         # Get template directory (relative to this file)
-        template_dir = pathlib.Path(__file__).parent / "templates"
+        template_dir = importlib.resources.files("audex.lib.server").joinpath("templates")
         self.templates = Jinja2Templates(directory=str(template_dir))
 
         # Create handlers
