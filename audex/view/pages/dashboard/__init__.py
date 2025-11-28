@@ -104,7 +104,7 @@ async def render(
 
             # Overview
             overview = await session_service.stats()
-            with ui.card().classes("glass-card p-5 w-full").style("margin-top: 40px;"):
+            with ui.card().classes("glass-card p-5 w-full").style("margin-top: 20px;"):
                 ui.label("概览").classes("text-subtitle2 font-semibold mb-4 text-grey-8")
 
                 with ui.column().classes("gap-3 w-full"):
@@ -131,7 +131,7 @@ async def render(
             "flex: 1; "
             "display: grid; "
             "grid-template-columns: repeat(2, 1fr); "
-            "gap: 25px; "
+            "gap: 15px; "
             "max-width: 850px; "
             "margin-left: auto;"
         ):

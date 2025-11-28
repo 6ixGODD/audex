@@ -4,8 +4,8 @@
 /* ==================== Background ==================== */
 .bg-white {
     background: #ffffff !important;
-    padding: 40px 60px ! important;
-    margin: 0 ! important;
+    padding: 40px 60px !important;
+    margin: 0 !important;
     box-sizing: border-box !important;
     overflow: visible !important;
     min-height: auto !important;
@@ -14,7 +14,7 @@
 
 /* ==================== Voiceprint Container ==================== */
 .voiceprint-container {
-    position: fixed ! important;
+    position: fixed !important;
     top: 0 !important;
     left: 0 !important;
     right: 0 !important;
@@ -95,7 +95,7 @@
 }
 
 .record-button:disabled {
-    opacity: 0.7 ! important;
+    opacity: 0.7 !important;
     cursor: not-allowed !important;
 }
 
@@ -165,7 +165,7 @@
 
     .voiceprint-button {
         width: 220px !important;
-        min-width: 200px ! important;
+        min-width: 200px !important;
     }
 
     .timer {
@@ -185,7 +185,7 @@
 
 @media (max-width: 768px) {
     .voiceprint-container {
-        padding: 20px ! important;
+        padding: 20px !important;
         padding-top: calc(108px + 10px) !important;
     }
 

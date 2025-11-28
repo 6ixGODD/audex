@@ -10,7 +10,7 @@
 html, body {
     margin: 0;
     padding: 0;
-    overflow-y: auto ! important;
+    overflow-y: auto !important;
     min-height: 100vh;
     width: 100vw;
     background: #ffffff;
@@ -18,32 +18,107 @@ html, body {
 
 /* ==================== Layout Classes ==================== */
 
-.items-center { align-items: center; }
-.justify-center { justify-content: center; }
-.gap-4 { gap: 1rem; }
-.mx-auto { margin-left: auto; margin-right: auto; }
-.mb-1 { margin-bottom: 0.25rem; }
-.mb-3 { margin-bottom: 0.75rem; }
-.mb-5 { margin-bottom: 1.25rem; }
-.mt-4 { margin-top: 1rem; }
-.my-3 { margin-top: 0.75rem; margin-bottom: 0.75rem; }
-.my-4 { margin-top: 1rem; margin-bottom: 1rem; }
-.w-full { width: 100%; }
-.w-16 { width: 4rem; }
-.flex-1 { flex: 1; }
-.h-16 { height: 4rem; }
+.items-center {
+    align-items: center;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.gap-4 {
+    gap: 1rem;
+}
+
+.mx-auto {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.mb-1 {
+    margin-bottom: 0.25rem;
+}
+
+.mb-3 {
+    margin-bottom: 0.75rem;
+}
+
+.mb-5 {
+    margin-bottom: 1.25rem;
+}
+
+.mt-4 {
+    margin-top: 1rem;
+}
+
+.my-3 {
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.my-4 {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+.w-full {
+    width: 100%;
+}
+
+.w-16 {
+    width: 4rem;
+}
+
+.flex-1 {
+    flex: 1;
+}
+
+.h-16 {
+    height: 4rem;
+}
 
 /* ==================== Typography ==================== */
 
-.text-xs { font-size: 0.75rem; line-height: 1rem; }
-.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
-.text-subtitle2 { font-size: 0.875rem; line-height: 1.375rem; font-weight: 500; }
-.text-h5 { font-size: 1.5rem; line-height: 2rem; }
-.text-center { text-align: center; }
-.font-semibold { font-weight: 600; }
-.text-grey-6 { color: #757575; }
-.text-grey-7 { color: #616161; }
-.text-grey-8 { color: #424242; }
+.text-xs {
+    font-size: 0.75rem;
+    line-height: 1rem;
+}
+
+.text-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+}
+
+.text-subtitle2 {
+    font-size: 0.875rem;
+    line-height: 1.375rem;
+    font-weight: 500;
+}
+
+.text-h5 {
+    font-size: 1.5rem;
+    line-height: 2rem;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.font-semibold {
+    font-weight: 600;
+}
+
+.text-grey-6 {
+    color: #757575;
+}
+
+.text-grey-7 {
+    color: #616161;
+}
+
+.text-grey-8 {
+    color: #424242;
+}
 
 /* ==================== Register Card ==================== */
 
@@ -53,7 +128,7 @@ html, body {
     backdrop-filter: blur(20px) !important;
     -webkit-backdrop-filter: blur(20px) !important;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.05), 0 0 1px rgba(0, 0, 0, 0.1) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) ! important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .register-card:hover {
@@ -79,8 +154,12 @@ html, body {
 }
 
 @keyframes gradient-shift {
-    0%, 100% { background-position: 0 50%; }
-    50% { background-position: 100% 50%; }
+    0%, 100% {
+        background-position: 0 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
 }
 
 /* ==================== Clean Input ==================== */
@@ -108,8 +187,8 @@ html, body {
 
 .clean-input .q-field__control:before {
     border: none !important;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.12) ! important;
-    transition: border-color 0.3s ease ! important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.12) !important;
+    transition: border-color 0.3s ease !important;
 }
 
 .clean-input .q-field__control:hover:before {
@@ -120,7 +199,7 @@ html, body {
     border: none !important;
     border-bottom: 2px solid #667eea !important;
     transform: scaleX(0);
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) ! important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .clean-input.q-field--focused .q-field__control:after {
@@ -128,15 +207,15 @@ html, body {
 }
 
 .clean-input .q-field__append {
-    height: 48px ! important;
-    display: flex ! important;
+    height: 48px !important;
+    display: flex !important;
     align-items: center !important;
     justify-content: center !important;
 }
 
 .clean-input .q-field__append .q-icon {
     color: #9ca3af !important;
-    transition: color 0.2s ease ! important;
+    transition: color 0.2s ease !important;
 }
 
 .clean-input .q-field__append .q-icon:hover {
@@ -148,13 +227,13 @@ html, body {
 /* Register button (主按钮) */
 .register-button {
     border-radius: 24px !important;
-    font-size: 16px ! important;
+    font-size: 16px !important;
     font-weight: 500 !important;
     letter-spacing: 0.02em !important;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
     box-shadow: 0 4px 16px rgba(102, 126, 234, 0.25), 0 2px 8px rgba(118, 75, 162, 0.15) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    text-transform: none ! important;
+    text-transform: none !important;
 }
 
 .register-button:hover {
@@ -177,7 +256,7 @@ html, body {
     background: rgba(248, 249, 250, 0.6) !important;
     color: #6b7280 !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) ! important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     text-transform: none !important;
 }
 
