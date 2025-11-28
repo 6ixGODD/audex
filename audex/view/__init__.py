@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import pathlib
+import importlib.resources
 
 from fastapi import Response
 from nicegui import app
@@ -10,7 +10,7 @@ from audex.config import Config
 from audex.helper.mixin import LoggingMixin
 from audex.lifespan import LifeSpan
 
-app.add_static_files("/static", str(pathlib.Path(__file__).parent / "static"))
+app.add_static_files("/static", importlib.resources.files("audex.view").joinpath("static"))
 
 
 @app.get("/sw.js")
