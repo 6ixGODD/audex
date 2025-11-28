@@ -55,6 +55,51 @@ async def render(
             ):
                 ui.label(f"{doctor.name}").classes("text-sm font-medium text-grey-9")
 
+            if config.core.app.native:
+                from nicegui.native import WindowProxy
+
+                # Native mode - use pywebview API
+                window = WindowProxy()
+                fullscreen_btn = (
+                    ui.button(icon="fullscreen", on_click=None)
+                    .props("flat round size=md")
+                    .classes("press-button")
+                    .tooltip("切换全屏")
+                )
+
+                def toggle_fullscreen() -> None:
+                    window.toggle_fullscreen()
+                    fullscreen_btn.props(
+                        f"icon={'fullscreen_exit' if window.fullscreen else 'fullscreen'}"
+                    )
+
+                fullscreen_btn.on("click", toggle_fullscreen)
+            else:
+                # Browser mode - use Fullscreen API
+                fullscreen_btn = (
+                    ui.button(icon="fullscreen", on_click=None)
+                    .props("flat round size=md")
+                    .classes("press-button")
+                    .tooltip("切换全屏")
+                )
+
+                async def toggle_fullscreen():
+                    is_fullscreen = await ui.run_javascript("""
+                        if (! document.fullscreenElement) {
+                            document.documentElement.requestFullscreen();
+                            return true;
+                        } else {
+                            document.exitFullscreen();
+                            return false;
+                        }
+                    """)
+                    fullscreen_btn.props(
+                        f"icon={'fullscreen_exit' if is_fullscreen else 'fullscreen'}"
+                    )
+
+                fullscreen_btn.on("click", toggle_fullscreen)
+
+            # Logout button
             @handle_errors
             async def do_logout() -> None:
                 await doctor_service.logout()
