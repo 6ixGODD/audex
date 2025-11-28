@@ -14,7 +14,6 @@ from audex.cli.helper import display
 from audex.config import Config
 from audex.config import build_config
 from audex.config import setconfig
-from audex.lib.injectors.container import InfrastructureContainer
 
 
 class Args(BaseArgs):
@@ -74,6 +73,8 @@ class Args(BaseArgs):
         cfg = build_config()
 
         with display.loading("Setting up database and server...  "):
+            from audex.lib.injectors.container import InfrastructureContainer
+
             infra_container = InfrastructureContainer(config=cfg)
             sqlite = infra_container.sqlite()
             server = infra_container.server()

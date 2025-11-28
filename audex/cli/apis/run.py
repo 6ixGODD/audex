@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pathlib
 import platform
+import typing as t
 
 from dependency_injector.wiring import Provide
 from dependency_injector.wiring import inject
@@ -67,7 +68,7 @@ class Args(BaseArgs):
             )
 
         # Initialize container
-        display.step("Initializing application", step=2 if cfg.core.app.native else 1)
+        display.step("Initializing application", step=1)
         with display.loading("Wiring dependencies... "):
             from audex.container import Container
 
@@ -80,7 +81,7 @@ class Args(BaseArgs):
         display.success("Application initialized")
 
         # Launch info
-        display.step("Launching application", step=3 if cfg.core.app.native else 2)
+        display.step("Launching application", step=2)
         print()
 
         if cfg.core.app.native:
@@ -101,7 +102,9 @@ class Args(BaseArgs):
 
 
 from audex.container import Container  # noqa: E402
-from audex.view import View  # noqa: E402
+
+if t.TYPE_CHECKING:
+    from audex.view import View  # noqa: E402
 
 
 @inject
