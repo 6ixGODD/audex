@@ -16,6 +16,8 @@ from audex.config import build_config
 from audex.config import setconfig
 from audex.utils import flatten_dict
 
+core.app.native.start_args.update({"gui": "qt"})
+
 
 class Args(BaseArgs):
     config: pathlib.Path | None = Field(
@@ -63,10 +65,6 @@ class Args(BaseArgs):
                 max_col_width=50,
                 row_spacing=1,
             )
-
-        # Setup native environment if needed
-        if cfg.core.app.native:
-            core.app.native.start_args.update({"gui": "qt"})
 
         # Initialize container
         display.step("Initializing application", step=2 if cfg.core.app.native else 1)
