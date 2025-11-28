@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import pathlib
 import sys
 
 import dotenv
@@ -9,7 +10,11 @@ from audex.cli.apis import register_apis
 from audex.cli.args import parser_with_version
 from audex.cli.exceptions import CLIError
 from audex.cli.helper import display
+from audex.config import Config
+from audex.config import build_config
+from audex.config import setconfig
 from audex.exceptions import AudexError
+from audex.utils import flatten_dict
 
 
 def main() -> int:
@@ -62,22 +67,112 @@ def parse_args() -> argparse.Namespace:
         help="Enable verbose output for debugging",
     )
 
-    # Create subparsers for commands
+    # Add config argument at top level
+    parser.add_argument(
+        "--config",
+        "-c",
+        type=pathlib.Path,
+        default=None,
+        help="Path to the configuration file",
+    )
+
+    # Create subparsers for other commands (serve, init, etc.)
     subparsers = parser.add_subparsers(
         title="Available Commands",
         dest="command",
-        help="Command to execute",
+        help="Command to execute (optional, default is to run the application)",
         metavar="<command>",
-        required=False,  # Allow running without command to show help
+        required=False,
     )
 
-    # Register all commands
+    # Register other commands (not run, since it's default)
     register_apis(subparsers)
 
-    # Set default function to print help
-    parser.set_defaults(func=lambda _: parser.print_help())
+    # Set default function to run the application
+    parser.set_defaults(func=run_application)
 
     return parser.parse_args()
+
+
+def run_application(args: argparse.Namespace) -> None:
+    """Run the main Audex application (default behavior)."""
+    from nicegui import core
+
+    core.app.native.start_args.update({"gui": "qt"})
+
+    display.banner("Audex", subtitle="Smart Medical Recording & Transcription System")
+
+    # Bootstrap
+    display.step("Bootstrapping application", step=0)
+    print()
+
+    # Load configuration
+    with display.section("Loading Configuration"):
+        if args.config:
+            display.info(f"Loading config from: {args.config}")
+            display.path(args.config, exists=args.config.exists())
+
+            if args.config.suffix in {".yaml", ".yml"}:
+                setconfig(Config.from_yaml(args.config))
+                display.success("YAML configuration loaded")
+            elif args.config.suffix in {".json", ".jsonc", ".json5"}:
+                setconfig(Config.from_json(args.config))
+                display.success("JSON configuration loaded")
+            else:
+                from audex.cli.exceptions import InvalidArgumentError
+
+                raise InvalidArgumentError(
+                    arg="config",
+                    value=args.config,
+                    reason=f"Unsupported config file format: {args.config.suffix}."
+                    "Supported formats are .yaml, .yml, .json, .jsonc, .json5",
+                )
+        else:
+            display.info("Using default configuration")
+
+    # Show configuration summary
+    cfg = build_config()
+    with display.section("Application Configuration"):
+        display.table_dict(
+            flatten_dict(cfg.model_dump()),
+            headers=("Config Key", "Value"),
+            max_col_width=50,
+            row_spacing=1,
+        )
+
+    # Initialize container
+    display.step("Initializing application", step=1)
+    with display.loading("Wiring dependencies..."):
+        from audex.container import Container
+        import audex.view.pages
+
+        container = Container()
+        container.wire(packages=[audex.view.pages])
+
+    display.success("Application initialized")
+
+    # Launch info
+    display.step("Launching application", step=2)
+    print()
+
+    import platform
+
+    if cfg.core.app.native:
+        display.info("Launching in native window mode")
+        display.info(f"GUI Backend: PyQt6 ({platform.system()})")
+    else:
+        display.info("Application will open in your default browser")
+
+    display.info("Press Ctrl+C to stop")
+
+    # Separator before app logs
+    print()
+    display.separator(70)
+    print()
+
+    # Start application
+    view = container.views().view()
+    view.run()
 
 
 def cli() -> None:
@@ -91,6 +186,8 @@ def cli() -> None:
 
         ```bash
         audex --help
+        audex -c .config.yml
+        audex serve --port 8080
         ```
     """
     sys.exit(main())
