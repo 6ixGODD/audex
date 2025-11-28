@@ -33,10 +33,6 @@ async def render(
 
     # Add CSS
     ui.add_head_html('<link rel="stylesheet" href="/static/css/dashboard.css">')
-    if config.core.app.theme == "performance":
-        ui.add_head_html(
-            "<script>document.documentElement.setAttribute('data-theme', 'performance');</script>"
-        )
 
     # Header
     with ui.header().classes("header-glass items-center justify-between px-6 py-3"):

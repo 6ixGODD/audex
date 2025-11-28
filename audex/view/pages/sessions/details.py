@@ -6,7 +6,6 @@ from fastapi import Depends
 from fastapi import Query
 from nicegui import ui
 
-from audex.config import Config
 from audex.container import Container
 from audex.service.session import SessionService
 from audex.service.session.types import UpdateSessionCommand
@@ -18,17 +17,12 @@ from audex.view.decorators import handle_errors
 @inject
 async def render(
     session_service: SessionService = Depends(Provide[Container.service.session]),
-    config: Config = Depends(Provide[Container.config]),
     session_id: str = Query(...),
 ) -> None:
     """Render session detail page with left form and right
     conversation."""
     # Add CSS
     ui.add_head_html('<link rel="stylesheet" href="/static/css/sessions/styles.css">')
-    if config.core.app.theme == "performance":
-        ui.add_head_html(
-            "<script>document.documentElement.setAttribute('data-theme', 'performance');</script>"
-        )
 
     # Fetch session and utterances
     session = await session_service.get(session_id)
