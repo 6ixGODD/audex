@@ -5,7 +5,6 @@ from dependency_injector.wiring import inject
 from fastapi import Depends
 from nicegui import ui
 
-from audex.config import Config
 from audex.container import Container
 from audex.exceptions import ValidationError
 from audex.service.doctor import DoctorService
@@ -21,7 +20,6 @@ from audex.view.decorators import handle_errors
 @inject
 async def render(
     doctor_service: DoctorService = Depends(Provide[Container.service.doctor]),
-    config: Config = Depends(Provide[Container.config]),
 ) -> None:
     """Render settings page."""
 
@@ -30,10 +28,6 @@ async def render(
 
     # Add CSS
     ui.add_head_html('<link rel="stylesheet" href="/static/css/settings.css">')
-    if config.core.app.theme == "performance":
-        ui.add_head_html(
-            "<script>document.documentElement.setAttribute('data-theme', 'performance');</script>"
-        )
 
     # State
     current_tab = {"value": "profile"}

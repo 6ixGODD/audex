@@ -7,7 +7,6 @@ from dependency_injector.wiring import inject
 from fastapi import Depends
 from nicegui import ui
 
-from audex.config import Config
 from audex.container import Container
 from audex.service.doctor import DoctorService
 from audex.service.export import ExportService
@@ -22,7 +21,6 @@ async def render(
     doctor_service: DoctorService = Depends(Provide[Container.service.doctor]),
     session_service: SessionService = Depends(Provide[Container.service.session]),
     export_service: ExportService = Depends(Provide[Container.service.export]),
-    config: Config = Depends(Provide[Container.config]),
 ) -> None:
     """Render export options page."""
 
@@ -31,10 +29,6 @@ async def render(
 
     # Add CSS
     ui.add_head_html('<link rel="stylesheet" href="/static/css/sessions/styles.css">')
-    if config.core.app.theme == "performance":
-        ui.add_head_html(
-            "<script>document.documentElement.setAttribute('data-theme', 'performance');</script>"
-        )
 
     # Fetch sessions
     sessions = await session_service.list(doctor_id=doctor.id, page_size=100)
