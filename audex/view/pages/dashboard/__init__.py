@@ -79,12 +79,8 @@ async def render(
             "align-items: center; "
             "justify-content: center; "
             "padding: 60px 80px; "
-            "padding-top: calc(108px + 30px); "
             "box-sizing: border-box; "
             "overflow: auto;"
-        ),
-        ui.element("div").style(
-            "display: flex; gap: 60px; align-items: center; max-width: 100%; width: 100%;"
         ),
     ):
         # Left column
@@ -135,7 +131,7 @@ async def render(
             "flex: 1; "
             "display: grid; "
             "grid-template-columns: repeat(2, 1fr); "
-            "gap: 20px; "
+            "gap: 25px; "
             "max-width: 850px; "
             "margin-left: auto;"
         ):
