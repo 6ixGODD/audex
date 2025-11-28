@@ -78,13 +78,14 @@ async def render(
             "display: flex; "
             "align-items: center; "
             "justify-content: center; "
-            "padding: 60px 80px; "
+            "gap: 30px; "
+            "padding: 40px clamp(20px, 5vw, 80px);"
             "box-sizing: border-box; "
             "overflow: auto;"
         ),
     ):
         # Left column
-        with ui.column().classes("gap-8").style("width: 360px; flex-shrink: 0;"):
+        with ui.column().classes("gap-8").style("min-width: 100px; max-width: 360px; width: 100%;"):
             # Welcome
             with ui.column().classes("gap-2 mb-6"):
                 candidate_words = ["Hi,", "Hello,", "您好,", ":)", "欢迎回来,", "很高兴见到您,"]
@@ -104,7 +105,7 @@ async def render(
 
             # Overview
             overview = await session_service.stats()
-            with ui.card().classes("glass-card p-5 w-full").style("margin-top: 20px;"):
+            with ui.card().classes("glass-card p-5 w-full").style("margin-top: 20px; width: 100%;"):
                 ui.label("概览").classes("text-subtitle2 font-semibold mb-4 text-grey-8")
 
                 with ui.column().classes("gap-3 w-full"):
