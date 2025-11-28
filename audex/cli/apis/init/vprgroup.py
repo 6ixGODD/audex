@@ -12,8 +12,6 @@ from audex.cli.helper import display
 from audex.config import Config
 from audex.config import build_config
 from audex.config import setconfig
-from audex.lib.injectors.container import InfrastructureContainer
-from audex.lib.vpr import GroupAlreadyExistsError
 
 
 class Args(BaseArgs):
@@ -75,12 +73,16 @@ class Args(BaseArgs):
             return
 
         # Initialize infrastructure
+        from audex.lib.injectors.container import InfrastructureContainer
+
         display.step("Initializing VPR infrastructure", step=1)
         infra_container = InfrastructureContainer(config=cfg)
         vpr = infra_container.vpr()
 
         # Create VPR group
         async def create_group(name: str | None) -> str:
+            from audex.lib.vpr import GroupAlreadyExistsError
+
             async with vpr:
                 try:
                     return await vpr.create_group(name)
