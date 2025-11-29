@@ -56,6 +56,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     portaudio19-dev \
     ffmpeg \
     policykit-1 \
+    network-manager \
     && rm -rf /var/lib/apt/lists/*
 
 # ============================================================================
