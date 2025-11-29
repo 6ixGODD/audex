@@ -10,6 +10,12 @@ on:
         type: boolean
         default: false
   workflow_call:
+    inputs:
+      test_pypi:
+        description: 'Publish to TestPyPI instead of PyPI'
+        required: false
+        type: boolean
+        default: false
 permissions:
   contents: read
   id-token: write # OIDC token for Trusted Publisher
@@ -40,16 +46,14 @@ jobs:
         run: |
           VERSION=$(poetry version -s)
           echo "Building version: $VERSION"
-
-          if [[ "${{ github.event.inputs.test_pypi }}" != "true" ]]; then
+          if [[ "${{ github.event.inputs.test_pypi }}" != "true" && "${{ github.event_name }}" != "workflow_call" ]]; then
             if pip index versions audex 2>/dev/null | grep -q "$VERSION"; then
               echo "Error: Version $VERSION already exists on PyPI"
               exit 1
             fi
           fi
       - name: Build package
-        run: |
-          poetry build
+        run: poetry build
       - name: Check distribution
         run: |
           poetry run pip install twine
@@ -64,12 +68,12 @@ jobs:
     name: Publish to TestPyPI
     needs: build
     runs-on: ubuntu-latest
-    if: github.event.inputs.test_pypi == 'true'
+    if: inputs.test_pypi == true
     environment:
       name: testpypi
       url: https://test.pypi.org/p/audex
     permissions:
-      id-token: write # OIDC for TestPyPI
+      id-token: write
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
@@ -85,12 +89,15 @@ jobs:
     name: Publish to PyPI
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_pypi != 'true') || github.event_name == 'workflow_call'
+    if: |
+      github.event_name == 'release' ||
+      github.event_name == 'workflow_call' ||
+      (github.event_name == 'workflow_dispatch' && inputs.test_pypi != true)
     environment:
       name: pypi
       url: https://pypi.org/p/audex
     permissions:
-      id-token: write # OIDC for PyPI
+      id-token: write
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
@@ -103,7 +110,11 @@ jobs:
     name: Verify Publication
     needs: [publish-pypi]
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_pypi != 'true') || github.event_name == 'workflow_call'
+    if: |
+      (github.event_name == 'release' ||
+       github.event_name == 'workflow_call' ||
+       (github.event_name == 'workflow_dispatch' && inputs.test_pypi != true)) &&
+      needs.publish-pypi.result == 'success'
     steps:
       - name: Setup Python
         uses: actions/setup-python@v5

@@ -89,11 +89,23 @@ jobs:
           prerelease: false
   # ============================================================================
 
-  # Job 2: Build DEB Packages (arm64 and amd64)
+  # Job 2: Publish to PyPI (using workflow_call)
+  # ============================================================================
+  publish-pypi:
+    name: Publish to PyPI
+    needs: create-release
+    uses: ./.github/workflows/publish.yml
+    permissions:
+      contents: read
+      id-token: write
+    secrets: inherit
+  # ============================================================================
+
+  # Job 3: Build DEB Packages
   # ============================================================================
   build-deb:
     name: Build DEB Package (${{ matrix.arch }})
-    needs: create-release
+    needs: [create-release, publish-pypi]
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -109,65 +121,19 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y dpkg-dev
-      - name: Create VERSION file
+      - name: Set up QEMU (for cross-platform builds)
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build DEB package using Docker
         run: |
-          echo "${{ needs.create-release.outputs.version }}" > VERSION
-      - name: Create package structure
-        run: |
-          VERSION="${{ needs.create-release.outputs.version }}"
-          ARCH="${{ matrix.arch }}"
-          PKG_DIR="audex-${VERSION}"
-
-          # Create directory structure
-          mkdir -p "${PKG_DIR}/DEBIAN"
-          mkdir -p "${PKG_DIR}/usr/bin"
-          mkdir -p "${PKG_DIR}/usr/lib/audex"
-          mkdir -p "${PKG_DIR}/usr/share/applications"
-          mkdir -p "${PKG_DIR}/usr/share/icons/hicolor/scalable/apps"
-          mkdir -p "${PKG_DIR}/usr/share/doc/audex"
-          mkdir -p "${PKG_DIR}/usr/share/systemd/user"
-
-          # Copy template files
-          cp packaging/linux/templates/DEBIAN/postinst "${PKG_DIR}/DEBIAN/"
-          cp packaging/linux/templates/DEBIAN/prerm "${PKG_DIR}/DEBIAN/"
-          cp packaging/linux/templates/DEBIAN/postrm "${PKG_DIR}/DEBIAN/"
-          chmod 755 "${PKG_DIR}/DEBIAN"/*
-
-          # Process control template
-          sed "s/{VERSION}/${VERSION}/g; s/{ARCH}/${ARCH}/g" \
-            packaging/linux/templates/DEBIAN/control.template > "${PKG_DIR}/DEBIAN/control"
-
-          # Copy launcher scripts
-          cp packaging/linux/templates/usr/bin/audex "${PKG_DIR}/usr/bin/"
-          cp packaging/linux/templates/usr/bin/audex-setup "${PKG_DIR}/usr/bin/"
-          chmod 755 "${PKG_DIR}/usr/bin"/*
-
-          # Copy desktop and systemd files
-          cp packaging/linux/templates/usr/share/applications/audex.desktop \
-            "${PKG_DIR}/usr/share/applications/"
-          cp packaging/linux/templates/usr/share/systemd/user/audex.service \
-            "${PKG_DIR}/usr/share/systemd/user/"
-
-          # Copy icon
-          if [ -f audex/view/static/images/logo.svg ]; then
-            cp audex/view/static/images/logo.svg \
-              "${PKG_DIR}/usr/share/icons/hicolor/scalable/apps/audex.svg"
-          fi
-
-          # Copy README
-          cp README.md "${PKG_DIR}/usr/share/doc/audex/"
-      - name: Build DEB package
-        run: |
-          VERSION="${{ needs.create-release.outputs.version }}"
-          ARCH="${{ matrix.arch }}"
-          PKG_DIR="audex-${VERSION}"
-
-          dpkg-deb --build "${PKG_DIR}" "audex_${VERSION}_${ARCH}.deb"
+          cd packaging/linux
+          ./build.sh ${{ matrix.arch }}
       - name: Verify DEB package
         run: |
           VERSION="${{ needs.create-release.outputs.version }}"
           ARCH="${{ matrix.arch }}"
-          DEB_FILE="audex_${VERSION}_${ARCH}.deb"
+          DEB_FILE="dist/audex_${VERSION}_${ARCH}.deb"
 
           echo "📦 Package Info:"
           dpkg-deb --info "${DEB_FILE}"
@@ -179,11 +145,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: deb-${{ matrix.arch }}
-          path: audex_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}.deb
+          path: dist/audex_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}.deb
           retention-days: 7
   # ============================================================================
 
-  # Job 3: Upload DEB packages to Release
+  # Job 4: Upload DEB packages to Release
   # ============================================================================
   upload-release-assets:
     name: Upload Release Assets
@@ -206,11 +172,3 @@ jobs:
           asset_path: ./audex_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}.deb
           asset_name: audex_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}.deb
           asset_content_type: application/vnd.debian.binary-package
-  # ============================================================================
-
-  # Job 4: Publish to PyPI (reuse existing workflow)
-  # ============================================================================
-  publish-pypi:
-    name: Publish to PyPI
-    needs: create-release
-    uses: ./.github/workflows/publish.yml
