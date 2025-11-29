@@ -1,0 +1,216 @@
+name: Release and Build DEB
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+permissions:
+  contents: write # For creating releases and uploading assets
+  id-token: write # For PyPI publishing (OIDC)
+jobs:
+  # ============================================================================
+  # Job 1: Create GitHub Release with Changelog
+  # ============================================================================
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Get version from tag
+        id: get_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+      - name: Generate changelog
+        id: changelog
+        uses: mikepenz/release-changelog-builder-action@v4
+        with:
+          configuration: |
+            {
+              "template": "## 🚀 What's Changed\n\n#{{CHANGELOG}}\n\n**Full Changelog**: #{{RELEASE_DIFF}}",
+              "categories": [
+                {
+                  "title": "## 🎉 Features",
+                  "labels": ["feature", "enhancement"]
+                },
+                {
+                  "title": "## 🐛 Bug Fixes",
+                  "labels": ["bug", "fix"]
+                },
+                {
+                  "title": "## 📚 Documentation",
+                  "labels": ["documentation", "docs"]
+                },
+                {
+                  "title": "## 🔧 Maintenance",
+                  "labels": ["chore", "refactor", "maintenance"]
+                }
+              ]
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ steps.get_version.outputs.version }}
+          body: |
+            # Audex ${{ steps.get_version.outputs.version }}
+
+            ${{ steps.changelog.outputs.changelog }}
+
+            ## 📦 Installation
+
+            ### From PyPI
+            ```bash
+            pip install audex==${{ steps.get_version.outputs.version }}
+            ```
+
+            ### DEB Package (Debian/Ubuntu/Raspberry Pi)
+            ```bash
+            # Download the .deb file from assets below
+            sudo dpkg -i audex_${{ steps.get_version.outputs.version }}_arm64.deb
+            sudo apt-get install -f
+            ```
+
+            ## 🔗 Links
+            - [PyPI Package](https://pypi.org/project/audex/${{ steps.get_version.outputs.version }}/)
+            - [Documentation](https://github.com/${{ github.repository }})
+          draft: false
+          prerelease: false
+  # ============================================================================
+
+  # Job 2: Build DEB Packages (arm64 and amd64)
+  # ============================================================================
+  build-deb:
+    name: Build DEB Package (${{ matrix.arch }})
+    needs: create-release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [arm64, amd64]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y dpkg-dev
+      - name: Create VERSION file
+        run: |
+          echo "${{ needs.create-release.outputs.version }}" > VERSION
+      - name: Create package structure
+        run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+          ARCH="${{ matrix.arch }}"
+          PKG_DIR="audex-${VERSION}"
+
+          # Create directory structure
+          mkdir -p "${PKG_DIR}/DEBIAN"
+          mkdir -p "${PKG_DIR}/usr/bin"
+          mkdir -p "${PKG_DIR}/usr/lib/audex"
+          mkdir -p "${PKG_DIR}/usr/share/applications"
+          mkdir -p "${PKG_DIR}/usr/share/icons/hicolor/scalable/apps"
+          mkdir -p "${PKG_DIR}/usr/share/doc/audex"
+          mkdir -p "${PKG_DIR}/usr/share/systemd/user"
+
+          # Copy template files
+          cp packaging/linux/templates/DEBIAN/postinst "${PKG_DIR}/DEBIAN/"
+          cp packaging/linux/templates/DEBIAN/prerm "${PKG_DIR}/DEBIAN/"
+          cp packaging/linux/templates/DEBIAN/postrm "${PKG_DIR}/DEBIAN/"
+          chmod 755 "${PKG_DIR}/DEBIAN"/*
+
+          # Process control template
+          sed "s/{VERSION}/${VERSION}/g; s/{ARCH}/${ARCH}/g" \
+            packaging/linux/templates/DEBIAN/control.template > "${PKG_DIR}/DEBIAN/control"
+
+          # Copy launcher scripts
+          cp packaging/linux/templates/usr/bin/audex "${PKG_DIR}/usr/bin/"
+          cp packaging/linux/templates/usr/bin/audex-setup "${PKG_DIR}/usr/bin/"
+          chmod 755 "${PKG_DIR}/usr/bin"/*
+
+          # Copy desktop and systemd files
+          cp packaging/linux/templates/usr/share/applications/audex.desktop \
+            "${PKG_DIR}/usr/share/applications/"
+          cp packaging/linux/templates/usr/share/systemd/user/audex.service \
+            "${PKG_DIR}/usr/share/systemd/user/"
+
+          # Copy icon
+          if [ -f audex/view/static/images/logo.svg ]; then
+            cp audex/view/static/images/logo.svg \
+              "${PKG_DIR}/usr/share/icons/hicolor/scalable/apps/audex.svg"
+          fi
+
+          # Copy README
+          cp README.md "${PKG_DIR}/usr/share/doc/audex/"
+      - name: Build DEB package
+        run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+          ARCH="${{ matrix.arch }}"
+          PKG_DIR="audex-${VERSION}"
+
+          dpkg-deb --build "${PKG_DIR}" "audex_${VERSION}_${ARCH}.deb"
+      - name: Verify DEB package
+        run: |
+          VERSION="${{ needs.create-release.outputs.version }}"
+          ARCH="${{ matrix.arch }}"
+          DEB_FILE="audex_${VERSION}_${ARCH}.deb"
+
+          echo "📦 Package Info:"
+          dpkg-deb --info "${DEB_FILE}"
+
+          echo ""
+          echo "📋 Package Contents:"
+          dpkg-deb --contents "${DEB_FILE}" | head -20
+      - name: Upload DEB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb-${{ matrix.arch }}
+          path: audex_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}.deb
+          retention-days: 7
+  # ============================================================================
+
+  # Job 3: Upload DEB packages to Release
+  # ============================================================================
+  upload-release-assets:
+    name: Upload Release Assets
+    needs: [create-release, build-deb]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [arm64, amd64]
+    steps:
+      - name: Download DEB artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: deb-${{ matrix.arch }}
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./audex_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}.deb
+          asset_name: audex_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}.deb
+          asset_content_type: application/vnd.debian.binary-package
+  # ============================================================================
+
+  # Job 4: Publish to PyPI (reuse existing workflow)
+  # ============================================================================
+  publish-pypi:
+    name: Publish to PyPI
+    needs: create-release
+    uses: ./.github/workflows/publish.yml
