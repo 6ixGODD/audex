@@ -1,0 +1,41 @@
+name: Build DEB Only
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build'
+        required: true
+        type: string
+permissions:
+  contents: write
+jobs:
+  build-deb:
+    name: Build DEB Package (${{ matrix.arch }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [arm64, amd64]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Create VERSION file
+        run: echo "${{ github.event.inputs.version }}" > VERSION
+      - name: Build DEB package
+        run: |
+          cd packaging/linux
+          chmod +x build.sh
+          ./build.sh ${{ matrixarch }}
+      - name: Upload DEB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb-${{ matrix.arch }}
+          path: dist/audex_${{ github.event.inputs.version }}_${{ matrixarch }}.deb
+          retention-days: 7
