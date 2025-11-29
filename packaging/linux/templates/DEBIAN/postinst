@@ -1,0 +1,88 @@
+#!/bin/bash
+# Post-installation script for Audex DEB package
+
+set -e
+
+# Color output
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+echo -e "${BLUE}🚀 Installing Audex... ${NC}"
+
+# Get the installed version from control file
+VERSION=$(dpkg -s audex | grep '^Version:' | awk '{print $2}')
+
+# Create virtual environment with system site packages (for PyQt6)
+cd /usr/lib/audex
+echo "📦 Creating virtual environment..."
+python3 -m venv --system-site-packages venv
+
+# Install Audex from PyPI
+echo "📥 Installing Audex ${VERSION} from PyPI..."
+venv/bin/pip install --no-cache-dir -q "audex==${VERSION}"
+
+# Set correct permissions
+chown -R root:root /usr/lib/audex
+chmod 755 /usr/bin/audex
+chmod 755 /usr/bin/audex-setup
+
+# Create user directory templates in /etc/skel for new users
+echo "📁 Creating user directory templates..."
+mkdir -p /etc/skel/.local/share/audex/{store,logs}
+mkdir -p /etc/skel/.config/audex
+
+# Copy example config to skel
+if [ -f /etc/audex/config.example.yml ]; then
+    cp /etc/audex/config.example.yml /etc/skel/.config/audex/config.example.yml
+fi
+
+# Initialize directories for existing users
+for user_home in /home/*; do
+    if [ -d "$user_home" ]; then
+        username=$(basename "$user_home")
+
+        # Skip if already initialized
+        if [ -d "$user_home/.local/share/audex" ]; then
+            continue
+        fi
+
+        # Create directories
+        sudo -u "$username" mkdir -p "$user_home/.local/share/audex"/{store,logs} 2>/dev/null || true
+        sudo -u "$username" mkdir -p "$user_home/.config/audex" 2>/dev/null || true
+
+        # Copy example config
+        if [ -f /etc/audex/config.example.yml ]; then
+            sudo -u "$username" cp /etc/audex/config.example.yml "$user_home/.config/audex/config.example.yml" 2>/dev/null || true
+        fi
+    fi
+done
+
+echo -e "${GREEN}✅ Audex ${VERSION} installed successfully!${NC}"
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo -e "${YELLOW}📋 Next Steps:${NC}"
+echo ""
+echo "  1️⃣  Run configuration wizard:"
+echo -e "     ${BLUE}audex-setup${NC}"
+echo ""
+echo "  3️⃣  Start Audex:"
+echo -e "     ${BLUE}audex${NC}"
+echo ""
+echo "  4️⃣  (Optional) Enable auto-start on boot:"
+echo -e "     ${BLUE}systemctl --user enable audex${NC}"
+echo -e "     ${BLUE}systemctl --user start audex${NC}"
+echo ""
+echo "  5️⃣  Check status:"
+echo -e "     ${BLUE}systemctl --user status audex${NC}"
+echo ""
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo ""
+echo "📁 User data: ~/.local/share/audex"
+echo "⚙️ Configuration: ~/.config/audex/config.yml"
+echo "📚 Example config: /etc/audex/config.example.yml"
+echo "📖 Documentation: /usr/share/doc/audex/"
+echo ""
+
+exit 0

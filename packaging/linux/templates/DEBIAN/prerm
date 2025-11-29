@@ -1,0 +1,21 @@
+#!/bin/bash
+# Pre-removal script for Audex DEB package
+
+set -e
+
+case "$1" in
+    remove|upgrade|deconfigure)
+        echo "🗑️ Removing Audex..."
+
+        # Stop user services if running
+        for user_home in /home/*; do
+            if [ -d "$user_home" ]; then
+                username=$(basename "$user_home")
+                sudo -u "$username" systemctl --user stop audex 2>/dev/null || true
+                sudo -u "$username" systemctl --user disable audex 2>/dev/null || true
+            fi
+        done
+        ;;
+esac
+
+exit 0

@@ -1,0 +1,23 @@
+[Unit]
+Description=Audex Medical Recording System
+Documentation=https://github.com/6ixGODD/audex
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/audex
+Restart=on-failure
+RestartSec=10
+
+# Environment variables
+Environment="DISPLAY=:0"
+Environment="QT_IM_MODULE=fcitx5"
+Environment="XMODIFIERS=@im=fcitx5"
+Environment="GTK_IM_MODULE=fcitx5"
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

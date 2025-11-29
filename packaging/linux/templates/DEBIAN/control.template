@@ -1,0 +1,19 @@
+Package: audex
+Version: {VERSION}
+Section: utils
+Priority: optional
+Architecture: {ARCH}
+Depends: python3 (>= 3.10), python3-venv, python3-pip, python3-pyqt6, python3-pyqt6.qtwebengine, libfcitx5-qt6-1, alsa-utils, sqlite3, portaudio19-dev
+Maintainer: BoChenSHEN <6goddddddd@gmail.com>
+Homepage: https://github.com/6ixGODD/audex
+Description: Smart Medical Recording & Transcription System
+ Audex is a professional medical recording and transcription system
+ with voice recognition and speaker identification.
+ .
+ Features:
+  - Real-time audio recording with voice activity detection
+  - Automatic speaker diarization
+  - Medical transcription and formatting
+  - Session management and export
+  - WiFi connectivity monitoring
+  - Voiceprint enrollment and verification

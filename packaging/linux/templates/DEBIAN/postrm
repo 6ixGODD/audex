@@ -1,0 +1,24 @@
+#!/bin/bash
+# Post-removal script for Audex DEB package
+
+set -e
+
+case "$1" in
+    purge)
+        echo "🧹 Purging Audex system configuration..."
+
+        # Remove system configuration only
+        rm -rf /etc/audex
+        rm -rf /etc/skel/.local/share/audex
+        rm -rf /etc/skel/.config/audex
+
+        echo "ℹ️ User data in ~/.local/share/audex is preserved"
+        echo "   To remove user data manually:"
+        echo "   rm -rf ~/.local/share/audex ~/.config/audex"
+        ;;
+    remove)
+        echo "✅ Audex removed (configuration preserved)"
+        ;;
+esac
+
+exit 0

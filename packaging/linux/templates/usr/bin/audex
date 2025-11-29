@@ -1,0 +1,84 @@
+#!/bin/bash
+# Audex launcher script
+# This script sets up the environment and launches Audex
+
+set -e
+
+# Constants
+readonly AUDEX_VENV="/usr/lib/audex/venv"
+readonly USER_CONFIG="$HOME/.config/audex/config.yml"
+readonly USER_DATA="$HOME/.local/share/audex"
+
+# Color codes
+readonly RED='\033[0;31m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly NC='\033[0m'
+
+# Check if user has configured Audex
+check_configuration() {
+    if [ ! -f "$USER_CONFIG" ]; then
+        echo -e "${YELLOW}⚠️  Configuration file not found! ${NC}"
+        echo ""
+        echo "Please run the configuration wizard first:"
+        echo -e "  ${BLUE}audex-setup${NC}"
+        echo ""
+        exit 1
+    fi
+
+    # Check if API credentials are set
+    if grep -q "<UNSET>" "$USER_CONFIG" 2>/dev/null; then
+        echo -e "${YELLOW}⚠️  API credentials not configured!${NC}"
+        echo ""
+        echo "Please complete the configuration:"
+        echo -e "  ${BLUE}audex-setup${NC}"
+        echo ""
+        exit 1
+    fi
+}
+
+# Initialize user directories if they don't exist
+init_user_dirs() {
+    if [ ! -d "$USER_DATA" ]; then
+        mkdir -p "$USER_DATA"/{store,logs}
+    fi
+}
+
+# Check virtual environment
+check_venv() {
+    if [ ! -f "$AUDEX_VENV/bin/activate" ]; then
+        echo -e "${RED}❌ Error: Virtual environment not found${NC}"
+        echo "   Please reinstall Audex:"
+        echo "     sudo apt install --reinstall audex"
+        exit 1
+    fi
+}
+
+# Set environment variables for input method support
+setup_environment() {
+    # Application paths
+    export AUDEX_DATA_DIR="$USER_DATA"
+    export AUDEX_CONFIG="$USER_CONFIG"
+}
+
+# Main execution
+main() {
+    check_configuration
+    init_user_dirs
+    check_venv
+    setup_environment
+
+    # Activate virtual environment
+    source "$AUDEX_VENV/bin/activate"
+
+    # Launch Audex
+    if [ $# -eq 0 ]; then
+        # No arguments: use user config
+        exec python3 -m audex --config "$USER_CONFIG"
+    else
+        # Pass through all arguments
+        exec python3 -m audex "$@"
+    fi
+}
+
+main "$@"
