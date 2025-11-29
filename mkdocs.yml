@@ -195,4 +195,3 @@ nav:
           - RESTful Client: reference/lib/restful.md
           - Session Manager: reference/lib/session.md
           - USB Manager: reference/lib/usb.md
-  - Changelog: changelog.md
