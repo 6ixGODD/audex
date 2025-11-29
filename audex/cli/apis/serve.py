@@ -99,7 +99,7 @@ class Args(BaseArgs):
 
         # Separator before server logs
         print()
-        display.separator(70)
+        display.separator()
         print()
 
         # Context manager for server lifecycle

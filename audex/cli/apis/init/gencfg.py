@@ -61,7 +61,7 @@ class Args(BaseArgs):
             with display.section("Default Configuration Preview"):
                 cfg_dict = flatten_dict(cfg.model_dump())
                 display.info(f"Total {len(cfg_dict)} configuration keys")
-                display.table_dict(cfg_dict, ("Config Key", "Value"))
+                display.table_dict(cfg_dict)
 
         # Confirm generation
         if not display.confirm("Generate configuration file?", default=True):

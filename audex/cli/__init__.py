@@ -130,12 +130,7 @@ def run_application(args: argparse.Namespace) -> None:
     # Show configuration summary
     cfg = build_config()
     with display.section("Application Configuration"):
-        display.table_dict(
-            flatten_dict(cfg.model_dump()),
-            headers=("Config Key", "Value"),
-            max_col_width=50,
-            row_spacing=1,
-        )
+        display.table_dict(flatten_dict(cfg.model_dump()))
 
     # Initialize container
     display.step("Initializing application", step=1)
@@ -164,7 +159,7 @@ def run_application(args: argparse.Namespace) -> None:
 
     # Separator before app logs
     print()
-    display.separator(70)
+    display.separator()
     print()
 
     # Start application
