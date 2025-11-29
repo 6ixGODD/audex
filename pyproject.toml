@@ -35,8 +35,8 @@ dependencies = [
   "pydantic>=2.12.4,<3",
   "pydantic-settings>=2.12,<3",
   "pydub>=0.25.1,<0.26",
-  "pyqt6>=6.10,<7",
-  "pyqt6-webengine>=6.10,<7",
+  "pyqt6>=6.10,<7; sys_platform!='linux'",           # Linux users should install PyQt6 from their distro packages
+  "pyqt6-webengine>=6.10,<7; sys_platform!='linux'",
   "pyudev>=0.24.4,<0.25; sys_platform=='linux'",
   "pywebview>=6.1,<7",
   "pywin32>=311,<312; sys_platform=='win32'",
