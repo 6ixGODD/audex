@@ -9,8 +9,9 @@ copyright: Copyright &copy; 2025 BoChenSHEN
 theme:
   name: material
   language: en
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
   palette:
-    # Light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: indigo
@@ -19,8 +20,6 @@ theme:
         icon: material/brightness-7
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
-      # Dark mode
-
       scheme: slate
       primary: indigo
       accent: indigo
@@ -53,11 +52,6 @@ theme:
     - search.share
     - search.suggest
     - toc.follow
-  icon:
-    repo: fontawesome/brands/github
-    edit: material/pencil
-    view: material/eye
-    logo: material/package-variant-closed
 extra:
   version:
     provider: mike
@@ -74,7 +68,6 @@ extra_css:
 extra_javascript:
   - assets/javascripts/extra.js
 markdown_extensions:
-  # Python Markdown
   - abbr
   - admonition
   - attr_list
@@ -87,7 +80,6 @@ markdown_extensions:
       title: On this page
   - pymdownx.arithmatex:
       generic: true
-    # Python Markdown Extensions
   - pymdownx.betterem:
       smart_enable: all
   - pymdownx.caret
@@ -116,7 +108,9 @@ markdown_extensions:
   - pymdownx.tilde
 plugins:
   - search:
-      lang: en
+      lang:
+        - en
+        - zh
       separator: '[\s\-,:!=\[\]()"/]+|(?!\b)(?=[A-Z][a-z])|\.(?!\d)|&[lg]t;'
   - mkdocstrings:
       handlers:
@@ -148,6 +142,7 @@ plugins:
       cache_safe: true
 nav:
   - Home: index.md
+  - Installation: installation.md
   - API Reference:
       - reference/index.md
       - Library:
@@ -178,7 +173,7 @@ nav:
               - reference/lib/transcription/index.md
               - Events: reference/lib/transcription/events.md
               - Dashscope Transcription: reference/lib/transcription/dashscope.md
-          - Voiceprint Recognition (VPR:
+          - Voiceprint Recognition (VPR):
               - reference/lib/vpr/index.md
               - Unisound VPR:
                   - reference/lib/vpr/unisound/index.md

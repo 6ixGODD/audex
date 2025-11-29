@@ -1,19 +1,6 @@
-<div align="center">
-
-![Audex Logo](assets/logo.svg)
-
 # Audex
 
-[![PyPI version](https://badge.fury.io/py/audex.svg)](https://pypi.org/project/audex/)
-[![Python](https://img.shields.io/pypi/pyversions/audex.svg)](https://pypi.org/project/audex/)
-[![License](https://img.shields.io/github/license/6ixGODD/audex.svg)](https://github.com/6ixGODD/audex/blob/main/LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/6ixGODD/audex.svg)](https://github.com/6ixGODD/audex/stargazers)
-
-Derived from "Audio Exchange", Smart Medical Recording & Transcription System with voice recognition and speaker identification.
-
 [Documentation](https://6ixgodd.github.io/audex/) • [Installation Guide](https://6ixgodd.github.io/audex/installation/) • [API Reference](https://6ixgodd.github.io/audex/reference/)
-
-</div>
 
 ---
 
@@ -288,30 +275,18 @@ audex/
 
 ## Links
 
-- **Documentation**: https://6ixgodd.github.io/audex/
-- **PyPI**: https://pypi.org/project/audex/
-- **GitHub**: https://github.com/6ixGODD/audex
-- **Issues**: https://github.com/6ixGODD/audex/issues
-- **Releases**: https://github.com/6ixGODD/audex/releases
+- **Documentation**: [https://6ixgodd.github.io/audex/](https://6ixgodd.github.io/audex/)
+- **PyPI**: [https://pypi.org/project/audex/](https://pypi.org/project/audex/)
+- **GitHub**: [https://github.com/6ixGODD/audex](https://github.com/6ixGODD/audex)
+- **Issues**: [https://github.com/6ixGODD/audex/issues](https://github.com/6ixGODD/audex/issues)
+- **Releases**: [https://github.com/6ixGODD/audex/releases](https://github.com/6ixGODD/audex/releases)
+
 
 ---
 
-<div align="center">
-
-![Audex Logo](assets/logo.svg)
-
 # Audex
 
-[![PyPI 版本](https://badge.fury.io/py/audex.svg)](https://pypi.org/project/audex/)
-[![Python](https://img.shields.io/pypi/pyversions/audex.svg)](https://pypi.org/project/audex/)
-[![许可证](https://img.shields.io/github/license/6ixGODD/audex.svg)](https://github.com/6ixGODD/audex/blob/main/LICENSE)
-[![GitHub 星标](https://img.shields.io/github/stars/6ixGODD/audex.svg)](https://github.com/6ixGODD/audex/stargazers)
-
-取自"Audio Exchange"，智能医疗录音与转录系统，具备语音识别和说话人识别功能。
-
 [文档](https://6ixgodd.github.io/audex/) • [安装指南](https://6ixgodd.github.io/audex/installation/) • [API 参考](https://6ixgodd.github.io/audex/reference/)
-
-</div>
 
 ---
 
@@ -586,8 +561,8 @@ audex/
 
 ## 链接
 
-- **文档**: https://6ixgodd.github.io/audex/
-- **PyPI**: https://pypi.org/project/audex/
-- **GitHub**: https://github.com/6ixGODD/audex
-- **Issues**: https://github.com/6ixGODD/audex/issues
-- **Releases**: https://github.com/6ixGODD/audex/releases
+- **文档**: [https://6ixgodd.github.io/audex/](https://6ixgodd.github.io/audex/)
+- **PyPI**: [https://pypi.org/project/audex/](https://pypi.org/project/audex/)
+- **GitHub**: [https://github.com/6ixGODD/audex](https://github.com/6ixGODD/audex)
+- **Issues**: [https://github.com/6ixGODD/audex/issues](https://github.com/6ixGODD/audex/issues)
+- **Releases**: [https://github.com/6ixGODD/audex/releases](https://github.com/6ixGODD/audex/releases)
