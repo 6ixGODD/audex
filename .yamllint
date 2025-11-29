@@ -1,23 +1,20 @@
 yaml-files:
   - '*.yaml'
   - '*.yml'
+ignore: |
+  .github/workflows/**/*
+  .config.example.yml
 extends: default
 rules:
-  new-lines: disable
   indentation:
-    spaces: 2
     indent-sequences: consistent
   line-length:
     max: 120
     level: warning
-    allow-non-breakable-inline-mappings: true
-  key-duplicates: enable
+  braces: disable
   document-start: disable
   empty-lines:
     max: 2
     max-start: 0
     max-end: 1
   comments-indentation: disable
-  braces: disable
-  trailing-spaces: disable
-  quoted-strings: disable
