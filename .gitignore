@@ -94,3 +94,4 @@ pyrightconfig.json
 !audex/lib/
 !/tests/lib/
 !/docs/reference/lib/
+!/packaging/linux/templates/usr/lib/
