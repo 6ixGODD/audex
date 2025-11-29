@@ -14,9 +14,6 @@ permissions:
   contents: write
   id-token: write
 jobs:
-  # ==========================================================================
-  # Job 1: Create GitHub Release
-  # ==========================================================================
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
@@ -114,10 +111,6 @@ jobs:
             - [Documentation](https://github.com/${{ github.repository }})
           draft: false
           prerelease: false
-  # ==========================================================================
-
-  # Job 2: Build Python Distribution
-  # ==========================================================================
   build-python:
     name: Build Python Distribution
     needs: create-release
@@ -148,7 +141,7 @@ jobs:
             exit 1
           fi
 
-          if [ ! -f README.md ]; then
+          if [ !  -f README.md ]; then
             echo "❌ README.md not found"
             exit 1
           fi
@@ -177,10 +170,6 @@ jobs:
           name: python-dist
           path: dist/
           retention-days: 7
-  # ==========================================================================
-
-  # Job 3: Publish to TestPyPI (optional)
-  # ==========================================================================
   publish-testpypi:
     name: Publish to TestPyPI
     needs: build-python
@@ -202,10 +191,6 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
           skip-existing: true
-  # ==========================================================================
-
-  # Job 4: Publish to PyPI
-  # ==========================================================================
   publish-pypi:
     name: Publish to PyPI
     needs: build-python
@@ -224,10 +209,6 @@ jobs:
           path: dist/
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-  # ==========================================================================
-
-  # Job 5: Verify PyPI Publication
-  # ==========================================================================
   verify-pypi:
     name: Verify PyPI Publication
     needs: publish-pypi
@@ -254,10 +235,6 @@ jobs:
         run: |
           audex --version
           audex --help
-  # ==========================================================================
-
-  # Job 6: Build DEB Packages
-  # ==========================================================================
   build-deb:
     name: Build DEB Package (${{ matrix.arch }})
     needs: [create-release, publish-pypi]
@@ -276,10 +253,13 @@ jobs:
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+      - name: Create VERSION file
+        run: echo "${{ needs.create-release.outputs.version }}" > VERSION
       - name: Build DEB package
         run: |
           cd packaging/linux
-          python3 build.py ${{ needs.create-release.outputs.version }} ${{ matrix.arch }}
+          chmod +x build.sh
+          ./build.sh ${{ matrix.arch }}
       - name: Verify DEB package
         run: |
           VERSION="${{ needs.create-release.outputs.version }}"
@@ -304,10 +284,6 @@ jobs:
           name: deb-${{ matrix.arch }}
           path: dist/audex_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}.deb
           retention-days: 7
-  # ==========================================================================
-
-  # Job 7: Upload Release Assets
-  # ==========================================================================
   upload-release-assets:
     name: Upload Release Assets
     needs: [create-release, build-deb]
