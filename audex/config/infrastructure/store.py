@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import typing as t
 
-from pydantic import Field
-
 from audex.helper.settings import BaseModel
+from audex.helper.settings.fields import Field
 
 
 class StoreConfig(BaseModel):
@@ -14,6 +13,7 @@ class StoreConfig(BaseModel):
     )
 
     base_url: str = Field(
-        default="./store",
+        default="store",
         description="Store base URL. In case of 'file' type, it is the local directory path. In case of 'obs' type, it is the OBS bucket URL.",
+        system_path_type="data",
     )

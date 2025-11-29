@@ -5,13 +5,13 @@ import os
 import pathlib
 import typing as t
 
-from pydantic import Field
 from pydantic import model_validator
 
 from audex.config.helper.client.http import HttpClientConfig
 from audex.config.helper.provider.unisound import UnisoundCredentialConfig
 from audex.config.helper.provider.xfyun import XFYunCredentialConfig
 from audex.helper.settings import BaseModel
+from audex.helper.settings.fields import Field
 
 
 class XFYunVPRConfig(BaseModel):
@@ -26,8 +26,10 @@ class XFYunVPRConfig(BaseModel):
     )
 
     group_id_path: os.PathLike[str] = Field(
-        default=pathlib.Path(".xfyun.vpr.gid"),
+        default=pathlib.Path(".xf.vprgroup"),
         description="The file path to read the group ID from if not provided directly.",
+        system_default=".xf.vprgroup",
+        system_path_type="config",
     )
 
     http: HttpClientConfig = Field(
@@ -58,8 +60,10 @@ class UnisoundVPRConfig(BaseModel):
     )
 
     group_id_path: os.PathLike[str] = Field(
-        default=pathlib.Path(".unisound.vpr.gid"),
+        default=pathlib.Path(".unisound.vprgroup"),
         description="The file path to read the group ID from if not provided directly.",
+        system_default=".unisound.vprgroup",
+        system_path_type="config",
     )
 
     http: HttpClientConfig = Field(

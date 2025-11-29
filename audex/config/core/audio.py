@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from pydantic import Field
-
+from audex import __prog__
 from audex.helper.settings import BaseModel
+from audex.helper.settings.fields import Field
 
 
 class AudioConfig(BaseModel):
@@ -24,14 +24,14 @@ class AudioConfig(BaseModel):
     )
 
     vpr_threshold: float = Field(
-        default=0.4,
+        default=0.5,
         gt=0.0,
         lt=1.0,
         description="The threshold for voice print recognition similarity.",
     )
 
     key_prefix: str = Field(
-        default="audex",
+        default=__prog__,
         min_length=1,
         max_length=50,
         description="The prefix for storing audio files in cloud storage.",

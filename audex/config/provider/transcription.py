@@ -2,11 +2,10 @@ from __future__ import annotations
 
 import typing as t
 
-from pydantic import Field
-
 from audex.config.helper.client.websocket import WebsocketClientConfig
 from audex.config.helper.provider.dashscope import DashscopeCredentialConfig
 from audex.helper.settings import BaseModel
+from audex.helper.settings.fields import Field
 
 
 class DashscopeTranscriptionSessionConfig(BaseModel):

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from pydantic import Field
-
 from audex.config.provider.transcription import TranscriptionConfig
 from audex.config.provider.vpr import VPRConfig
 from audex.helper.settings import BaseModel
+from audex.helper.settings.fields import Field
 
 
 class ProviderConfig(BaseModel):

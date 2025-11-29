@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-from pydantic import Field
-
 from audex.config.core.app import AppConfig
 from audex.config.core.audio import AudioConfig
 from audex.config.core.logging import LoggingConfig
 from audex.config.core.session import SessionConfig
 from audex.helper.settings import BaseModel
+from audex.helper.settings.fields import Field
 
 
 class CoreConfig(BaseModel):

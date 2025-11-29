@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from pydantic import Field
-
 from audex import __title__
 from audex import __version__
 from audex.helper.settings import BaseModel
+from audex.helper.settings.fields import Field
 
 
 class AppConfig(BaseModel):
@@ -26,4 +25,5 @@ class AppConfig(BaseModel):
     native: bool = Field(
         default=False,
         description="Indicates if the application is running in native mode.",
+        linux_default=True,
     )

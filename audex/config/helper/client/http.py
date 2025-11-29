@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import typing as t
 
-from pydantic import Field
-
 from audex.helper.settings import BaseModel
+from audex.helper.settings.fields import Field
 
 
 class HttpClientConfig(BaseModel):

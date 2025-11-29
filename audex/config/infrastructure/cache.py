@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import typing as t
 
-from pydantic import Field
-
-from audex import __title__
+from audex import __prog__
 from audex.helper.settings import BaseModel
+from audex.helper.settings.fields import Field
 
 
 class InmemoryCacheConfig(BaseModel):
@@ -42,7 +41,7 @@ class CacheConfig(BaseModel):
     )
 
     prefix: str = Field(
-        default=__title__.lower().replace(" ", "_"),
+        default=__prog__,
         description="Prefix for all cache keys.",
     )
 

@@ -5,11 +5,11 @@ import pathlib
 import sys
 import typing as t
 
-from pydantic import Field
 from pydantic import model_validator
 
 from audex.helper.mixin import ContextMixin
 from audex.helper.settings import BaseModel
+from audex.helper.settings.fields import Field
 
 
 class SizeBasedRotation(BaseModel):
@@ -103,6 +103,22 @@ class LoggingConfig(BaseModel):
             ),
         ],
         description="List of logging targets",
+        windows_default=lambda: [
+            LoggingTarget(logname="stdout", loglevel="info"),
+            LoggingTarget(
+                logname=pathlib.PureWindowsPath("C:/ProgramData/Audex/logs/audex.log"),
+                loglevel="info",
+                rotation=Rotation(size_based=SizeBasedRotation()),
+            ),
+        ],
+        linux_default=lambda: [
+            LoggingTarget(logname="stdout", loglevel="info"),
+            LoggingTarget(
+                logname=pathlib.PurePosixPath("/var/log/audex/audex.log"),
+                loglevel="info",
+                rotation=Rotation(size_based=SizeBasedRotation()),
+            ),
+        ],
     )
 
     def init(self) -> None:

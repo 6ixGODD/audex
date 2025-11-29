@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-from pydantic import Field
-
 from audex.helper.settings import BaseModel
+from audex.helper.settings.fields import Field
 
 
 class SQLiteConfig(BaseModel):
     uri: str = Field(
         default="sqlite+aiosqlite:///./audex.db",
         description="SQLite database URI.",
+        windows_default="sqlite+aiosqlite:///C:/ProgramData/Audex/audex.db",
+        linux_default="sqlite+aiosqlite:////var/lib/audex/audex.db",
     )
 
     echo: bool = Field(
