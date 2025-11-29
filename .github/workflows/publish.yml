@@ -31,14 +31,6 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
-      - name: Read README
-        id: readme
-        run: |
-          {
-            echo 'readme<<EOF'
-            cat README.md
-            echo EOF
-          } >> $GITHUB_OUTPUT
       - name: Generate changelog
         id: changelog
         uses: mikepenz/release-changelog-builder-action@v4
@@ -76,10 +68,6 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ steps.get_version.outputs.version }}
           body: |
-            ${{ steps.readme.outputs.readme }}
-
-            ---
-
             ## 🚀 What's New in ${{ steps.get_version.outputs.version }}
 
             ${{ steps.changelog.outputs.changelog }}
