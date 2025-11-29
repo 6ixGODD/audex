@@ -6,6 +6,11 @@ on:
         description: 'Version to build'
         required: true
         type: string
+      upload_to_release:
+        description: 'Upload to existing release? '
+        required: false
+        type: boolean
+        default: false
 permissions:
   contents: write
 jobs:
@@ -33,9 +38,36 @@ jobs:
           cd packaging/linux
           chmod +x build.sh
           ./build.sh ${{ matrix.arch }}
+      - name: Verify DEB package
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          ARCH="${{ matrix.arch }}"
+          DEB_FILE="dist/audex_${VERSION}_${ARCH}.deb"
+
+          if [ !  -f "${DEB_FILE}" ]; then
+            echo "❌ DEB file not found: ${DEB_FILE}"
+            ls -la dist/
+            exit 1
+          fi
+
+          echo "📦 Package Info:"
+          dpkg-deb --info "${DEB_FILE}"
+
+          echo ""
+          echo "📋 Package Contents:"
+          dpkg-deb --contents "${DEB_FILE}" | head -20
       - name: Upload DEB artifact
         uses: actions/upload-artifact@v4
         with:
           name: deb-${{ matrix.arch }}
           path: dist/audex_${{ github.event.inputs.version }}_${{ matrix.arch }}.deb
           retention-days: 7
+      - name: Upload to Release
+        if: github.event.inputs.upload_to_release == 'true'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          files: dist/audex_${{ github.event.inputs.version }}_${{ matrix.arch }}.deb
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
