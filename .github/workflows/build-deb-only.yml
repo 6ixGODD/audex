@@ -32,10 +32,10 @@ jobs:
         run: |
           cd packaging/linux
           chmod +x build.sh
-          ./build.sh ${{ matrixarch }}
+          ./build.sh ${{ matrix.arch }}
       - name: Upload DEB artifact
         uses: actions/upload-artifact@v4
         with:
           name: deb-${{ matrix.arch }}
-          path: dist/audex_${{ github.event.inputs.version }}_${{ matrixarch }}.deb
+          path: dist/audex_${{ github.event.inputs.version }}_${{ matrix.arch }}.deb
           retention-days: 7
