@@ -7,14 +7,23 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 
-# Install basic tools
-RUN apt-get update && apt-get install -y \
+# Install common utilities AND Audex runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
     vim \
     nano \
     curl \
     tree \
     less \
+    python3 \
+    python3-venv \
+    python3-pip \
+    python3-pyqt6 \
+    python3-pyqt6.qtwebengine \
+    libfcitx5-qt6-1 \
+    alsa-utils \
+    sqlite3 \
+    portaudio19-dev \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
@@ -22,20 +31,25 @@ RUN apt-get update && apt-get install -y \
 RUN useradd -m -s /bin/bash testuser && \
     echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
+# Copy DEB file and guide script
+ARG DEB_FILE
+ARG GUIDE_SCRIPT
+
+COPY ${DEB_FILE} /tmp/audex.deb
+COPY ${GUIDE_SCRIPT} /tmp/guide.sh
+
+# Setup guide script
+RUN mv /tmp/guide.sh /home/testuser/guide.sh && \
+    chmod +x /home/testuser/guide.sh && \
+    chown testuser:testuser /home/testuser/guide.sh
+
+# Switch to test user
 USER testuser
 WORKDIR /home/testuser
 
-# Copy DEB package
-ARG DEB_FILE
-COPY ${DEB_FILE} /tmp/audex.deb
+# Add alias and auto-run guide script on login
+RUN echo "alias guide='~/guide.sh'" >> ~/.bashrc && \
+    echo "~/guide.sh" >> ~/.bashrc
 
-# Create interactive guide script
-ARG GUIDE_SCRIPT
-COPY ${GUIDE_SCRIPT} /home/testuser/guide.sh
-RUN chmod +x /home/testuser/guide.sh
-
-# Add guide alias and run on login
-RUN echo "alias guide='/home/testuser/guide.sh'" >> /home/testuser/.bashrc && \
-    echo "/home/testuser/guide.sh" >> /home/testuser/.bashrc
-
+# Set default command to bash
 CMD ["/bin/bash"]
