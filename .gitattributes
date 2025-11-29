@@ -4,3 +4,11 @@
 *.jpeg filter=lfs diff=lfs merge=lfs -text
 *.gif filter=lfs diff=lfs merge=lfs -text
 *.webp filter=lfs diff=lfs merge=lfs -text
+
+# Force LF line endings for packaging scripts only
+packaging/linux/**/*.sh text eol=lf
+packaging/linux/**/postinst text eol=lf
+packaging/linux/**/prerm text eol=lf
+packaging/linux/**/postrm text eol=lf
+packaging/linux/**/*.py text eol=lf
+packaging/linux/**/*.template text eol=lf
