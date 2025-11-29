@@ -124,9 +124,14 @@ log_success "Permissions set"
 
 log_step "Configuring systemd service..."
 
-systemctl daemon-reload
-
-log_success "Systemd service configured"
+# Check if systemd is available
+if command -v systemctl >/dev/null 2>&1 && systemctl is-system-running >/dev/null 2>&1; then
+    systemctl daemon-reload
+    log_success "Systemd service configured"
+else
+    log_warn "Systemd not available (running in container? ), skipping daemon-reload"
+    log_info "Run 'systemctl daemon-reload' manually after installation"
+fi
 
 # ============================================================================
 # Final Instructions
