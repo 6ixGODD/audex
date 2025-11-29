@@ -30,6 +30,7 @@ INIT_FILE="$PROJECT_ROOT/$PROJECT_NAME/__init__.py"
 # Flags
 DRY_RUN=0
 NO_GIT=0
+NO_PUSH=0
 NEW_VERSION=""
 
 # ============================================================================
@@ -50,6 +51,11 @@ parse_args() {
 			log_info "Git operations disabled"
 			shift
 			;;
+    --no-push)
+      NO_PUSH=1
+      log_info "Git push disabled"
+      shift
+      ;;
 		-h | --help)
 			show_usage
 			exit 0
@@ -277,6 +283,58 @@ create_git_tag() {
 	log_info "To push the tag, run: git push origin $tag_name"
 }
 
+# Push git tag
+push_git_tag() {
+	new_version="$1"
+
+  if [ $NO_GIT -eq 1 ] || [ $NO_PUSH -eq 1 ]; then
+    log_info "Skipping git push"
+    return 0
+  fi
+
+	if ! command_exists git; then
+		return 1
+	fi
+
+	if ! git rev-parse --git-dir >/dev/null 2>&1; then
+		return 1
+	fi
+
+	log_step "Pushing to remote..."
+
+	tag_name="v$new_version"
+
+	if [ $DRY_RUN -eq 1 ]; then
+		log_info "[DRY-RUN] Would push: git push origin main"
+		log_info "[DRY-RUN] Would push: git push origin $tag_name"
+		return 0
+	fi
+
+	# Ask for confirmation
+	if ! confirm "Do you want to push commit and tag to remote?"; then
+		log_info "Skipping push. Run manually:"
+		echo "  git push origin main"
+		echo "  git push origin $tag_name"
+		return 0
+	fi
+
+	# Push commit
+	if git push origin "$(git branch --show-current)" 2>/dev/null; then
+		log_success "✓ Pushed commit to remote"
+	else
+		log_error "Failed to push commit"
+		return 1
+	fi
+
+	# Push tag
+	if git push origin "$tag_name" 2>/dev/null; then
+		log_success "✓ Pushed tag to remote: $tag_name"
+	else
+		log_error "Failed to push tag"
+		return 1
+	fi
+}
+
 # Verify all files were updated
 verify_updates() {
 	new_version="$1"
@@ -401,6 +459,7 @@ main() {
 		echo ""
 		create_git_commit "$NEW_VERSION"
 		create_git_tag "$NEW_VERSION"
+		push_git_tag "$NEW_VERSION"
 	fi
 
 	# Show summary
