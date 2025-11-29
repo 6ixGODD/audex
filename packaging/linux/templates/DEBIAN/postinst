@@ -14,14 +14,20 @@ echo -e "${BLUE}🚀 Installing Audex...${NC}"
 # Get the installed version from control file
 VERSION=$(dpkg -s audex | grep '^Version:' | awk '{print $2}')
 
+# Create system directories
+echo "📁 Creating system directories..."
+mkdir -p /etc/audex
+mkdir -p /usr/lib/audex
+
 # Create virtual environment with system site packages (for PyQt6)
 cd /usr/lib/audex
 echo "📦 Creating virtual environment..."
 python3 -m venv --system-site-packages venv
 
-# Install Audex from PyPI
+# Install Audex from PyPI with progress
 echo "📥 Installing Audex ${VERSION} from PyPI..."
-venv/bin/pip install --no-cache-dir -q "audex==${VERSION}"
+echo "   (This may take a few minutes...)"
+venv/bin/pip install --progress-bar on "audex==${VERSION}"
 
 # Generate configuration files using the installed audex
 echo "⚙️  Generating system configuration..."
@@ -79,10 +85,10 @@ echo ""
 echo "  1️⃣  Run configuration wizard:"
 echo -e "     ${BLUE}audex-setup${NC}"
 echo ""
-echo "  3️⃣  Start Audex:"
+echo "  2️⃣  Start Audex:"
 echo -e "     ${BLUE}audex${NC}"
 echo ""
-echo "  4️⃣  (Optional) Enable auto-start:"
+echo "  3️⃣  (Optional) Enable auto-start:"
 echo -e "     ${BLUE}systemctl --user enable audex${NC}"
 echo -e "     ${BLUE}systemctl --user start audex${NC}"
 echo ""
