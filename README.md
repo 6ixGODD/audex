@@ -1,73 +1,90 @@
+<div align="center">
+
+![Audex Logo](docs/assets/logo.svg)
+
 # Audex
 
-Smart Medical Recording & Transcription System with voice recognition and speaker identification.
+[![PyPI version](https://badge.fury.io/py/audex.svg)](https://pypi.org/project/audex/)
+[![Python](https://img.shields.io/pypi/pyversions/audex.svg)](https://pypi.org/project/audex/)
+[![License](https://img.shields.io/github/license/6ixGODD/audex.svg)](https://github.com/6ixGODD/audex/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/6ixGODD/audex.svg)](https://github.com/6ixGODD/audex/stargazers)
+
+Derived from "Audio Exchange", Smart Medical Recording & Transcription System with voice recognition and speaker identification.
+
+[Documentation](https://6ixgodd.github.io/audex/) • [Installation Guide](https://6ixgodd.github.io/audex/installation/) • [API Reference](https://6ixgodd.github.io/audex/reference/)
+
+English | [简体中文](README.zh-CN.md)
+
+</div>
 
 ---
 
-## Requirements
+## System Requirements
 
 - Python 3.10-3.13
 - Poetry
-- PortAudio (for audio processing)
-- FFmpeg (for audio format conversion)
+- PortAudio
+- FFmpeg
+- SQLite3
 - PyQt6 (Linux: install from system packages)
+- NetworkManager (Linux: for WiFi connectivity)
 
 ### System Dependencies
 
 **Ubuntu/Debian:**
 ```bash
-sudo apt-get install portaudio19-dev ffmpeg python3-pyqt6 python3-pyqt6.qtwebengine
+sudo apt-get install python3-pyqt6 python3-pyqt6.qtwebengine \
+    portaudio19-dev ffmpeg sqlite3 network-manager \
+    libfcitx5-qt6-1 alsa-utils gcc build-essential
 ```
 
 **macOS:**
 ```bash
-brew install portaudio ffmpeg
+brew install portaudio ffmpeg sqlite3
+pip install PyQt6 PyQt6-WebEngine
 ```
 
 **Windows:**
 - PortAudio is bundled with PyAudio wheel
 - FFmpeg: Download from https://ffmpeg.org/download.html and add to `PATH`
+- SQLite3: Included with Python installation
 
 ---
 
-## Development
+## Installation
 
-### Install Dependencies
+### From PyPI
 
 ```bash
-# Development environment
-poetry install --extras dev
-
-# Testing environment
-poetry install --extras test
-
-# Documentation environment
-poetry install --extras docs
+pip install audex
 ```
 
-### Build Package
+### From Source
 
 ```bash
-# Build wheel and sdist
-poetry build
-
-# Output: dist/audex-{version}-py3-none-any.whl
+git clone https://github.com/6ixGODD/audex.git
+cd audex
+poetry install
 ```
 
-### Run Tests
+### DEB Package (Debian/Ubuntu/Raspberry Pi)
+
+Download the appropriate DEB package for your architecture from [Releases](https://github.com/6ixGODD/audex/releases).
+
+For detailed installation instructions, see [Installation Guide](https://6ixgodd.github.io/audex/installation/).
+
+**Quick Install:**
 
 ```bash
-poetry install --extras test
-poetry run pytest
-```
+# Download and install
+sudo dpkg -i audex_{version}_arm64.deb
+sudo apt-get install -f
 
-### Documentation
+# Run configuration wizard
+sudo audex-setup
 
-```bash
-poetry install --extras docs
-poetry run mkdocs serve
-
-# Visit: http://127.0.0.1:8000
+# Start application
+sudo audex
 ```
 
 ---
@@ -106,119 +123,6 @@ audex init vprgroup --config config.yaml
 ```bash
 # Start file export server
 audex serve --config config.yaml
-```
-
----
-
-## Installation
-
-### From PyPI
-
-```bash
-pip install audex
-```
-
-### From Source
-
-```bash
-git clone https://github.com/6ixGODD/audex.git
-cd audex
-poetry install
-```
-
-### DEB Package (Debian/Ubuntu/Raspberry Pi)
-
-Download from [Releases](https://github.com/6ixGODD/audex/releases):
-
-```bash
-sudo dpkg -i audex_{version}_arm64.deb
-sudo apt-get install -f
-```
-
-**Post-installation:**
-
-```bash
-# Run configuration wizard
-audex-setup
-
-# Initialize VPR group
-audex init vprgroup --config ~/.config/audex/config.yml
-
-# Start application
-audex
-
-# (Optional) Enable auto-start
-systemctl --user enable audex
-systemctl --user start audex
-```
-
----
-
-## DEB Package Development
-
-### Build DEB Package
-
-**Prerequisites:**
-- Docker (for cross-platform builds)
-
-**Build:**
-
-```bash
-cd packaging/linux
-
-# Build for Raspberry Pi (arm64)
-./build.sh
-
-# Build for amd64
-./build.sh amd64
-```
-
-**Output:** `dist/audex_{version}_{arch}.deb`
-
-### Test DEB Package
-
-```bash
-cd packaging/linux
-./test.sh
-```
-
-**Inside test container:**
-
-```bash
-# Install package
-sudo dpkg -i /tmp/audex.deb
-sudo apt-get install -f
-
-# Verify installation
-which audex
-audex --version
-
-# View configurations
-cat /etc/audex/config.system.yml
-cat /etc/audex/config.example.yml
-
-# Run configuration wizard
-audex-setup
-
-# Exit container
-exit
-```
-
-### Manual Build (Without Docker)
-
-**On Debian/Ubuntu:**
-
-```bash
-cd packaging/linux
-
-# Install build dependencies
-sudo apt-get install dpkg-dev
-
-# Build package
-python3 build_in_docker.py {version} {arch}
-
-# Example
-python3 build_in_docker.py 1.0.1 arm64
 ```
 
 ---
@@ -262,7 +166,101 @@ infrastructure:
     base_url: /path/to/store
 ```
 
-See `.config.example.yml` for full configuration options.
+See `config.example.yml` for complete configuration options.
+
+---
+
+## Development
+
+### Install Development Dependencies
+
+```bash
+# Development environment
+poetry install --extras dev
+
+# Testing environment
+poetry install --extras test
+
+# Documentation environment
+poetry install --extras docs
+```
+
+### Build Package
+
+```bash
+# Build wheel and sdist
+poetry build
+
+# Output: dist/audex-{version}-py3-none-any.whl
+```
+
+### Run Tests
+
+```bash
+poetry install --extras test
+poetry run pytest
+```
+
+### Documentation
+
+```bash
+poetry install --extras docs
+poetry run mkdocs serve
+
+# Visit: http://127.0.0.1:8000
+```
+
+---
+
+## DEB Package Development
+
+### Build DEB Package
+
+**Prerequisites:**
+- Docker
+
+**Build:**
+
+```bash
+cd packaging/linux
+
+# Build for ARM64 (Raspberry Pi)
+./build.sh
+
+# Build for AMD64
+./build.sh amd64
+```
+
+**Output:** `dist/audex_{version}_{arch}.deb`
+
+### Test DEB Package
+
+```bash
+cd packaging/linux
+./test.sh arm64
+```
+
+**Inside test container:**
+
+```bash
+# Install package
+dpkg -i /tmp/audex.deb
+apt-get install -f
+
+# Verify installation
+which audex
+audex --version
+
+# View configurations
+cat /etc/audex/config.system.yml
+cat /etc/audex/config.example.yml
+
+# Run configuration wizard
+audex-setup
+
+# Exit container
+exit
+```
 
 ---
 
@@ -271,7 +269,7 @@ See `.config.example.yml` for full configuration options.
 ```
 audex/
 ├── audex/                 # Main package
-│   ├── cli/               # CLI
+│   ├── cli/               # Command-line interface
 │   ├── service/           # Business layer
 │   ├── entity/            # Entities
 │   ├── filters/           # Data filters
@@ -292,6 +290,10 @@ audex/
 
 ## Links
 
+- **Documentation**: https://6ixgodd.github.io/audex/
 - **PyPI**: https://pypi.org/project/audex/
+- **GitHub**: https://github.com/6ixGODD/audex
 - **Issues**: https://github.com/6ixGODD/audex/issues
 - **Releases**: https://github.com/6ixGODD/audex/releases
+
+---
