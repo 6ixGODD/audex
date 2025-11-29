@@ -1,15 +1,5 @@
 #!/usr/bin/env python3
-"""Build DEB package inside Docker container.
-
-This script creates a DEB package structure with:
-- DEBIAN control files
-- Launcher scripts
-- Desktop integration files
-- Icons
-
-The version is read from the VERSION file in the project root.
-The actual audex package will be installed from PyPI during postinst.
-"""
+"""Build DEB package inside Docker container."""
 
 from __future__ import annotations
 
@@ -26,7 +16,7 @@ import sys
 BUILD_DIR = pathlib.Path("/build")
 TEMPLATES_DIR = BUILD_DIR / "templates"
 OUTPUT_DIR = BUILD_DIR / "output"
-VERSION_FILE = BUILD_DIR / "VERSION"  # Mounted from project root
+VERSION_FILE = BUILD_DIR / "VERSION"
 
 PACKAGE_NAME = "audex"
 
@@ -95,6 +85,11 @@ def get_version_from_file() -> str:
     return version
 
 
+def normalize_line_endings(content: str) -> str:
+    """Convert CRLF to LF."""
+    return content.replace("\r\n", "\n").replace("\r", "\n")
+
+
 # ============================================================================
 # Build Steps
 # ============================================================================
@@ -118,8 +113,9 @@ def create_package_structure(pkg_dir: pathlib.Path) -> None:
 
     directories = [
         pkg_dir / "DEBIAN",
+        pkg_dir / "etc" / "audex",
         pkg_dir / "usr" / "bin",
-        pkg_dir / "usr" / "lib" / "audex",  # Empty, venv created in postinst
+        pkg_dir / "usr" / "lib" / "audex",
         pkg_dir / "usr" / "share" / "applications",
         pkg_dir / "usr" / "share" / "icons" / "hicolor" / "scalable" / "apps",
         pkg_dir / "usr" / "share" / "doc" / "audex",
@@ -136,41 +132,61 @@ def copy_template_files(pkg_dir: pathlib.Path, version: str, arch: str) -> None:
     """Copy and process template files."""
     log_step("Copying template files...")
 
-    # Copy DEBIAN scripts
+    # Copy DEBIAN scripts with line ending normalization
     for script in ["postinst", "prerm", "postrm"]:
         src = TEMPLATES_DIR / "DEBIAN" / script
         dst = pkg_dir / "DEBIAN" / script
-        shutil.copy2(src, dst)
+
+        # ✅ Read, normalize, and write with LF
+        content = src.read_text(encoding="utf-8")
+        content = normalize_line_endings(content)
+        dst.write_text(content, encoding="utf-8")
         dst.chmod(0o755)
+
+        log_info(f"  Copied {script}")
 
     # Process control template
     control_template = TEMPLATES_DIR / "DEBIAN" / "control.template"
     control_dst = pkg_dir / "DEBIAN" / "control"
 
-    control_content = control_template.read_text()
+    control_content = control_template.read_text(encoding="utf-8")
+    control_content = normalize_line_endings(control_content)
     control_content = control_content.replace("{VERSION}", version)
     control_content = control_content.replace("{ARCH}", arch)
 
-    control_dst.write_text(control_content)
+    control_dst.write_text(control_content, encoding="utf-8")
+    log_info("  Processed control file")
 
     # Copy launcher scripts
     for script in ["audex", "audex-setup"]:
         src = TEMPLATES_DIR / "usr" / "bin" / script
         dst = pkg_dir / "usr" / "bin" / script
-        shutil.copy2(src, dst)
+
+        # ✅ Normalize line endings for shell scripts
+        content = src.read_text(encoding="utf-8")
+        content = normalize_line_endings(content)
+        dst.write_text(content, encoding="utf-8")
         dst.chmod(0o755)
 
+        log_info(f"  Copied {script}")
+
     # Copy desktop file
-    shutil.copy2(
-        TEMPLATES_DIR / "usr" / "share" / "applications" / "audex.desktop",
-        pkg_dir / "usr" / "share" / "applications" / "audex.desktop",
-    )
+    desktop_src = TEMPLATES_DIR / "usr" / "share" / "applications" / "audex. desktop"
+    desktop_dst = pkg_dir / "usr" / "share" / "applications" / "audex.desktop"
+
+    content = desktop_src.read_text(encoding="utf-8")
+    content = normalize_line_endings(content)
+    desktop_dst.write_text(content, encoding="utf-8")
+    log_info("  Copied desktop file")
 
     # Copy systemd service
-    shutil.copy2(
-        TEMPLATES_DIR / "usr" / "share" / "systemd" / "user" / "audex.service",
-        pkg_dir / "usr" / "share" / "systemd" / "user" / "audex.service",
-    )
+    service_src = TEMPLATES_DIR / "usr" / "share" / "systemd" / "user" / "audex. service"
+    service_dst = pkg_dir / "usr" / "share" / "systemd" / "user" / "audex.service"
+
+    content = service_src.read_text(encoding="utf-8")
+    content = normalize_line_endings(content)
+    service_dst.write_text(content, encoding="utf-8")
+    log_info("  Copied systemd service")
 
     log_success("Template files copied")
 
@@ -180,7 +196,7 @@ def copy_icon(pkg_dir: pathlib.Path) -> None:
     log_step("Copying icon...")
 
     icon_src = BUILD_DIR / "logo.svg"
-    icon_dst = pkg_dir / "usr" / "share" / "icons" / "hicolor" / "scalable" / "apps" / "audex.svg"
+    icon_dst = pkg_dir / "usr" / "share" / "icons" / "hicolor" / "scalable" / "apps" / "audex. svg"
 
     if icon_src.exists():
         shutil.copy2(icon_src, icon_dst)
@@ -191,7 +207,7 @@ def copy_icon(pkg_dir: pathlib.Path) -> None:
   <circle cx="24" cy="24" r="20" fill="#1976d2"/>
   <text x="24" y="32" font-size="24" fill="white" text-anchor="middle" font-family="sans-serif" font-weight="bold">A</text>
 </svg>"""
-        icon_dst.write_text(placeholder)
+        icon_dst.write_text(placeholder, encoding="utf-8")
 
 
 def build_deb_package(pkg_dir: pathlib.Path, version: str, arch: str) -> pathlib.Path:
@@ -202,9 +218,14 @@ def build_deb_package(pkg_dir: pathlib.Path, version: str, arch: str) -> pathlib
     deb_file = OUTPUT_DIR / f"{PACKAGE_NAME}_{version}_{arch}.deb"
 
     if deb_file.exists():
+        log_info("Removing existing DEB file")
         deb_file.unlink()
 
     run_command(["dpkg-deb", "--build", str(pkg_dir), str(deb_file)])
+
+    if not deb_file.exists():
+        log_error("DEB file was not created")
+        sys.exit(1)
 
     log_success(f"DEB package built: {deb_file.name}")
     return deb_file
@@ -238,7 +259,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "arch",
-        nargs="?",
+        nargs="? ",
         default="arm64",
         help="Architecture (default: arm64)",
     )
@@ -274,6 +295,9 @@ def main() -> None:
 
     except Exception as e:
         log_error(f"Build failed: {e}")
+        import traceback
+
+        traceback.print_exc()
         sys.exit(1)
 
 
