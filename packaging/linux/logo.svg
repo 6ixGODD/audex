@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="120mm"
+   height="120.00001mm"
+   viewBox="0 0 120 120.00001"
+   version="1.1"
+   id="svg1"
+   inkscape:export-filename="logo.svg"
+   inkscape:export-xdpi="108.37333"
+   inkscape:export-ydpi="108.37333"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="mm"
+     showgrid="false">
+    <inkscape:grid
+       id="grid5"
+       units="mm"
+       originx="-39.999999"
+       originy="-39.999996"
+       spacingx="0.99999998"
+       spacingy="1"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="5"
+       enabled="true"
+       visible="false" />
+    <inkscape:page
+       x="0"
+       y="0"
+       width="120"
+       height="120.00001"
+       id="page2"
+       margin="0"
+       bleed="0" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-40,-39.999995)">
+    <a
+       id="a4"
+       transform="translate(-11.424503,-11.98388)">
+      <rect
+         style="opacity:0;fill:#000000;fill-opacity:0;fill-rule:evenodd;stroke-width:7.28718;stroke-dasharray:none"
+         id="rect7"
+         width="120"
+         height="120"
+         x="51.424503"
+         y="51.983879"
+         ry="0" />
+      <g
+         id="g5-6"
+         transform="translate(42.826257,27.443227)" />
+      <path
+         d="m 111.4245,66.564319 a 49.999952,50.000105 0 0 0 -49.999997,50.000161 49.999952,50.000105 0 0 0 49.999997,50.00015 49.999952,50.000105 0 0 0 50,-50.00015 49.999952,50.000105 0 0 0 -50,-50.000161 z"
+         style="fill:#183d4d;fill-opacity:1;fill-rule:evenodd;stroke-width:9.871;stroke-dasharray:none"
+         id="path3" />
+      <ellipse
+         style="fill:#3c5b75;fill-opacity:0.465565;stroke-width:8.34183"
+         id="path2"
+         cy="116.56448"
+         cx="111.42451"
+         inkscape:label="path2"
+         rx="34.999966"
+         ry="35.000072" />
+      <rect
+         style="fill:#183d4d;fill-opacity:1;fill-rule:evenodd;stroke-width:9.2624;stroke-dasharray:none"
+         id="rect6"
+         width="15"
+         height="20"
+         x="103.9245"
+         y="57.40313"
+         ry="6.0470963"
+         rx="7.5" />
+    </a>
+  </g>
+</svg>

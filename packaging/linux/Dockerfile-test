@@ -1,0 +1,41 @@
+# Interactive test environment for Audex DEB package
+
+FROM debian:bookworm
+
+# Prevent interactive prompts
+ENV DEBIAN_FRONTEND=noninteractive
+ENV LANG=C.UTF-8
+ENV LC_ALL=C.UTF-8
+
+# Install basic tools
+RUN apt-get update && apt-get install -y \
+    sudo \
+    vim \
+    nano \
+    curl \
+    tree \
+    less \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create test user
+RUN useradd -m -s /bin/bash testuser && \
+    echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+
+USER testuser
+WORKDIR /home/testuser
+
+# Copy DEB package
+ARG DEB_FILE
+COPY ${DEB_FILE} /tmp/audex.deb
+
+# Create interactive guide script
+ARG GUIDE_SCRIPT
+COPY ${GUIDE_SCRIPT} /home/testuser/guide.sh
+RUN chmod +x /home/testuser/guide.sh
+
+# Add guide alias and run on login
+RUN echo "alias guide='/home/testuser/guide.sh'" >> /home/testuser/.bashrc && \
+    echo "/home/testuser/guide.sh" >> /home/testuser/.bashrc
+
+CMD ["/bin/bash"]
