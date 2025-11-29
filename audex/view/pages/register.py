@@ -49,7 +49,7 @@ async def render(
         ui.card().classes("register-card").style("width: 480px; padding: 32px 36px;"),
     ):  # Register card
         # Logo
-        ui.image("assets/logo.png").classes("w-16 h-16 mx-auto mb-3")
+        ui.image("/static/images/logo.svg").classes("mx-auto mb-3 register-logo")
 
         # Title
         ui.label("创建账号").classes("gradient-title text-h5 text-center w-full mb-1")

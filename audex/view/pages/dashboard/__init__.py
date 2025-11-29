@@ -37,7 +37,7 @@ async def render(
     # Header
     with ui.header().classes("header-glass items-center justify-between px-6 py-3"):
         with ui.row().classes("items-center gap-3"):
-            ui.image("/static/images/logo.png").classes("w-10 h-10")
+            ui.image("/static/images/logo.svg").classes("w-8 h-8")
             ui.label(config.core.app.app_name).classes("text-h6 font-semibold text-grey-9")
 
         with ui.row().classes("items-center gap-4"):

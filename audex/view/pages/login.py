@@ -47,7 +47,7 @@ async def render(
         ui.card().classes("login-card").style("width: 420px; max-width: 90vw; padding: 32px 36px;"),
     ):
         # Logo
-        ui.image("/static/images/logo.png").classes("mx-auto mb-3 login-logo")
+        ui.image("/static/images/logo.svg").classes("mx-auto mb-3 login-logo")
 
         # Title
         ui.label("欢迎回来").classes("gradient-title text-h5 text-center w-full mb-1")
