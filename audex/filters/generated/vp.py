@@ -360,39 +360,39 @@ class VPFilterBuilder(FilterBuilder[VP]):
             super().__init__("vpr_group_id", object.__getattribute__(builder, "_filter"))
             self._parent_builder = builder
 
-        def eq(self, value: str | None) -> VPFilterBuilder:
+        def eq(self, value: str) -> VPFilterBuilder:
             super().eq(value)
             return self._parent_builder
 
-        def ne(self, value: str | None) -> VPFilterBuilder:
+        def ne(self, value: str) -> VPFilterBuilder:
             super().ne(value)
             return self._parent_builder
 
-        def gt(self, value: str | None) -> VPFilterBuilder:
+        def gt(self, value: str) -> VPFilterBuilder:
             super().gt(value)
             return self._parent_builder
 
-        def lt(self, value: str | None) -> VPFilterBuilder:
+        def lt(self, value: str) -> VPFilterBuilder:
             super().lt(value)
             return self._parent_builder
 
-        def gte(self, value: str | None) -> VPFilterBuilder:
+        def gte(self, value: str) -> VPFilterBuilder:
             super().gte(value)
             return self._parent_builder
 
-        def lte(self, value: str | None) -> VPFilterBuilder:
+        def lte(self, value: str) -> VPFilterBuilder:
             super().lte(value)
             return self._parent_builder
 
-        def in_(self, values: t.Sequence[str | None]) -> VPFilterBuilder:
+        def in_(self, values: t.Sequence[str]) -> VPFilterBuilder:
             super().in_(values)
             return self._parent_builder
 
-        def nin(self, values: t.Sequence[str | None]) -> VPFilterBuilder:
+        def nin(self, values: t.Sequence[str]) -> VPFilterBuilder:
             super().nin(values)
             return self._parent_builder
 
-        def between(self, value1: str | None, value2: str | None) -> VPFilterBuilder:
+        def between(self, value1: str, value2: str) -> VPFilterBuilder:
             super().between(value1, value2)
             return self._parent_builder
 

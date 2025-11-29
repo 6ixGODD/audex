@@ -11,7 +11,11 @@ from audex.entity.doctor import Doctor
 from audex.filters import FieldFilter
 from audex.filters import Filter
 from audex.filters import FilterBuilder
+from audex.filters import StringBackedFieldFilter
 from audex.filters import StringFieldFilter
+from audex.valueobj.common.auth import HashedPassword
+from audex.valueobj.common.email import Email
+from audex.valueobj.common.phone import CNPhone
 
 
 class DoctorFilterBuilder(FilterBuilder[Doctor]):
@@ -284,46 +288,46 @@ class DoctorFilterBuilder(FilterBuilder[Doctor]):
             super().endswith(value)
             return self._parent_builder
 
-    class _PasswordHashField(StringFieldFilter):
+    class _PasswordHashField(StringBackedFieldFilter[HashedPassword]):
         """Chainable password_hash filter with type-safe operations."""
 
         def __init__(self, builder: DoctorFilterBuilder) -> None:
             super().__init__("password_hash", object.__getattribute__(builder, "_filter"))
             self._parent_builder = builder
 
-        def eq(self, value: str) -> DoctorFilterBuilder:
+        def eq(self, value: HashedPassword) -> DoctorFilterBuilder:
             super().eq(value)
             return self._parent_builder
 
-        def ne(self, value: str) -> DoctorFilterBuilder:
+        def ne(self, value: HashedPassword) -> DoctorFilterBuilder:
             super().ne(value)
             return self._parent_builder
 
-        def gt(self, value: str) -> DoctorFilterBuilder:
+        def gt(self, value: HashedPassword) -> DoctorFilterBuilder:
             super().gt(value)
             return self._parent_builder
 
-        def lt(self, value: str) -> DoctorFilterBuilder:
+        def lt(self, value: HashedPassword) -> DoctorFilterBuilder:
             super().lt(value)
             return self._parent_builder
 
-        def gte(self, value: str) -> DoctorFilterBuilder:
+        def gte(self, value: HashedPassword) -> DoctorFilterBuilder:
             super().gte(value)
             return self._parent_builder
 
-        def lte(self, value: str) -> DoctorFilterBuilder:
+        def lte(self, value: HashedPassword) -> DoctorFilterBuilder:
             super().lte(value)
             return self._parent_builder
 
-        def in_(self, values: t.Sequence[str]) -> DoctorFilterBuilder:
+        def in_(self, values: t.Sequence[HashedPassword]) -> DoctorFilterBuilder:
             super().in_(values)
             return self._parent_builder
 
-        def nin(self, values: t.Sequence[str]) -> DoctorFilterBuilder:
+        def nin(self, values: t.Sequence[HashedPassword]) -> DoctorFilterBuilder:
             super().nin(values)
             return self._parent_builder
 
-        def between(self, value1: str, value2: str) -> DoctorFilterBuilder:
+        def between(self, value1: HashedPassword, value2: HashedPassword) -> DoctorFilterBuilder:
             super().between(value1, value2)
             return self._parent_builder
 
@@ -646,39 +650,39 @@ class DoctorFilterBuilder(FilterBuilder[Doctor]):
             super().__init__("phone", object.__getattribute__(builder, "_filter"))
             self._parent_builder = builder
 
-        def eq(self, value: str | None) -> DoctorFilterBuilder:
+        def eq(self, value: CNPhone | None) -> DoctorFilterBuilder:
             super().eq(value)
             return self._parent_builder
 
-        def ne(self, value: str | None) -> DoctorFilterBuilder:
+        def ne(self, value: CNPhone | None) -> DoctorFilterBuilder:
             super().ne(value)
             return self._parent_builder
 
-        def gt(self, value: str | None) -> DoctorFilterBuilder:
+        def gt(self, value: CNPhone | None) -> DoctorFilterBuilder:
             super().gt(value)
             return self._parent_builder
 
-        def lt(self, value: str | None) -> DoctorFilterBuilder:
+        def lt(self, value: CNPhone | None) -> DoctorFilterBuilder:
             super().lt(value)
             return self._parent_builder
 
-        def gte(self, value: str | None) -> DoctorFilterBuilder:
+        def gte(self, value: CNPhone | None) -> DoctorFilterBuilder:
             super().gte(value)
             return self._parent_builder
 
-        def lte(self, value: str | None) -> DoctorFilterBuilder:
+        def lte(self, value: CNPhone | None) -> DoctorFilterBuilder:
             super().lte(value)
             return self._parent_builder
 
-        def in_(self, values: t.Sequence[str | None]) -> DoctorFilterBuilder:
+        def in_(self, values: t.Sequence[CNPhone | None]) -> DoctorFilterBuilder:
             super().in_(values)
             return self._parent_builder
 
-        def nin(self, values: t.Sequence[str | None]) -> DoctorFilterBuilder:
+        def nin(self, values: t.Sequence[CNPhone | None]) -> DoctorFilterBuilder:
             super().nin(values)
             return self._parent_builder
 
-        def between(self, value1: str | None, value2: str | None) -> DoctorFilterBuilder:
+        def between(self, value1: CNPhone | None, value2: CNPhone | None) -> DoctorFilterBuilder:
             super().between(value1, value2)
             return self._parent_builder
 
@@ -710,46 +714,46 @@ class DoctorFilterBuilder(FilterBuilder[Doctor]):
             super().endswith(value)
             return self._parent_builder
 
-    class _EmailField(StringFieldFilter):
+    class _EmailField(StringBackedFieldFilter[Email | None]):
         """Chainable email filter with type-safe operations."""
 
         def __init__(self, builder: DoctorFilterBuilder) -> None:
             super().__init__("email", object.__getattribute__(builder, "_filter"))
             self._parent_builder = builder
 
-        def eq(self, value: str | None) -> DoctorFilterBuilder:
+        def eq(self, value: Email | None) -> DoctorFilterBuilder:
             super().eq(value)
             return self._parent_builder
 
-        def ne(self, value: str | None) -> DoctorFilterBuilder:
+        def ne(self, value: Email | None) -> DoctorFilterBuilder:
             super().ne(value)
             return self._parent_builder
 
-        def gt(self, value: str | None) -> DoctorFilterBuilder:
+        def gt(self, value: Email | None) -> DoctorFilterBuilder:
             super().gt(value)
             return self._parent_builder
 
-        def lt(self, value: str | None) -> DoctorFilterBuilder:
+        def lt(self, value: Email | None) -> DoctorFilterBuilder:
             super().lt(value)
             return self._parent_builder
 
-        def gte(self, value: str | None) -> DoctorFilterBuilder:
+        def gte(self, value: Email | None) -> DoctorFilterBuilder:
             super().gte(value)
             return self._parent_builder
 
-        def lte(self, value: str | None) -> DoctorFilterBuilder:
+        def lte(self, value: Email | None) -> DoctorFilterBuilder:
             super().lte(value)
             return self._parent_builder
 
-        def in_(self, values: t.Sequence[str | None]) -> DoctorFilterBuilder:
+        def in_(self, values: t.Sequence[Email | None]) -> DoctorFilterBuilder:
             super().in_(values)
             return self._parent_builder
 
-        def nin(self, values: t.Sequence[str | None]) -> DoctorFilterBuilder:
+        def nin(self, values: t.Sequence[Email | None]) -> DoctorFilterBuilder:
             super().nin(values)
             return self._parent_builder
 
-        def between(self, value1: str | None, value2: str | None) -> DoctorFilterBuilder:
+        def between(self, value1: Email | None, value2: Email | None) -> DoctorFilterBuilder:
             super().between(value1, value2)
             return self._parent_builder
 
