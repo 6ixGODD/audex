@@ -8,21 +8,24 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 
-# Replace with Aliyun mirror (fast globally)
-RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
-    sed -i 's|security.debian.org/debian-security|mirrors.aliyun.com/debian-security|g' /etc/apt/sources.list.d/debian.sources
+# Update package lists with retries
+RUN apt-get update || (sleep 5 && apt-get update) || (sleep 10 && apt-get update)
 
-# Install build dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# Install Python and build tools
+RUN apt-get install -y --no-install-recommends \
     python3 \
     python3-pip \
-    python3-venv \
-    dpkg-dev \
-    build-essential \
-    ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+    python3-venv
 
-# Create build directory
+# Install dpkg-dev and build-essential for building DEB packages
+RUN apt-get install -y --no-install-recommends \
+    dpkg-dev \
+    build-essential
+
+# Clean up apt cache
+RUN rm -rf /var/lib/apt/lists/*
+
+# Set working directory
 WORKDIR /build
 
 # Copy templates
