@@ -9,9 +9,10 @@ on:
         required: false
         type: boolean
         default: false
+  workflow_call:
 permissions:
   contents: read
-  id-token: write
+  id-token: write # OIDC token for Trusted Publisher
 jobs:
   build:
     name: Build Distribution
@@ -28,7 +29,7 @@ jobs:
       - name: Install PortAudio
         run: |
           sudo apt-get update
-          sudo apt-get install -y portaudio19-dev python3-pyaudio
+          sudo apt-get install -y portaudio19-dev python3-pyaudio ffmpeg
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
@@ -67,6 +68,8 @@ jobs:
     environment:
       name: testpypi
       url: https://test.pypi.org/p/audex
+    permissions:
+      id-token: write # OIDC for TestPyPI
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
@@ -82,10 +85,12 @@ jobs:
     name: Publish to PyPI
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_pypi != 'true')
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_pypi != 'true') || github.event_name == 'workflow_call'
     environment:
       name: pypi
       url: https://pypi.org/p/audex
+    permissions:
+      id-token: write # OIDC for PyPI
     steps:
       - name: Download artifact
         uses: actions/download-artifact@v4
@@ -98,7 +103,7 @@ jobs:
     name: Verify Publication
     needs: [publish-pypi]
     runs-on: ubuntu-latest
-    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_pypi != 'true')
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.event.inputs.test_pypi != 'true') || github.event_name == 'workflow_call'
     steps:
       - name: Setup Python
         uses: actions/setup-python@v5
