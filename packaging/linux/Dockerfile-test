@@ -1,13 +1,10 @@
-# Interactive test environment for Audex DEB package
-
 FROM debian:bookworm
 
-# Prevent interactive prompts
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 
-# Install common utilities AND Audex runtime dependencies
+# Layer 1: Base system packages (rarely changes)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
     vim \
@@ -15,9 +12,24 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     tree \
     less \
+    && rm -rf /var/lib/apt/lists/*
+
+# Layer 2: Build tools (rarely changes)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Layer 3: Python runtime (rarely changes)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-venv \
     python3-pip \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Layer 4: Audex dependencies (rarely changes)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pyqt6 \
     python3-pyqt6.qtwebengine \
     libfcitx5-qt6-1 \
@@ -27,29 +39,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# Create test user
+# Layer 5: User setup (rarely changes)
 RUN useradd -m -s /bin/bash testuser && \
     echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-# Copy DEB file and guide script
+# Layer 6: Build arguments (changes every build)
 ARG DEB_FILE
 ARG GUIDE_SCRIPT
 
+# Layer 7: Copy files (changes when DEB/script changes)
 COPY ${DEB_FILE} /tmp/audex.deb
-COPY ${GUIDE_SCRIPT} /tmp/guide.sh
+COPY --chown=testuser:testuser --chmod=755 ${GUIDE_SCRIPT} /home/testuser/guide.sh
 
-# Setup guide script
-RUN mv /tmp/guide.sh /home/testuser/guide.sh && \
-    chmod +x /home/testuser/guide.sh && \
-    chown testuser:testuser /home/testuser/guide.sh
-
-# Switch to test user
+# Layer 8: User configuration (rarely changes)
 USER testuser
 WORKDIR /home/testuser
 
-# Add alias and auto-run guide script on login
 RUN echo "alias guide='~/guide.sh'" >> ~/.bashrc && \
     echo "~/guide.sh" >> ~/.bashrc
 
-# Set default command to bash
 CMD ["/bin/bash"]
