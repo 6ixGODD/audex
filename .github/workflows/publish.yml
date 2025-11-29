@@ -196,6 +196,7 @@ jobs:
     needs: build-python
     runs-on: ubuntu-latest
     if: github.event.inputs.test_pypi != 'true'
+    continue-on-error: true
     environment:
       name: pypi
       url: https://pypi.org/p/audex
@@ -209,6 +210,7 @@ jobs:
           path: dist/
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        continue-on-error: true
   verify-pypi:
     name: Verify PyPI Publication
     needs: publish-pypi
