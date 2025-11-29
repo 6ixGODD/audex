@@ -1,20 +1,38 @@
 #!/bin/bash
+# ============================================================================
 # Pre-removal script for Audex DEB package
+# ============================================================================
 
 set -e
 
+# ============================================================================
+# Colors
+# ============================================================================
+
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+# ============================================================================
+# Handle Removal
+# ============================================================================
+
 case "$1" in
     remove|upgrade|deconfigure)
-        echo "🗑️ Removing Audex..."
+        echo -e "${BLUE}🗑️  Removing Audex...${NC}"
 
-        # Stop user services if running
-        for user_home in /home/*; do
-            if [ -d "$user_home" ]; then
-                username=$(basename "$user_home")
-                sudo -u "$username" systemctl --user stop audex 2>/dev/null || true
-                sudo -u "$username" systemctl --user disable audex 2>/dev/null || true
-            fi
-        done
+        # Stop systemd service if running
+        if systemctl is-active --quiet audex.service 2>/dev/null; then
+            echo "   Stopping audex service..."
+            systemctl stop audex.service 2>/dev/null || true
+        fi
+
+        # Disable systemd service if enabled
+        if systemctl is-enabled --quiet audex.service 2>/dev/null; then
+            echo "   Disabling audex service..."
+            systemctl disable audex.service 2>/dev/null || true
+        fi
+
+        echo "✓ Audex service stopped"
         ;;
 esac
 

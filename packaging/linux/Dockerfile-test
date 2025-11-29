@@ -1,10 +1,19 @@
+# ============================================================================
+# Audex DEB Package Test Environment
+# ============================================================================
+# This Dockerfile creates an environment to test the installed DEB package
+# ============================================================================
+
 FROM debian:bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV LANG=C.UTF-8
 ENV LC_ALL=C.UTF-8
 
-# Layer 1: Base system packages (rarely changes)
+# ============================================================================
+# Layer 1: Base system packages
+# ============================================================================
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
     vim \
@@ -14,13 +23,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     less \
     && rm -rf /var/lib/apt/lists/*
 
-# Layer 2: Build tools (rarely changes)
+# ============================================================================
+# Layer 2: Build tools
+# ============================================================================
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Layer 3: Python runtime (rarely changes)
+# ============================================================================
+# Layer 3: Python runtime
+# ============================================================================
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     python3-venv \
@@ -28,7 +43,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Layer 4: Audex dependencies (rarely changes)
+# ============================================================================
+# Layer 4: Audex dependencies
+# ============================================================================
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-pyqt6 \
     python3-pyqt6.qtwebengine \
@@ -37,25 +55,38 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sqlite3 \
     portaudio19-dev \
     ffmpeg \
+    policykit-1 \
     && rm -rf /var/lib/apt/lists/*
 
-# Layer 5: User setup (rarely changes)
-RUN useradd -m -s /bin/bash testuser && \
-    echo "testuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
+# ============================================================================
+# Layer 5: Build arguments
+# ============================================================================
 
-# Layer 6: Build arguments (changes every build)
 ARG DEB_FILE
 ARG GUIDE_SCRIPT
 
-# Layer 7: Copy files (changes when DEB/script changes)
+# ============================================================================
+# Layer 6: Copy DEB package and guide script
+# ============================================================================
+
 COPY ${DEB_FILE} /tmp/audex.deb
-COPY --chown=testuser:testuser --chmod=755 ${GUIDE_SCRIPT} /home/testuser/guide.sh
+COPY ${GUIDE_SCRIPT} /root/guide.sh
 
-# Layer 8: User configuration (rarely changes)
-USER testuser
-WORKDIR /home/testuser
+RUN chmod +x /root/guide.sh
 
-RUN echo "alias guide='~/guide.sh'" >> ~/.bashrc && \
-    echo "~/guide.sh" >> ~/.bashrc
+# ============================================================================
+# Layer 7: Setup environment
+# ============================================================================
+
+# Add guide alias for root
+RUN echo "alias guide='/root/guide.sh'" >> /root/.bashrc && \
+    echo "/root/guide.sh" >> /root/.bashrc
+
+# Set working directory
+WORKDIR /root
+
+# ============================================================================
+# Entry point
+# ============================================================================
 
 CMD ["/bin/bash"]

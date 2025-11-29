@@ -1,5 +1,7 @@
 #!/bin/bash
-# Simple wrapper script to build DEB package using Docker
+# ============================================================================
+# Audex DEB Package - Simple wrapper script to build DEB package using Docker
+# ============================================================================
 
 set -e
 

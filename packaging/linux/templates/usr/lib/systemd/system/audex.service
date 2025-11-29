@@ -1,0 +1,42 @@
+[Unit]
+Description=Audex Medical Transcription Service
+Documentation=https://github.com/6ixGODD/audex
+After=network-online.target sound.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/usr/lib/audex
+
+# Environment
+Environment="PYTHONUNBUFFERED=1"
+
+# Ensure directories exist
+ExecStartPre=/bin/mkdir -p /var/log/audex
+ExecStartPre=/bin/mkdir -p /var/lib/audex/store
+ExecStartPre=/bin/mkdir -p /etc/audex
+
+# Start Audex
+ExecStart=/usr/bin/audex
+
+# Restart policy
+Restart=on-failure
+RestartSec=10s
+
+# Security
+NoNewPrivileges=false
+PrivateTmp=true
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=audex
+
+[Unit]
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Install]
+WantedBy=multi-user.target

@@ -1,102 +1,174 @@
 #!/bin/bash
+# ============================================================================
 # Post-installation script for Audex DEB package
+# ============================================================================
 
 set -e
 
-# Color output
+# ============================================================================
+# Colors and Logging
+# ============================================================================
+
+RED='\033[0;31m'
 GREEN='\033[0;32m'
-BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m'
 
-echo -e "${BLUE}🚀 Installing Audex...${NC}"
+log_info() { echo -e "${BLUE}ℹ${NC} $1"; }
+log_success() { echo -e "${GREEN}✓${NC} $1"; }
+log_warn() { echo -e "${YELLOW}⚠${NC} $1"; }
+log_error() { echo -e "${RED}✗${NC} $1"; }
+log_step() { echo -e "\n${BLUE}━━━${NC} $1"; }
+print_separator() { echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; }
 
-# Get the installed version from control file
-VERSION=$(dpkg -s audex | grep '^Version:' | awk '{print $2}')
+# ============================================================================
+# Get Package Version
+# ============================================================================
 
-# Create system directories
-echo "📁 Creating system directories..."
+VERSION=$(dpkg -s audex 2>/dev/null | grep '^Version:' | awk '{print $2}')
+
+echo ""
+print_separator
+echo -e "${BLUE}🚀 Installing Audex ${VERSION}${NC}"
+print_separator
+echo ""
+
+# ============================================================================
+# Create System Directories
+# ============================================================================
+
+log_step "Creating system directories..."
+
 mkdir -p /etc/audex
+mkdir -p /var/lib/audex/store
+mkdir -p /var/log/audex
 mkdir -p /usr/lib/audex
 
-# Create virtual environment with system site packages (for PyQt6)
-cd /usr/lib/audex
-echo "📦 Creating virtual environment..."
-python3 -m venv --system-site-packages venv
+chmod 755 /etc/audex
+chmod 755 /var/lib/audex
+chmod 755 /var/lib/audex/store
+chmod 755 /var/log/audex
+chmod 755 /usr/lib/audex
 
-# Install Audex from PyPI with progress
-echo "📥 Installing Audex ${VERSION} from PyPI..."
-echo "   (This may take a few minutes...)"
+log_success "System directories created"
+
+# ============================================================================
+# Setup Python Virtual Environment
+# ============================================================================
+
+log_step "Setting up Python virtual environment..."
+
+cd /usr/lib/audex
+
+# Create venv with system site packages (for PyQt6)
+if [ ! -d "venv" ]; then
+    python3 -m venv --system-site-packages venv
+    log_success "Virtual environment created"
+else
+    log_info "Virtual environment already exists"
+fi
+
+# ============================================================================
+# Install Audex from PyPI
+# ============================================================================
+
+log_step "Installing Audex ${VERSION} from PyPI..."
+log_info "This may take a few minutes..."
+
+venv/bin/pip install --quiet --upgrade pip
 venv/bin/pip install --progress-bar on "audex==${VERSION}"
 
-# Generate configuration files using the installed audex
-echo "⚙️  Generating system configuration..."
+log_success "Audex ${VERSION} installed"
+
+# ============================================================================
+# Generate System Configuration
+# ============================================================================
+
+log_step "Generating system configuration files..."
+
+# Generate system config
 venv/bin/python3 -m audex init gencfg \
     --format system \
     --output /etc/audex/config.system.yml \
     --platform linux
 
-echo "⚙️  Generating example configuration..."
+log_success "Generated: /etc/audex/config.system.yml"
+
+# Generate example config
 venv/bin/python3 -m audex init gencfg \
     --format yaml \
     --output /etc/audex/config.example.yml
 
-# Set correct permissions
+log_success "Generated: /etc/audex/config.example.yml"
+
+# ============================================================================
+# Set Permissions
+# ============================================================================
+
+log_step "Setting permissions..."
+
 chown -R root:root /usr/lib/audex
+chown -R root:root /etc/audex
+chown -R root:root /var/lib/audex
+chown -R root:root /var/log/audex
+
 chmod 755 /usr/bin/audex
 chmod 755 /usr/bin/audex-setup
 
-# Create user directory templates
-echo "📁 Creating user directory templates..."
-mkdir -p /etc/skel/.local/share/audex/{store,logs}
-mkdir -p /etc/skel/.config/audex
+log_success "Permissions set"
 
-# Copy example config to skel
-if [ -f /etc/audex/config.example.yml ]; then
-    cp /etc/audex/config.example.yml /etc/skel/.config/audex/config.example.yml
-fi
+# ============================================================================
+# Configure systemd Service
+# ============================================================================
 
-# Initialize directories for existing users
-for user_home in /home/*; do
-    if [ -d "$user_home" ]; then
-        username=$(basename "$user_home")
+log_step "Configuring systemd service..."
 
-        # Skip if already initialized
-        if [ -d "$user_home/.local/share/audex" ]; then
-            continue
-        fi
+systemctl daemon-reload
 
-        # Create directories
-        sudo -u "$username" mkdir -p "$user_home/.local/share/audex"/{store,logs} 2>/dev/null || true
-        sudo -u "$username" mkdir -p "$user_home/.config/audex" 2>/dev/null || true
+log_success "Systemd service configured"
 
-        # Copy example config
-        if [ -f /etc/audex/config.example.yml ]; then
-            sudo -u "$username" cp /etc/audex/config.example.yml "$user_home/.config/audex/config.example.yml" 2>/dev/null || true
-        fi
-    fi
-done
+# ============================================================================
+# Final Instructions
+# ============================================================================
 
-echo -e "${GREEN}✅ Audex ${VERSION} installed successfully!${NC}"
 echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+print_separator
+log_success "Audex ${VERSION} installed successfully!"
+print_separator
+echo ""
 echo -e "${YELLOW}📋 Next Steps:${NC}"
 echo ""
-echo "  1️⃣  Run configuration wizard:"
-echo -e "     ${BLUE}audex-setup${NC}"
+echo "  1️⃣  Run the setup wizard (required):"
+echo -e "     ${GREEN}sudo audex-setup${NC}"
 echo ""
-echo "  2️⃣  Start Audex:"
-echo -e "     ${BLUE}audex${NC}"
+echo "  2️⃣  Start Audex manually:"
+echo -e "     ${GREEN}sudo audex${NC}"
 echo ""
-echo "  3️⃣  (Optional) Enable auto-start:"
-echo -e "     ${BLUE}systemctl --user enable audex${NC}"
-echo -e "     ${BLUE}systemctl --user start audex${NC}"
+echo "  3️⃣  Enable auto-start on boot:"
+echo -e "     ${GREEN}sudo systemctl enable audex.service${NC}"
+echo -e "     ${GREEN}sudo systemctl start audex.service${NC}"
 echo ""
-echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+echo "  4️⃣  Check service status:"
+echo -e "     ${GREEN}sudo systemctl status audex.service${NC}"
 echo ""
-echo "📁 User data: ~/.local/share/audex"
-echo "⚙️  Configuration: ~/.config/audex/config.yml"
-echo "📚 Example config: /etc/audex/config.example.yml"
+echo "  5️⃣  View logs:"
+echo -e "     ${GREEN}sudo journalctl -u audex.service -f${NC}"
+echo -e "     ${GREEN}sudo tail -f /var/log/audex/audex.log${NC}"
 echo ""
+print_separator
+echo ""
+echo -e "${BLUE}📁 System Directories:${NC}"
+echo "   Configuration:  /etc/audex/"
+echo "   Data:           /var/lib/audex/"
+echo "   Logs:           /var/log/audex/"
+echo "   Installation:   /usr/lib/audex/"
+echo ""
+echo -e "${YELLOW}⚠️  Important:${NC}"
+echo "   - Audex requires root privileges to run"
+echo "   - Always use 'sudo' when running audex commands"
+echo "   - Configuration file: /etc/audex/config.yml (created by setup wizard)"
+echo ""
+print_separator
 
 exit 0

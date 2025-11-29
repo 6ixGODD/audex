@@ -114,12 +114,15 @@ def create_package_structure(pkg_dir: pathlib.Path) -> None:
     directories = [
         pkg_dir / "DEBIAN",
         pkg_dir / "etc" / "audex",
+        pkg_dir / "var" / "lib" / "audex" / "store",
+        pkg_dir / "var" / "log" / "audex",
         pkg_dir / "usr" / "bin",
         pkg_dir / "usr" / "lib" / "audex",
+        pkg_dir / "usr" / "lib" / "systemd" / "system",
         pkg_dir / "usr" / "share" / "applications",
         pkg_dir / "usr" / "share" / "icons" / "hicolor" / "scalable" / "apps",
+        pkg_dir / "usr" / "share" / "polkit-1" / "actions",
         pkg_dir / "usr" / "share" / "doc" / "audex",
-        pkg_dir / "usr" / "share" / "systemd" / "user",
     ]
 
     for directory in directories:
@@ -137,17 +140,24 @@ def copy_template_files(pkg_dir: pathlib.Path, version: str, arch: str) -> None:
         src = TEMPLATES_DIR / "DEBIAN" / script
         dst = pkg_dir / "DEBIAN" / script
 
-        # ✅ Read, normalize, and write with LF
+        if not src.exists():
+            log_error(f"Template file not found: {src}")
+            sys.exit(1)
+
         content = src.read_text(encoding="utf-8")
         content = normalize_line_endings(content)
         dst.write_text(content, encoding="utf-8")
         dst.chmod(0o755)
 
-        log_info(f"  Copied {script}")
+        log_info(f"   Copied {script}")
 
     # Process control template
     control_template = TEMPLATES_DIR / "DEBIAN" / "control.template"
     control_dst = pkg_dir / "DEBIAN" / "control"
+
+    if not control_template.exists():
+        log_error(f"Control template not found: {control_template}")
+        sys.exit(1)
 
     control_content = control_template.read_text(encoding="utf-8")
     control_content = normalize_line_endings(control_content)
@@ -155,38 +165,61 @@ def copy_template_files(pkg_dir: pathlib.Path, version: str, arch: str) -> None:
     control_content = control_content.replace("{ARCH}", arch)
 
     control_dst.write_text(control_content, encoding="utf-8")
-    log_info("  Processed control file")
+    log_info("   Processed control file")
 
     # Copy launcher scripts
     for script in ["audex", "audex-setup"]:
         src = TEMPLATES_DIR / "usr" / "bin" / script
         dst = pkg_dir / "usr" / "bin" / script
 
-        # ✅ Normalize line endings for shell scripts
+        if not src.exists():
+            log_error(f"Launcher script not found: {src}")
+            sys.exit(1)
+
         content = src.read_text(encoding="utf-8")
         content = normalize_line_endings(content)
         dst.write_text(content, encoding="utf-8")
         dst.chmod(0o755)
 
-        log_info(f"  Copied {script}")
+        log_info(f"   Copied {script}")
 
     # Copy desktop file
     desktop_src = TEMPLATES_DIR / "usr" / "share" / "applications" / "audex.desktop"
     desktop_dst = pkg_dir / "usr" / "share" / "applications" / "audex.desktop"
 
-    content = desktop_src.read_text(encoding="utf-8")
-    content = normalize_line_endings(content)
-    desktop_dst.write_text(content, encoding="utf-8")
-    log_info("  Copied desktop file")
+    if desktop_src.exists():
+        content = desktop_src.read_text(encoding="utf-8")
+        content = normalize_line_endings(content)
+        desktop_dst.write_text(content, encoding="utf-8")
+        log_info("   Copied desktop file")
+    else:
+        log_warn("Desktop file not found, skipping")
 
-    # Copy systemd service
-    service_src = TEMPLATES_DIR / "usr" / "share" / "systemd" / "user" / "audex.service"
-    service_dst = pkg_dir / "usr" / "share" / "systemd" / "user" / "audex.service"
+    # Copy systemd system service
+    service_src = TEMPLATES_DIR / "usr" / "lib" / "systemd" / "system" / "audex.service"
+    service_dst = pkg_dir / "usr" / "lib" / "systemd" / "system" / "audex.service"
 
-    content = service_src.read_text(encoding="utf-8")
-    content = normalize_line_endings(content)
-    service_dst.write_text(content, encoding="utf-8")
-    log_info("  Copied systemd service")
+    if service_src.exists():
+        content = service_src.read_text(encoding="utf-8")
+        content = normalize_line_endings(content)
+        service_dst.write_text(content, encoding="utf-8")
+        log_info("   Copied systemd service")
+    else:
+        log_warn("Systemd service file not found, skipping")
+
+    # Copy PolicyKit policy
+    policy_src = (
+        TEMPLATES_DIR / "usr" / "share" / "polkit-1" / "actions" / "com.audex.pkexec.policy"
+    )
+    policy_dst = pkg_dir / "usr" / "share" / "polkit-1" / "actions" / "com.audex.pkexec.policy"
+
+    if policy_src.exists():
+        content = policy_src.read_text(encoding="utf-8")
+        content = normalize_line_endings(content)
+        policy_dst.write_text(content, encoding="utf-8")
+        log_info("   Copied PolicyKit policy")
+    else:
+        log_warn("PolicyKit policy not found, pkexec won't work")
 
     log_success("Template files copied")
 
@@ -272,7 +305,7 @@ def main() -> None:
 
     print(f"{Colors.BLUE}")
     print("╔════════════════════════════════════════════════╗")
-    print("║       Audex DEB Package Builder               ║")
+    print("║       Audex DEB Package Builder                ║")
     print("╚════════════════════════════════════════════════╝")
     print(f"{Colors.NC}\n")
 

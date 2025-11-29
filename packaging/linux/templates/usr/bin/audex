@@ -1,71 +1,124 @@
 #!/bin/bash
-# Audex launcher script
-# This script sets up the environment and launches Audex
+# ============================================================================
+# Audex Launcher Script
+# ============================================================================
+# Description: Launch Audex application (requires root privileges)
+# ============================================================================
 
 set -e
 
+# ============================================================================
 # Constants
-readonly AUDEX_VENV="/usr/lib/audex/venv"
-readonly USER_CONFIG="$HOME/.config/audex/config.yml"
-readonly USER_DATA="$HOME/.local/share/audex"
+# ============================================================================
 
-# Color codes
+readonly AUDEX_VENV="/usr/lib/audex/venv"
+readonly SYSTEM_CONFIG="/etc/audex/config.yml"
+readonly SYSTEM_DATA="/var/lib/audex"
+readonly SYSTEM_LOG="/var/log/audex"
+
+# ============================================================================
+# Color Codes
+# ============================================================================
+
 readonly RED='\033[0;31m'
 readonly YELLOW='\033[1;33m'
+readonly GREEN='\033[0;32m'
 readonly BLUE='\033[0;34m'
 readonly NC='\033[0m'
 
-# Check if user has configured Audex
+# ============================================================================
+# Root Permission Check
+# ============================================================================
+
+if [ "$(id -u)" -ne 0 ]; then
+    echo -e "${RED}❌ Error: Audex requires root privileges${NC}"
+    echo ""
+    echo "Please run with sudo:"
+    echo -e "  ${GREEN}sudo audex${NC}"
+    echo ""
+    echo "Or enable as a system service:"
+    echo -e "  ${GREEN}sudo systemctl enable --now audex.service${NC}"
+    echo ""
+    exit 1
+fi
+
+# ============================================================================
+# Check Virtual Environment
+# ============================================================================
+
+check_venv() {
+    if [ ! -f "$AUDEX_VENV/bin/activate" ]; then
+        echo -e "${RED}❌ Error: Virtual environment not found at $AUDEX_VENV${NC}"
+        echo ""
+        echo "Please reinstall Audex:"
+        echo -e "  ${GREEN}sudo apt install --reinstall audex${NC}"
+        echo ""
+        exit 1
+    fi
+}
+
+# ============================================================================
+# Check Configuration
+# ============================================================================
+
 check_configuration() {
-    if [ ! -f "$USER_CONFIG" ]; then
+    if [ ! -f "$SYSTEM_CONFIG" ]; then
         echo -e "${YELLOW}⚠️  Configuration file not found! ${NC}"
         echo ""
-        echo "Please run the configuration wizard first:"
-        echo -e "  ${BLUE}audex-setup${NC}"
+        echo "Please run the setup wizard first:"
+        echo -e "  ${GREEN}sudo audex-setup${NC}"
         echo ""
         exit 1
     fi
 
-    # Check if API credentials are set
-    if grep -q "<UNSET>" "$USER_CONFIG" 2>/dev/null; then
+    # Check if API credentials are configured
+    if grep -q "<UNSET>" "$SYSTEM_CONFIG" 2>/dev/null; then
         echo -e "${YELLOW}⚠️  API credentials not configured!${NC}"
         echo ""
         echo "Please complete the configuration:"
-        echo -e "  ${BLUE}audex-setup${NC}"
+        echo -e "  ${GREEN}sudo audex-setup${NC}"
         echo ""
         exit 1
     fi
 }
 
-# Initialize user directories if they don't exist
-init_user_dirs() {
-    if [ ! -d "$USER_DATA" ]; then
-        mkdir -p "$USER_DATA"/{store,logs}
-    fi
+# ============================================================================
+# Initialize System Directories
+# ============================================================================
+
+init_system_dirs() {
+    mkdir -p "$SYSTEM_DATA/store"
+    mkdir -p "$SYSTEM_LOG"
+
+    # Ensure proper permissions
+    chmod 755 "$SYSTEM_DATA"
+    chmod 755 "$SYSTEM_DATA/store"
+    chmod 755 "$SYSTEM_LOG"
 }
 
-# Check virtual environment
-check_venv() {
-    if [ ! -f "$AUDEX_VENV/bin/activate" ]; then
-        echo -e "${RED}❌ Error: Virtual environment not found${NC}"
-        echo "   Please reinstall Audex:"
-        echo "     sudo apt install --reinstall audex"
-        exit 1
-    fi
-}
+# ============================================================================
+# Setup Environment
+# ============================================================================
 
-# Set environment variables for input method support
 setup_environment() {
-    # Application paths
-    export AUDEX_DATA_DIR="$USER_DATA"
-    export AUDEX_CONFIG="$USER_CONFIG"
+    # Set system paths
+    export AUDEX_CONFIG="$SYSTEM_CONFIG"
+    export AUDEX_DATA_DIR="$SYSTEM_DATA"
+    export AUDEX_LOG_DIR="$SYSTEM_LOG"
+    export AUDEX_SYSTEM_INSTALL="1"
+
+    # Python unbuffered output
+    export PYTHONUNBUFFERED="1"
 }
 
-# Main execution
+# ============================================================================
+# Main Execution
+# ============================================================================
+
 main() {
-    check_configuration
-    init_user_dirs
     check_venv
+    check_configuration
+    init_system_dirs
     setup_environment
 
     # Activate virtual environment
@@ -73,8 +126,8 @@ main() {
 
     # Launch Audex
     if [ $# -eq 0 ]; then
-        # No arguments: use user config
-        exec python3 -m audex --config "$USER_CONFIG"
+        # No arguments: use system config
+        exec python3 -m audex --config "$SYSTEM_CONFIG"
     else
         # Pass through all arguments
         exec python3 -m audex "$@"

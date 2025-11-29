@@ -1,23 +1,53 @@
 #!/bin/bash
+# ============================================================================
 # Post-removal script for Audex DEB package
+# ============================================================================
 
 set -e
 
+# ============================================================================
+# Colors
+# ============================================================================
+
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+# ============================================================================
+# Handle Removal
+# ============================================================================
+
 case "$1" in
     purge)
-        echo "🧹 Purging Audex system configuration..."
+        echo ""
+        echo -e "${BLUE}🧹 Purging Audex system files...${NC}"
+        echo ""
 
-        # Remove system configuration only
+        # Remove system directories
         rm -rf /etc/audex
-        rm -rf /etc/skel/.local/share/audex
-        rm -rf /etc/skel/.config/audex
+        rm -rf /var/lib/audex
+        rm -rf /var/log/audex
+        rm -rf /usr/lib/audex
 
-        echo "ℹ️ User data in ~/.local/share/audex is preserved"
-        echo "   To remove user data manually:"
-        echo "   rm -rf ~/.local/share/audex ~/.config/audex"
+        # Reload systemd
+        systemctl daemon-reload 2>/dev/null || true
+
+        echo -e "${GREEN}✓ System files removed${NC}"
+        echo ""
+        echo -e "${YELLOW}Note: User data has been removed${NC}"
         ;;
+
     remove)
-        echo "✅ Audex removed (configuration preserved)"
+        echo ""
+        echo -e "${GREEN}✅ Audex removed${NC}"
+        echo ""
+        echo -e "${BLUE}ℹ️  Configuration preserved in:${NC}"
+        echo "   /etc/audex/"
+        echo ""
+        echo -e "${YELLOW}To completely remove all data, run:${NC}"
+        echo "   sudo apt purge audex"
+        echo ""
         ;;
 esac
 

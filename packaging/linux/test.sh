@@ -1,5 +1,7 @@
 #!/bin/bash
-# Interactive test script for Audex DEB package
+# ============================================================================
+# Audex DEB Package - Interactive test script for Audex DEB package
+# ============================================================================
 
 set -e
 
