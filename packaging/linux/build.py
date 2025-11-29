@@ -171,7 +171,7 @@ def copy_template_files(pkg_dir: pathlib.Path, version: str, arch: str) -> None:
         log_info(f"  Copied {script}")
 
     # Copy desktop file
-    desktop_src = TEMPLATES_DIR / "usr" / "share" / "applications" / "audex. desktop"
+    desktop_src = TEMPLATES_DIR / "usr" / "share" / "applications" / "audex.desktop"
     desktop_dst = pkg_dir / "usr" / "share" / "applications" / "audex.desktop"
 
     content = desktop_src.read_text(encoding="utf-8")
@@ -180,7 +180,7 @@ def copy_template_files(pkg_dir: pathlib.Path, version: str, arch: str) -> None:
     log_info("  Copied desktop file")
 
     # Copy systemd service
-    service_src = TEMPLATES_DIR / "usr" / "share" / "systemd" / "user" / "audex. service"
+    service_src = TEMPLATES_DIR / "usr" / "share" / "systemd" / "user" / "audex.service"
     service_dst = pkg_dir / "usr" / "share" / "systemd" / "user" / "audex.service"
 
     content = service_src.read_text(encoding="utf-8")
@@ -196,7 +196,7 @@ def copy_icon(pkg_dir: pathlib.Path) -> None:
     log_step("Copying icon...")
 
     icon_src = BUILD_DIR / "logo.svg"
-    icon_dst = pkg_dir / "usr" / "share" / "icons" / "hicolor" / "scalable" / "apps" / "audex. svg"
+    icon_dst = pkg_dir / "usr" / "share" / "icons" / "hicolor" / "scalable" / "apps" / "audex.svg"
 
     if icon_src.exists():
         shutil.copy2(icon_src, icon_dst)
@@ -259,7 +259,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "arch",
-        nargs="? ",
+        nargs="?",
         default="arm64",
         help="Architecture (default: arm64)",
     )
