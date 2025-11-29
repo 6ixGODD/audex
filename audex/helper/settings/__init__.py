@@ -96,15 +96,30 @@ class Settings(BaseSettings):
         raw_dump = self.model_dump()
         return self._clean_dict(raw_dump, include_none=include_none)
 
-    def to_yaml(self, fpath: str | pathlib.Path | os.PathLike[str]) -> None:
-        """Export configuration to YAML file with field descriptions as
-        comments.
+    def to_yaml(
+        self,
+        fpath: str | pathlib.Path | os.PathLike[str],
+        exclude_unset: bool = False,
+        exclude_none: bool = False,
+        with_comments: bool = True,
+    ) -> None:
+        """Export configuration to YAML file with optional field
+        descriptions as comments.
 
         Args:
             fpath: Path to the output YAML file.
+            exclude_unset: If True, exclude fields with Unset values and empty nested models.
+            exclude_none: If True, exclude fields with None values.
+            with_comments: If True, include field descriptions as comments.
         """
-        descriptions = self._collect_field_desc()
+        descriptions = self._collect_field_desc() if with_comments else {}
         data = self.serl(include_none=True)
+
+        # Clean unset and none values
+        if exclude_unset:
+            data = self._clean_unset_recursive(data)
+        if exclude_none:
+            data = self._clean_none_recursive(data)
 
         def write_yaml_value(
             f: t.TextIO,
@@ -117,7 +132,7 @@ class Settings(BaseSettings):
             formatting."""
             indent_str = "  " * indent
             desc = descriptions.get(field_path, "")
-            comment = f" # {desc}" if desc else ""
+            comment = f" # {desc}" if desc and with_comments else ""
 
             if value is None:
                 f.write(f"{indent_str}{key}: ~{comment}\n")
@@ -161,7 +176,7 @@ class Settings(BaseSettings):
                         first_key, first_value = items_list[0]
                         first_field_path = f"{prefix}.{first_key}"
                         first_desc = descriptions.get(first_field_path, "")
-                        first_comment = f"  # {first_desc}" if first_desc else ""
+                        first_comment = f"  # {first_desc}" if first_desc and with_comments else ""
 
                         if first_value is None:
                             f.write(f"{indent_str}- {first_key}: ~{first_comment}\n")
@@ -391,6 +406,112 @@ class Settings(BaseSettings):
                 if serialized is not None or include_none:
                     cleaned[key] = serialized
         return cleaned
+
+    def _clean_unset_recursive(self, data: t.Any) -> t.Any:
+        """Recursively remove Unset values and empty nested structures.
+
+        Args:
+            data: Data structure to clean.
+
+        Returns:
+            Cleaned data structure with Unset values and empty dicts removed.
+        """
+        if isinstance(data, utils.Unset) or isinstance(data, str) and data == "<UNSET>":
+            return None
+
+        if isinstance(data, dict):
+            cleaned = {}
+            for key, value in data.items():
+                # Skip Unset values
+                if isinstance(value, utils.Unset) or isinstance(value, str) and value == "<UNSET>":
+                    continue
+
+                cleaned_value = self._clean_unset_recursive(value)
+
+                # Skip None (which indicates Unset was found)
+                if cleaned_value is None:
+                    continue
+
+                # Skip empty dicts (all nested fields were Unset)
+                if isinstance(cleaned_value, dict) and not cleaned_value:
+                    continue
+
+                # Skip empty lists
+                if isinstance(cleaned_value, list) and not cleaned_value:
+                    continue
+
+                cleaned[key] = cleaned_value
+
+            # Return None if dict is empty (all fields were Unset)
+            return cleaned if cleaned else None
+
+        if isinstance(data, list):
+            cleaned_list = []
+            for item in data:
+                if isinstance(item, utils.Unset) or isinstance(item, str) and item == "<UNSET>":
+                    continue
+
+                cleaned_item = self._clean_unset_recursive(item)
+                if cleaned_item is not None:
+                    # Don't add empty dicts or lists
+                    if isinstance(cleaned_item, (dict, list)) and not cleaned_item:
+                        continue
+                    cleaned_list.append(cleaned_item)
+
+            return cleaned_list if cleaned_list else None
+
+        return data
+
+    def _clean_none_recursive(self, data: t.Any) -> t.Any:
+        """Recursively remove None values and empty nested structures.
+
+        Args:
+            data: Data structure to clean.
+
+        Returns:
+            Cleaned data structure with None values removed.
+        """
+        if data is None:
+            return None
+
+        if isinstance(data, dict):
+            cleaned = {}
+            for key, value in data.items():
+                if value is None:
+                    continue
+
+                cleaned_value = self._clean_none_recursive(value)
+
+                if cleaned_value is None:
+                    continue
+
+                # Skip empty dicts
+                if isinstance(cleaned_value, dict) and not cleaned_value:
+                    continue
+
+                # Skip empty lists
+                if isinstance(cleaned_value, list) and not cleaned_value:
+                    continue
+
+                cleaned[key] = cleaned_value
+
+            return cleaned if cleaned else None
+
+        if isinstance(data, list):
+            cleaned_list = []
+            for item in data:
+                if item is None:
+                    continue
+
+                cleaned_item = self._clean_none_recursive(item)
+                if cleaned_item is not None:
+                    if isinstance(cleaned_item, (dict, list)) and not cleaned_item:
+                        continue
+                    cleaned_list.append(cleaned_item)
+
+            return cleaned_list if cleaned_list else None
+
+        return data
 
     # ============================================================================
     # Private Methods - System YAML Generation
@@ -642,7 +763,7 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             if (
                 not value
-                or value[0] in "-?  :,[]{}#&*!  |>'\"%@`"
+                or value[0] in "-? :,[]{}#&*! |>'\"%@`"
                 or value in ("true", "false", "null", "yes", "no", "on", "off")
                 or ":" in value
                 or "#" in value

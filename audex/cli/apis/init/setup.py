@@ -79,7 +79,7 @@ class Args(BaseArgs):
             self.output.parent.mkdir(parents=True, exist_ok=True)
 
             with display.loading("Writing configuration..."):
-                cfg.to_yaml(self.output)
+                cfg.to_yaml(self.output, exclude_unset=True)
 
             display.success("Configuration saved successfully")
             display.path(self.output, label="Saved to", exists=self.output.exists())
