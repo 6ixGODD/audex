@@ -7,9 +7,6 @@ permissions:
   contents: write # For creating releases and uploading assets
   id-token: write # For PyPI publishing (OIDC)
 jobs:
-  # ============================================================================
-  # Job 1: Create GitHub Release with Changelog
-  # ============================================================================
   create-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
@@ -87,10 +84,6 @@ jobs:
             - [Documentation](https://github.com/${{ github.repository }})
           draft: false
           prerelease: false
-  # ============================================================================
-
-  # Job 2: Publish to PyPI (using workflow_call)
-  # ============================================================================
   publish-pypi:
     name: Publish to PyPI
     needs: create-release
@@ -99,10 +92,6 @@ jobs:
       contents: read
       id-token: write
     secrets: inherit
-  # ============================================================================
-
-  # Job 3: Build DEB Packages
-  # ============================================================================
   build-deb:
     name: Build DEB Package (${{ matrix.arch }})
     needs: [create-release, publish-pypi]
@@ -117,10 +106,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y dpkg-dev
       - name: Set up QEMU (for cross-platform builds)
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -128,12 +113,20 @@ jobs:
       - name: Build DEB package using Docker
         run: |
           cd packaging/linux
-          ./build.sh ${{ matrix.arch }}
+          python3 build.py \
+            --version ${{ needs.create-release.outputs.version }} \
+            --arch ${{ matrix.arch }}
       - name: Verify DEB package
         run: |
           VERSION="${{ needs.create-release.outputs.version }}"
           ARCH="${{ matrix.arch }}"
           DEB_FILE="dist/audex_${VERSION}_${ARCH}.deb"
+
+          if [ !  -f "${DEB_FILE}" ]; then
+            echo "❌ DEB file not found: ${DEB_FILE}"
+            ls -la dist/
+            exit 1
+          fi
 
           echo "📦 Package Info:"
           dpkg-deb --info "${DEB_FILE}"
@@ -147,10 +140,6 @@ jobs:
           name: deb-${{ matrix.arch }}
           path: dist/audex_${{ needs.create-release.outputs.version }}_${{ matrix.arch }}.deb
           retention-days: 7
-  # ============================================================================
-
-  # Job 4: Upload DEB packages to Release
-  # ============================================================================
   upload-release-assets:
     name: Upload Release Assets
     needs: [create-release, build-deb]
