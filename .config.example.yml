@@ -1,7 +1,7 @@
 core: # Core configuration settings.
   app: # Application specific configuration
     app_name: Audex # The name of the application.
-    app_version: 1.0.1 # The version of the application.
+    app_version: 1.0.5-a # The version of the application.
     debug: false # Enable or disable debug mode.
     native: false # Indicates if the application is running in native mode.
   logging: # Logging configuration
@@ -23,7 +23,7 @@ core: # Core configuration settings.
     sample_rate: 16000 # The sample rate of the audio in Hz.
     vpr_sample_rate: 16000 # The sample rate for voice print recognition in Hz.
     vpr_text_content: 您好，请问您今天需要什么帮助？ # The text content used for voice print recognition.
-    vpr_threshold: 0.4 # The threshold for voice print recognition similarity.
+    vpr_threshold: 0.5 # The threshold for voice print recognition similarity.
     key_prefix: audex # The prefix for storing audio files in cloud storage.
     segment_buffer: 2000 # The buffer time in milliseconds for audio segmentation.
   session: # Session management configuration
@@ -60,8 +60,8 @@ provider: # Provider configuration settings.
         app_id: <UNSET> # XFYun Application ID. Must be provided for authentication.
         api_key: <UNSET> # XFYun API Key. Must be provided for authentication.
         api_secret: <UNSET> # XFYun API Secret. Must be provided for authentication.
-      group_id: 4e81d0ed1a1341c58476eedc23c5f9d0 # The group ID for voiceprint recognition.
-      group_id_path: .xfyun.vpr.gid # The file path to read the group ID from if not provided directly.
+      group_id: ~ # The group ID for voiceprint recognition.
+      group_id_path: .xf.vprgroup # The file path to read the group ID from if not provided directly.
       http: # HTTP client configuration for XFYun VPR service.
         proxy: ~ # Proxy URL to route HTTP requests through. Example: 'http://localhost:8080'
         timeout: 10.0 # Timeout in seconds for HTTP requests.
@@ -72,7 +72,7 @@ provider: # Provider configuration settings.
         appkey: <UNSET> # Unisound App Key
         secret: <UNSET> # Unisound Secret
       group_id: ~ # The group ID for voiceprint recognition.
-      group_id_path: .unisound.vpr.gid # The file path to read the group ID from if not provided directly.
+      group_id_path: .unisound.vprgroup # The file path to read the group ID from if not provided directly.
       http: # HTTP client configuration for Unisound VPR service.
         proxy: ~ # Proxy URL to route HTTP requests through. Example: 'http://localhost:8080'
         timeout: 10.0 # Timeout in seconds for HTTP requests.
@@ -99,7 +99,7 @@ infrastructure: # Infrastructure configuration settings.
       negative_ttl: 60 # TTL for negative cache entries in seconds.
   store: # Store configuration.
     type: localfile # Type of the store.
-    base_url: ./store # Store base URL. In case of 'file' type, it is the local directory path. In case of 'obs' type, it is the OBS bucket URL.
+    base_url: store # Store base URL. In case of 'file' type, it is the local directory path. In case of 'obs' type, it is the OBS bucket URL.
   recorder: # Recorder configuration.
     format: int16 # Audio sample format.
     channels: 1 # Number of audio channels.
