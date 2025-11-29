@@ -79,7 +79,7 @@ class Args(BaseArgs):
             self.output.parent.mkdir(parents=True, exist_ok=True)
 
             with display.loading("Writing configuration..."):
-                cfg.to_yaml(self.output, exclude_unset=True)
+                cfg.to_yaml(self.output, exclude_unset=True, exclude_none=True, with_comments=False)
 
             display.success("Configuration saved successfully")
             display.path(self.output, label="Saved to", exists=self.output.exists())
@@ -159,7 +159,7 @@ class Args(BaseArgs):
 
         # App ID
         current_app_id = xfyun_cfg.app_id
-        is_unset = current_app_id in ("<UNSET>", None, "")
+        is_unset = current_app_id in ("<UNSET>", None, "") or isinstance(current_app_id, Unset)
 
         if is_unset:
             display.warning("XFYun App ID is NOT configured")
@@ -175,7 +175,7 @@ class Args(BaseArgs):
 
         # API Key
         current_api_key = xfyun_cfg.api_key
-        is_unset = current_api_key in ("<UNSET>", None, "")
+        is_unset = current_api_key in ("<UNSET>", None, "") or isinstance(current_api_key, Unset)
 
         if is_unset:
             display.warning("XFYun API Key is NOT configured")
@@ -183,7 +183,7 @@ class Args(BaseArgs):
             cfg.provider.vpr.xfyun.credential.api_key = api_key
             display.success("XFYun API Key updated")
         else:
-            display.info(f"Current API Key: {self._mask_secret(current_api_key)}")
+            display.info(f"Current API Key: {self._mask_secret(str(current_api_key))}")
             if display.confirm("Update XFYun API Key?", default=False):
                 api_key = self._prompt_secret("Enter XFYun API Key")
                 cfg.provider.vpr.xfyun.credential.api_key = api_key
@@ -191,7 +191,7 @@ class Args(BaseArgs):
 
         # API Secret
         current_secret = xfyun_cfg.api_secret
-        is_unset = current_secret in ("<UNSET>", None, "")
+        is_unset = current_secret in ("<UNSET>", None, "") or isinstance(current_secret, Unset)
 
         if is_unset:
             display.warning("XFYun API Secret is NOT configured")
@@ -199,7 +199,7 @@ class Args(BaseArgs):
             cfg.provider.vpr.xfyun.credential.api_secret = api_secret
             display.success("XFYun API Secret updated")
         else:
-            display.info(f"Current API Secret: {self._mask_secret(current_secret)}")
+            display.info(f"Current API Secret: {self._mask_secret(str(current_secret))}")
             if display.confirm("Update XFYun API Secret?", default=False):
                 api_secret = self._prompt_secret("Enter XFYun API Secret")
                 cfg.provider.vpr.xfyun.credential.api_secret = api_secret
@@ -215,7 +215,7 @@ class Args(BaseArgs):
 
         # AppKey
         current_appkey = unisound_cfg.appkey
-        is_unset = current_appkey in ("<UNSET>", None, "")
+        is_unset = current_appkey in ("<UNSET>", None, "") or isinstance(current_appkey, Unset)
 
         if is_unset:
             display.warning("Unisound AppKey is NOT configured")
@@ -231,7 +231,7 @@ class Args(BaseArgs):
 
         # Secret
         current_secret = unisound_cfg.secret
-        is_unset = current_secret in ("<UNSET>", None, "")
+        is_unset = current_secret in ("<UNSET>", None, "") or isinstance(current_secret, Unset)
 
         if is_unset:
             display.warning("Unisound Secret is NOT configured")
@@ -239,7 +239,7 @@ class Args(BaseArgs):
             cfg.provider.vpr.unisound.credential.secret = secret
             display.success("Unisound Secret updated")
         else:
-            display.info(f"Current Secret: {self._mask_secret(current_secret)}")
+            display.info(f"Current Secret: {self._mask_secret(str(current_secret))}")
             if display.confirm("Update Unisound Secret?", default=False):
                 secret = self._prompt_secret("Enter Unisound Secret")
                 cfg.provider.vpr.unisound.credential.secret = secret
