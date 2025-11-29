@@ -45,9 +45,6 @@ class Args(BaseArgs):
                 if self.config.suffix in {".yaml", ".yml"}:
                     setconfig(Config.from_yaml(self.config))
                     display.success("YAML configuration loaded")
-                elif self.config.suffix in {".json", ".jsonc", ".json5"}:
-                    setconfig(Config.from_json(self.config))
-                    display.success("JSON configuration loaded")
                 else:
                     raise InvalidArgumentError(
                         arg="config",

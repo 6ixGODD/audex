@@ -115,9 +115,6 @@ def run_application(args: argparse.Namespace) -> None:
             if args.config.suffix in {".yaml", ".yml"}:
                 setconfig(Config.from_yaml(args.config))
                 display.success("YAML configuration loaded")
-            elif args.config.suffix in {".json", ".jsonc", ".json5"}:
-                setconfig(Config.from_json(args.config))
-                display.success("JSON configuration loaded")
             else:
                 from audex.cli.exceptions import InvalidArgumentError
 
