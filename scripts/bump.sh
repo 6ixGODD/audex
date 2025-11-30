@@ -27,6 +27,8 @@ PYPROJECT_FILE="$PROJECT_ROOT/pyproject.toml"
 PROJECT_NAME="audex"
 INIT_FILE="$PROJECT_ROOT/$PROJECT_NAME/__init__.py"
 CONFIG_EXAMPLE_YML="$PROJECT_ROOT/.config.example.yml"
+CONFIG_SYSTEM_LINUX="$PROJECT_ROOT/.config.system.linux.yml"
+CONFIG_SYSTEM_WINDOWS="$PROJECT_ROOT/.config.system.windows.yml"
 ENV_EXAMPLE_FILE="$PROJECT_ROOT/.env.example"
 
 PYTHON="poetry run python"
@@ -198,17 +200,23 @@ update_init_py() {
 	log_success "✓ Updated: $INIT_FILE"
 }
 
-# Update .env.example & .config.example.yml files
-update_example_files() {
-  log_step "Updating example configuration files..."
+# Update configuration files
+update_config_files() {
+  log_step "Updating configuration files..."
 
   if [ $DRY_RUN -eq 1 ]; then
-    log_info "[DRY-RUN] Would update $CONFIG_EXAMPLE_YML and $ENV_EXAMPLE_FILE"
+    log_info "[DRY-RUN] Would update $CONFIG_EXAMPLE_YML, $CONFIG_SYSTEM_LINUX, $CONFIG_SYSTEM_WINDOWS, $ENV_EXAMPLE_FILE"
     return 0
   fi
 
   echo y | $PYTHON -m audex init gencfg -o $CONFIG_EXAMPLE_YML --format yaml
   log_success "✓ Updated: $CONFIG_EXAMPLE_YML"
+
+  echo y | $PYTHON -m audex init gencfg -o $CONFIG_SYSTEM_LINUX --format system --platform linux
+  log_success "✓ Updated: $CONFIG_SYSTEM_LINUX"
+
+  echo y | $PYTHON -m audex init gencfg -o $CONFIG_SYSTEM_WINDOWS --format system --platform windows
+  log_success "✓ Updated: $CONFIG_SYSTEM_WINDOWS"
 
   echo y | $PYTHON -m audex init gencfg -o $ENV_EXAMPLE_FILE --format dotenv
   log_success "✓ Updated: $ENV_EXAMPLE_FILE"
@@ -469,7 +477,7 @@ main() {
 	update_version_file "$NEW_VERSION"
 	update_pyproject "$NEW_VERSION"
 	update_init_py "$NEW_VERSION"
-	update_example_files
+	update_config_files
 	echo ""
 
 	# Verify updates
