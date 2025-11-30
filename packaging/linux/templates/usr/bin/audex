@@ -112,7 +112,7 @@ setup_environment() {
 
     # Qt WebEngine flags
     export XDG_RUNTIME_DIR="/run/audex"
-    export QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox --disable-gpu --single-process"
+    export QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox --disable-setuid-sandbox --disable-gpu --single-process"
 }
 
 # ============================================================================
