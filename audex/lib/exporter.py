@@ -118,7 +118,7 @@ class Exporter(LoggingMixin):
                     "segments": audio_metadata_items,
                 }
                 zipf.writestr(
-                    "audio/metadata. json",
+                    "audio/metadata.json",
                     json.dumps(audio_metadata, ensure_ascii=False, indent=2),
                 )
 
