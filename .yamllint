@@ -4,6 +4,8 @@ yaml-files:
 ignore: |
   .github/workflows/**/*
   .config.example.yml
+  .config.system.linux.yml
+  .config.system.windows.yml
 extends: default
 rules:
   indentation:
