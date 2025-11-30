@@ -102,9 +102,9 @@ check_existing_config() {
         echo ""
         echo "What would you like to do?"
         echo ""
-        echo "  ${GREEN}1)${NC} Edit existing configuration"
-        echo "  ${GREEN}2)${NC} Create new configuration from template (overwrite)"
-        echo "  ${GREEN}3)${NC} Cancel setup"
+        echo -e "  ${GREEN}1) ${NC}Edit existing configuration"
+        echo -e "  ${GREEN}2) ${NC}Create new configuration from template (overwrite)"
+        echo -e "  ${GREEN}3) ${NC}Cancel setup"
         echo ""
 
         while true; do
