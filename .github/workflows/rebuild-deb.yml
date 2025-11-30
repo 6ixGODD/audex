@@ -79,11 +79,14 @@ jobs:
         run: |
           VERSION="${{ needs.check-latest-release.outputs.version }}"
           ARCH="${{ matrix.arch }}"
-          DEB_FILE="packaging/linux/dist/audex_${VERSION}_${ARCH}.deb"
+          DEB_FILE="dist/audex_${VERSION}_${ARCH}.deb"
 
           if [ ! -f "${DEB_FILE}" ]; then
             echo "❌ DEB file not found: ${DEB_FILE}"
-            ls -la packaging/linux/dist/
+            echo "📁 Listing dist/ directory:"
+            ls -la dist/ || echo "dist/ directory not found"
+            echo "📁 Listing packaging/linux/ directory:"
+            ls -la packaging/linux/
             exit 1
           fi
 
@@ -98,7 +101,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: deb-${{ matrix.arch }}
-          path: packaging/linux/dist/audex_${{ needs.check-latest-release.outputs.version }}_${{ matrix.arch }}.deb
+          path: dist/audex_${{ needs.check-latest-release.outputs.version }}_${{ matrix.arch }}.deb
           retention-days: 7
 
   delete-old-assets:
