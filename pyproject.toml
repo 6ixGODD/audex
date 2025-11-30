@@ -4,7 +4,7 @@ requires = [ "poetry-core>=2,<3" ]
 
 [project]
 name = "audex"
-version = "1.0.7-a3"
+version = "1.0.7-a4"
 description = ""
 readme = "README.md"
 authors = [

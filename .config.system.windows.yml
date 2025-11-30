@@ -1,6 +1,6 @@
 # Audex System Configuration
 # Platform: windows
-# Version: 1.0.7-a3
+# Version: 1.0.7-a4
 #
 # This file is generated automatically. Do not edit manually.
 # User configuration should be placed in ~/.config/audex/config.yml
@@ -10,7 +10,7 @@
 core:
   app:
     app_name: Audex
-    app_version: 1.0.7-a3
+    app_version: 1.0.7-a4
     debug: false
     native: false
   logging:
@@ -74,7 +74,7 @@ infrastructure:
       negative_ttl: 60
   store:
     type: localfile
-    base_url: store
+    base_url: "%PROGRAMDATA%\\audex\\data\\store"
   recorder:
     format: int16
     channels: 1

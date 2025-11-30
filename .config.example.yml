@@ -1,7 +1,7 @@
 core: # Core configuration settings.
   app: # Application specific configuration
     app_name: Audex # The name of the application.
-    app_version: 1.0.7-a3 # The version of the application.
+    app_version: 1.0.7-a4 # The version of the application.
     debug: false # Enable or disable debug mode.
     native: false # Indicates if the application is running in native mode.
   logging: # Logging configuration

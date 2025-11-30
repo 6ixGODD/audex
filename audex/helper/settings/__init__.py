@@ -555,6 +555,8 @@ class Settings(BaseSettings):
 
             # Get value based on field type
             if isinstance(field_info, AudexFieldInfo):
+                if field_name == "base_url":
+                    print("Debug: Processing base_url field for platform-specific default.")
                 value = field_info.get_platform_default(platform)
             else:
                 # Standard field - use current value or default
