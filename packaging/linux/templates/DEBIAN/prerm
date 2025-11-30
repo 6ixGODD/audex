@@ -10,6 +10,7 @@ set -e
 # ============================================================================
 
 BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
 NC='\033[0m'
 
 # ============================================================================
@@ -18,21 +19,32 @@ NC='\033[0m'
 
 case "$1" in
     remove|upgrade|deconfigure)
-        echo -e "${BLUE}🗑️  Removing Audex...${NC}"
+        echo -e "${BLUE}🗑️  Removing Audex... ${NC}"
 
-        # Stop systemd service if running
-        if systemctl is-active --quiet audex.service 2>/dev/null; then
-            echo "   Stopping audex service..."
-            systemctl stop audex.service 2>/dev/null || true
-        fi
+        # Stop and disable system-level services for all users
+        for user_service in /etc/systemd/system/audex@*.service; do
+            if [ -f "$user_service" ]; then
+                service_name=$(basename "$user_service")
+                echo "   Stopping $service_name..."
+                systemctl stop "$service_name" 2>/dev/null || true
+                systemctl disable "$service_name" 2>/dev/null || true
+            fi
+        done
 
-        # Disable systemd service if enabled
-        if systemctl is-enabled --quiet audex.service 2>/dev/null; then
-            echo "   Disabling audex service..."
-            systemctl disable audex.service 2>/dev/null || true
-        fi
+        # Find all users with audex service enabled
+        while IFS=: read -r user_name _ user_id _ _ user_home _; do
+            if [ "$user_id" -ge 1000 ] && [ "$user_id" -lt 65534 ]; then
+                if [ -d "$user_home/.config/systemd/user" ]; then
+                    # Stop user-level service if exists
+                    sudo -u "$user_name" XDG_RUNTIME_DIR="/run/user/$user_id" \
+                        systemctl --user stop audex.service 2>/dev/null || true
+                    sudo -u "$user_name" XDG_RUNTIME_DIR="/run/user/$user_id" \
+                        systemctl --user disable audex.service 2>/dev/null || true
+                fi
+            fi
+        done < /etc/passwd
 
-        echo "✓ Audex service stopped"
+        echo "✓ Audex services stopped"
         ;;
 esac
 

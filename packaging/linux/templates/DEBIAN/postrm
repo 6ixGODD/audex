@@ -26,27 +26,33 @@ case "$1" in
 
         # Remove system directories
         rm -rf /etc/audex
-        rm -rf /var/lib/audex
-        rm -rf /var/log/audex
-        rm -rf /usr/lib/audex
+        rm -rf /opt/audex
+
+        # Remove systemd service files
+        rm -f /usr/lib/systemd/system/audex@.service
 
         # Reload systemd
         systemctl daemon-reload 2>/dev/null || true
 
         echo -e "${GREEN}✓ System files removed${NC}"
         echo ""
-        echo -e "${YELLOW}Note: User data has been removed${NC}"
+        echo -e "${YELLOW}Note: User data preserved in home directories${NC}"
+        echo "To remove user data, manually delete:"
+        echo "  ~/.config/audex"
+        echo "  ~/.local/share/audex"
         ;;
 
     remove)
         echo ""
         echo -e "${GREEN}✅ Audex removed${NC}"
         echo ""
-        echo -e "${BLUE}ℹ️  Configuration preserved in:${NC}"
-        echo "   /etc/audex/"
+        echo -e "${BLUE}ℹ️  User data preserved in:${NC}"
+        echo "   ~/.config/audex/"
+        echo "   ~/.local/share/audex/"
         echo ""
         echo -e "${YELLOW}To completely remove all data, run:${NC}"
         echo "   sudo apt purge audex"
+        echo "   rm -rf ~/.config/audex ~/.local/share/audex"
         echo ""
         ;;
 esac

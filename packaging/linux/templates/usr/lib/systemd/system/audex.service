@@ -1,49 +1,40 @@
 [Unit]
-Description=Audex Medical Transcription Service
+Description=Audex Medical Transcription Service for %I
 Documentation=https://github.com/6ixGODD/audex
-After=network-online.target sound.target
+After=network-online.target sound.target graphical-session.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=root
-Group=root
-SupplementaryGroups=audio
-WorkingDirectory=/usr/lib/audex
+User=%i
+Group=%i
+WorkingDirectory=/opt/audex
 
-# Environment
-Environment="PYTHONUNBUFFERED=1"
-Environment="ALSA_PCM_CARD=0"
-Environment="ALSA_PCM_DEVICE=0"
-Environment="PULSE_RUNTIME_PATH=/tmp/audex-audio"
-Environment="PULSE_SERVER=unix:/tmp/audex-pulse.sock"
-Environment="PA_ALSA_PLUGHW=1"
+# Wait for user session to be ready
+ExecStartPre=/bin/sleep 5
 
-# Ensure directories exist
-ExecStartPre=/bin/mkdir -p /var/log/audex
-ExecStartPre=/bin/mkdir -p /var/lib/audex/store
-ExecStartPre=/bin/mkdir -p /etc/audex
-ExecStartPre=/bin/mkdir -p /tmp/audex-audio
-ExecStartPre=/bin/chmod 777 /tmp/audex-audio
-
-# Start Audex
+# Start Audex as user
 ExecStart=/usr/bin/audex
 
 # Restart policy
 Restart=on-failure
-RestartSec=10s
+RestartSec=30s
+
+# Environment
+Environment="XDG_RUNTIME_DIR=/run/user/%U"
+Environment="DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/%U/bus"
+
+# Audio access (user should be in audio group)
+SupplementaryGroups=audio
 
 # Security
-NoNewPrivileges=false
-PrivateTmp=false
-
-# Audio access
-SupplementaryGroups=audio
+NoNewPrivileges=true
+PrivateTmp=true
 
 # Logging
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=audex
+SyslogIdentifier=audex-%i
 
 [Unit]
 StartLimitIntervalSec=300

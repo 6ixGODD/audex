@@ -2,7 +2,7 @@
 # ============================================================================
 # Audex Setup Wizard
 # ============================================================================
-# Description: Interactive configuration wizard (requires root privileges)
+# Description: Interactive configuration wizard (runs as current user)
 # ============================================================================
 
 set -e
@@ -11,10 +11,10 @@ set -e
 # Constants
 # ============================================================================
 
-readonly AUDEX_VENV="/usr/lib/audex/venv"
-readonly SYSTEM_CONFIG_TEMPLATE="/etc/audex/config.system.yml"
-readonly SYSTEM_CONFIG="/etc/audex/config.yml"
-readonly EXAMPLE_CONFIG="/etc/audex/config.example.yml"
+readonly AUDEX_VENV="/opt/audex/venv"
+readonly SYSTEM_CONFIG_TEMPLATE="/etc/audex/templates/config.system.yml"
+readonly USER_CONFIG="$HOME/.config/audex/config.yml"
+readonly EXAMPLE_CONFIG="/etc/audex/templates/config.example.yml"
 
 # ============================================================================
 # Color Codes
@@ -25,19 +25,6 @@ readonly YELLOW='\033[1;33m'
 readonly GREEN='\033[0;32m'
 readonly BLUE='\033[0;34m'
 readonly NC='\033[0m'
-
-# ============================================================================
-# Root Permission Check
-# ============================================================================
-
-if [ "$(id -u)" -ne 0 ]; then
-    echo -e "${RED}❌ Error: Setup wizard requires root privileges${NC}"
-    echo ""
-    echo "Please run with sudo:"
-    echo -e "  ${GREEN}sudo audex-setup${NC}"
-    echo ""
-    exit 1
-fi
 
 # ============================================================================
 # Check Virtual Environment
@@ -67,52 +54,12 @@ if [ ! -f "$SYSTEM_CONFIG_TEMPLATE" ]; then
 fi
 
 # ============================================================================
-# Ensure System Directories
+# Ensure User Directories
 # ============================================================================
 
-mkdir -p /etc/audex
-mkdir -p /var/lib/audex/store
-mkdir -p /var/log/audex
-
-# ============================================================================
-# Setup Audio System
-# ============================================================================
-
-setup_audio_system() {
-    echo -e "${BLUE}🔊 Setting up audio system for root access...${NC}"
-
-    mkdir -p /tmp/audex-audio
-    chmod 777 /tmp/audex-audio
-
-    if [ -d "/dev/snd" ]; then
-        echo "   ✓ ALSA devices detected"
-        chmod 666 /dev/snd/* 2>/dev/null || true
-    else
-        echo -e "   ${YELLOW}⚠️  No ALSA devices found${NC}"
-    fi
-
-    if command -v pulseaudio >/dev/null 2>&1; then
-        echo "   ✓ PulseAudio available"
-
-        mkdir -p /etc/pulse/system.pa.d
-        cat > /etc/pulse/system.pa.d/audex.pa << 'EOF'
-# Audex system audio configuration
-# Allow root access to audio devices
-load-module module-native-protocol-unix auth-anonymous=1 socket=/tmp/audex-pulse.sock
-EOF
-        echo "   ✓ PulseAudio system configuration created"
-    else
-        echo -e "   ${YELLOW}⚠️  PulseAudio not found, will use ALSA directly${NC}"
-    fi
-
-    if getent group audio >/dev/null; then
-        usermod -a -G audio root 2>/dev/null || true
-        echo "   ✓ Root added to audio group"
-    fi
-
-    echo "   ✅ Audio system setup completed"
-    echo ""
-}
+mkdir -p "$HOME/.config/audex"
+mkdir -p "$HOME/.local/share/audex/store"
+mkdir -p "$HOME/.local/share/audex/logs"
 
 # ============================================================================
 # Audio Device Detection
@@ -151,7 +98,7 @@ except Exception as e:
     print(f'   ❌ Audio detection failed: {e}')
     sys.exit(1)
 " 2>/dev/null || {
-        echo -e "   ${RED}❌ Audio device detection failed${NC}"
+        echo -e "   ${YELLOW}⚠️  Audio device detection failed${NC}"
         echo "   This may be resolved after completing the setup."
     }
 
@@ -164,10 +111,9 @@ except Exception as e:
 
 echo ""
 echo -e "${BLUE}🔧 Audex Setup Wizard${NC}"
+echo -e "${BLUE}Running as user: ${GREEN}$(whoami)${NC}"
+echo -e "${BLUE}Config will be saved to: ${GREEN}$USER_CONFIG${NC}"
 echo ""
-
-# Setup audio system first
-setup_audio_system
 
 # Detect audio devices
 detect_audio_devices
@@ -175,43 +121,39 @@ detect_audio_devices
 # Activate virtual environment
 source "$AUDEX_VENV/bin/activate"
 
-# Set audio environment for setup
-export ALSA_PCM_CARD=0
-export ALSA_PCM_DEVICE=0
-export PULSE_RUNTIME_PATH="/tmp/audex-audio"
-export PULSE_SERVER="unix:/tmp/audex-pulse.sock"
-export PA_ALSA_PLUGHW=1
-
-# Run setup wizard
+# Run setup wizard (output to user's config directory)
 python3 -m audex init setup \
     --config "$SYSTEM_CONFIG_TEMPLATE" \
-    --output "$SYSTEM_CONFIG"
+    --output "$USER_CONFIG"
 
 # Check if setup was successful
-if [ $? -eq 0 ] && [ -f "$SYSTEM_CONFIG" ]; then
+if [ $? -eq 0 ] && [ -f "$USER_CONFIG" ]; then
     echo ""
     echo -e "${GREEN}✅ Configuration saved successfully!${NC}"
     echo ""
-    echo -e "${BLUE}📁 Configuration file:${NC}"
-    echo "   $SYSTEM_CONFIG"
+    echo -e "${BLUE}📁 Your configuration file:${NC}"
+    echo "   $USER_CONFIG"
     echo ""
     echo -e "${BLUE}📋 Next steps:${NC}"
     echo ""
     echo "  1️⃣  Start Audex:"
-    echo -e "     ${GREEN}sudo audex${NC}"
+    echo -e "     ${GREEN}audex${NC}"
     echo ""
-    echo "  2️⃣  Enable auto-start:"
-    echo -e "     ${GREEN}sudo systemctl enable audex.service${NC}"
-    echo -e "     ${GREEN}sudo systemctl start audex.service${NC}"
+    echo "  2️⃣  Enable auto-start (system-level):"
+    echo -e "     ${GREEN}sudo systemctl enable audex@\$(whoami).service${NC}"
+    echo -e "     ${GREEN}sudo systemctl start audex@\$(whoami).service${NC}"
     echo ""
     echo "  3️⃣  Check service status:"
-    echo -e "     ${GREEN}sudo systemctl status audex.service${NC}"
+    echo -e "     ${GREEN}systemctl status audex@\$(whoami).service${NC}"
+    echo ""
+    echo "  4️⃣  View logs:"
+    echo -e "     ${GREEN}tail -f ~/.local/share/audex/logs/audex.log${NC}"
     echo ""
     echo -e "${YELLOW}💡 Tips:${NC}"
-    echo "   - Configuration can be edited at: $SYSTEM_CONFIG"
-    echo "   - Example configuration: $EXAMPLE_CONFIG"
-    echo "   - Re-run setup anytime with: sudo audex-setup"
-    echo "   - Audio system configured for root access"
+    echo "   - Your config: $USER_CONFIG"
+    echo "   - Example config: $EXAMPLE_CONFIG"
+    echo "   - Re-run setup anytime: audex-setup"
+    echo "   - Audex runs as your user (no root)"
     echo ""
 else
     echo ""

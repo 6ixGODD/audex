@@ -2,7 +2,7 @@
 # ============================================================================
 # Audex Launcher Script
 # ============================================================================
-# Description: Launch Audex application (requires root privileges)
+# Description: Launch Audex application (runs as current user)
 # ============================================================================
 
 set -e
@@ -11,10 +11,10 @@ set -e
 # Constants
 # ============================================================================
 
-readonly AUDEX_VENV="/usr/lib/audex/venv"
-readonly SYSTEM_CONFIG="/etc/audex/config.yml"
-readonly SYSTEM_DATA="/var/lib/audex"
-readonly SYSTEM_LOG="/var/log/audex"
+readonly AUDEX_VENV="/opt/audex/venv"
+readonly USER_CONFIG="$HOME/.config/audex/config.yml"
+readonly USER_DATA="$HOME/.local/share/audex"
+readonly USER_LOG="$HOME/.local/share/audex/logs"
 
 # ============================================================================
 # Color Codes
@@ -27,17 +27,18 @@ readonly BLUE='\033[0;34m'
 readonly NC='\033[0m'
 
 # ============================================================================
-# Root Permission Check
+# Prevent Root Execution
 # ============================================================================
 
-if [ "$(id -u)" -ne 0 ]; then
-    echo -e "${RED}❌ Error: Audex requires root privileges${NC}"
+if [ "$(id -u)" -eq 0 ]; then
+    echo -e "${RED}❌ Error: Audex should NOT run as root${NC}"
     echo ""
-    echo "Please run with sudo:"
-    echo -e "  ${GREEN}sudo audex${NC}"
+    echo "Please run as a normal user:"
+    echo -e "  ${GREEN}audex${NC}"
     echo ""
-    echo "Or enable as a system service:"
-    echo -e "  ${GREEN}sudo systemctl enable --now audex.service${NC}"
+    echo "For system service, use:"
+    echo -e "  ${GREEN}sudo systemctl enable audex@\$USER.service${NC}"
+    echo -e "  ${GREEN}sudo systemctl start audex@\$USER. service${NC}"
     echo ""
     exit 1
 fi
@@ -62,74 +63,34 @@ check_venv() {
 # ============================================================================
 
 check_configuration() {
-    if [ ! -f "$SYSTEM_CONFIG" ]; then
+    if [ ! -f "$USER_CONFIG" ]; then
         echo -e "${YELLOW}⚠️  Configuration file not found! ${NC}"
         echo ""
         echo "Please run the setup wizard first:"
-        echo -e "  ${GREEN}sudo audex-setup${NC}"
+        echo -e "  ${GREEN}audex-setup${NC}"
         echo ""
         exit 1
     fi
 
     # Check if API credentials are configured
-    if grep -q "<UNSET>" "$SYSTEM_CONFIG" 2>/dev/null; then
+    if grep -q "<UNSET>" "$USER_CONFIG" 2>/dev/null; then
         echo -e "${YELLOW}⚠️  API credentials not configured!${NC}"
         echo ""
         echo "Please complete the configuration:"
-        echo -e "  ${GREEN}sudo audex-setup${NC}"
+        echo -e "  ${GREEN}audex-setup${NC}"
         echo ""
         exit 1
     fi
 }
 
 # ============================================================================
-# Initialize System Directories
+# Initialize User Directories
 # ============================================================================
 
-init_system_dirs() {
-    mkdir -p "$SYSTEM_DATA/store"
-    mkdir -p "$SYSTEM_LOG"
-
-    # Ensure proper permissions
-    chmod 755 "$SYSTEM_DATA"
-    chmod 755 "$SYSTEM_DATA/store"
-    chmod 755 "$SYSTEM_LOG"
-}
-
-# ============================================================================
-# Fix Audio Access for Root
-# ============================================================================
-
-fix_root_audio() {
-    echo -e "${BLUE}🔊 Configuring audio access for root...${NC}"
-
-    if [ -d "/dev/snd" ]; then
-        chmod 666 /dev/snd/* 2>/dev/null || true
-        echo "   ✓ ALSA device permissions updated"
-    fi
-
-    mkdir -p /tmp/audex-audio
-    chmod 777 /tmp/audex-audio
-
-    pkill -f "pulseaudio --start" 2>/dev/null || true
-
-    if command -v pulseaudio >/dev/null 2>&1; then
-        if !  pgrep -x "pulseaudio" > /dev/null; then
-            echo "   ⏳ Starting system PulseAudio..."
-            pulseaudio --system --daemonize --disable-shm --exit-idle-time=-1 2>/dev/null || {
-                echo "   ⚠️  System PulseAudio failed, trying user mode..."
-                PULSE_SERVER="unix:/tmp/audex-pulse.sock" pulseaudio --daemonize --exit-idle-time=-1 2>/dev/null || true
-            }
-        fi
-        echo "   ✓ PulseAudio configured"
-    fi
-
-    if getent group audio >/dev/null; then
-        usermod -a -G audio root 2>/dev/null || true
-        echo "   ✓ Audio group permissions updated"
-    fi
-
-    echo "   ✅ Audio configuration completed"
+init_user_dirs() {
+    mkdir -p "$HOME/.config/audex"
+    mkdir -p "$USER_DATA/store"
+    mkdir -p "$USER_LOG"
 }
 
 # ============================================================================
@@ -137,41 +98,18 @@ fix_root_audio() {
 # ============================================================================
 
 setup_environment() {
-    # Set system paths
-    export AUDEX_CONFIG="$SYSTEM_CONFIG"
-    export AUDEX_DATA_DIR="$SYSTEM_DATA"
-    export AUDEX_LOG_DIR="$SYSTEM_LOG"
-    export AUDEX_SYSTEM_INSTALL="1"
+    # Set user paths
+    export AUDEX_CONFIG="$USER_CONFIG"
+    export AUDEX_DATA_DIR="$USER_DATA"
+    export AUDEX_LOG_DIR="$USER_LOG"
+    export AUDEX_USER_INSTALL="1"
 
     # Python unbuffered output
     export PYTHONUNBUFFERED="1"
 
-    # Qt WebEngine flags
-    export XDG_RUNTIME_DIR="/run/audex"
-    export QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox --disable-setuid-sandbox --disable-gpu --single-process"
-
-    # ============================================================================
-    # Audio Environment Configuration
-    # ============================================================================
-
-    # ALSA configuration
-    export ALSA_PCM_CARD=0
-    export ALSA_PCM_DEVICE=0
-
-    # PulseAudio configuration for root
-    export PULSE_RUNTIME_PATH="/tmp/audex-audio"
-    export PULSE_SERVER="unix:/tmp/audex-pulse.sock"
-
-    if pgrep -x "pulseaudio" > /dev/null; then
-        unset PULSE_SERVER
-        export PULSE_RUNTIME_PATH="/run/pulse"
-    fi
-
-    export PA_ALSA_PLUGHW=1
-
-    export AUDIO_GID=$(getent group audio | cut -d: -f3)
-    if [ -n "$AUDIO_GID" ]; then
-        export AUDIO_GROUP="audio"
+    # Use user's PulseAudio/Pipewire
+    if [ -n "$XDG_RUNTIME_DIR" ]; then
+        export PULSE_RUNTIME_PATH="$XDG_RUNTIME_DIR/pulse"
     fi
 }
 
@@ -182,8 +120,7 @@ setup_environment() {
 main() {
     check_venv
     check_configuration
-    init_system_dirs
-    fix_root_audio
+    init_user_dirs
     setup_environment
 
     # Activate virtual environment
@@ -191,8 +128,8 @@ main() {
 
     # Launch Audex
     if [ $# -eq 0 ]; then
-        # No arguments: use system config
-        exec python3 -m audex --config "$SYSTEM_CONFIG"
+        # No arguments: use user config
+        exec python3 -m audex --config "$USER_CONFIG"
     else
         # Pass through all arguments
         exec python3 -m audex "$@"

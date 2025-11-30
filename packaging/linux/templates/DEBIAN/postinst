@@ -40,16 +40,12 @@ echo ""
 
 log_step "Creating system directories..."
 
-mkdir -p /etc/audex
-mkdir -p /var/lib/audex/store
-mkdir -p /var/log/audex
-mkdir -p /usr/lib/audex
+mkdir -p /opt/audex
+mkdir -p /etc/audex/templates
 
+chmod 755 /opt/audex
 chmod 755 /etc/audex
-chmod 755 /var/lib/audex
-chmod 755 /var/lib/audex/store
-chmod 755 /var/log/audex
-chmod 755 /usr/lib/audex
+chmod 755 /etc/audex/templates
 
 log_success "System directories created"
 
@@ -59,7 +55,7 @@ log_success "System directories created"
 
 log_step "Setting up Python virtual environment..."
 
-cd /usr/lib/audex
+cd /opt/audex
 
 # Create venv with system site packages (for PyQt6)
 if [ ! -d "venv" ]; then
@@ -82,25 +78,25 @@ venv/bin/pip install --progress-bar on "audex==${VERSION}"
 log_success "Audex ${VERSION} installed"
 
 # ============================================================================
-# Generate System Configuration
+# Generate Configuration Templates (NOT actual config)
 # ============================================================================
 
-log_step "Generating system configuration files..."
+log_step "Generating configuration templates..."
 
-# Generate system config
+# Generate system config template (for reference/setup wizard)
 venv/bin/python3 -m audex init gencfg \
     --format system \
-    --output /etc/audex/config.system.yml \
+    --output /etc/audex/templates/config.system.yml \
     --platform linux
 
-log_success "Generated: /etc/audex/config.system.yml"
+log_success "Generated: /etc/audex/templates/config.system.yml (template)"
 
-# Generate example config
+# Generate example config (for reference)
 venv/bin/python3 -m audex init gencfg \
     --format yaml \
-    --output /etc/audex/config.example.yml
+    --output /etc/audex/templates/config.example.yml
 
-log_success "Generated: /etc/audex/config.example.yml"
+log_success "Generated: /etc/audex/templates/config.example.yml (example)"
 
 # ============================================================================
 # Set Permissions
@@ -108,13 +104,14 @@ log_success "Generated: /etc/audex/config.example.yml"
 
 log_step "Setting permissions..."
 
-chown -R root:root /usr/lib/audex
+chown -R root:root /opt/audex
 chown -R root:root /etc/audex
-chown -R root:root /var/lib/audex
-chown -R root:root /var/log/audex
 
 chmod 755 /usr/bin/audex
 chmod 755 /usr/bin/audex-setup
+
+# Templates should be readable by all users
+chmod 644 /etc/audex/templates/*
 
 log_success "Permissions set"
 
@@ -134,6 +131,40 @@ else
 fi
 
 # ============================================================================
+# Setup for existing users (optional, create directory structure)
+# ============================================================================
+
+log_step "Preparing user directory structure for existing users..."
+
+# Function to setup user directory structure
+setup_user_dirs() {
+    local user_name=$1
+    local user_home=$2
+
+    if [ -d "$user_home" ] && [ "$user_name" != "root" ]; then
+        log_info "Creating directory structure for: $user_name"
+
+        # Create user directories (if they don't exist)
+        sudo -u "$user_name" mkdir -p "$user_home/.config/audex" 2>/dev/null || true
+        sudo -u "$user_name" mkdir -p "$user_home/.local/share/audex/store" 2>/dev/null || true
+        sudo -u "$user_name" mkdir -p "$user_home/.local/share/audex/logs" 2>/dev/null || true
+
+        # Set proper permissions
+        chown -R "$user_name:$user_name" "$user_home/.config/audex" 2>/dev/null || true
+        chown -R "$user_name:$user_name" "$user_home/.local/share/audex" 2>/dev/null || true
+
+        log_success "Directory structure ready for $user_name"
+    fi
+}
+
+# Setup for all existing normal users (UID >= 1000)
+while IFS=: read -r user_name _ user_id _ _ user_home _; do
+    if [ "$user_id" -ge 1000 ] && [ "$user_id" -lt 65534 ]; then
+        setup_user_dirs "$user_name" "$user_home"
+    fi
+done < /etc/passwd
+
+# ============================================================================
 # Final Instructions
 # ============================================================================
 
@@ -144,35 +175,39 @@ print_separator
 echo ""
 echo -e "${YELLOW}📋 Next Steps:${NC}"
 echo ""
-echo "  1️⃣  Run the setup wizard (required):"
-echo -e "     ${GREEN}sudo audex-setup${NC}"
+echo "  1️⃣  Run the setup wizard (as your normal user):"
+echo -e "     ${GREEN}audex-setup${NC}"
 echo ""
 echo "  2️⃣  Start Audex manually:"
-echo -e "     ${GREEN}sudo audex${NC}"
+echo -e "     ${GREEN}audex${NC}"
 echo ""
-echo "  3️⃣  Enable auto-start on boot:"
-echo -e "     ${GREEN}sudo systemctl enable audex.service${NC}"
-echo -e "     ${GREEN}sudo systemctl start audex.service${NC}"
+echo "  3️⃣  Enable auto-start on boot (system-level):"
+echo -e "     ${GREEN}sudo systemctl enable audex@\$USER.service${NC}"
+echo -e "     ${GREEN}sudo systemctl start audex@\$USER.service${NC}"
 echo ""
 echo "  4️⃣  Check service status:"
-echo -e "     ${GREEN}sudo systemctl status audex.service${NC}"
+echo -e "     ${GREEN}systemctl status audex@\$USER.service${NC}"
 echo ""
 echo "  5️⃣  View logs:"
-echo -e "     ${GREEN}sudo journalctl -u audex.service -f${NC}"
-echo -e "     ${GREEN}sudo tail -f /var/log/audex/audex.log${NC}"
+echo -e "     ${GREEN}journalctl -u audex@\$USER.service -f${NC}"
+echo -e "     ${GREEN}tail -f ~/.local/share/audex/logs/audex.log${NC}"
 echo ""
 print_separator
 echo ""
+echo -e "${BLUE}📁 User Directories (created per user):${NC}"
+echo "   Configuration:  ~/.config/audex/config.yml"
+echo "   Data:           ~/.local/share/audex/"
+echo "   Logs:           ~/.local/share/audex/logs/"
+echo ""
 echo -e "${BLUE}📁 System Directories:${NC}"
-echo "   Configuration:  /etc/audex/"
-echo "   Data:           /var/lib/audex/"
-echo "   Logs:           /var/log/audex/"
-echo "   Installation:   /usr/lib/audex/"
+echo "   Installation:   /opt/audex/"
+echo "   Templates:      /etc/audex/templates/"
 echo ""
 echo -e "${YELLOW}⚠️  Important:${NC}"
-echo "   - Audex requires root privileges to run"
-echo "   - Always use 'sudo' when running audex commands"
-echo "   - Configuration file: /etc/audex/config.yml (created by setup wizard)"
+echo "   - Audex runs as a normal user (no root required)"
+echo "   - Each user needs to run 'audex-setup' once"
+echo "   - Configuration templates are in /etc/audex/templates/"
+echo "   - Actual config is in ~/.config/audex/config.yml"
 echo ""
 print_separator
 
