@@ -106,7 +106,7 @@ class LoggingConfig(BaseModel):
         windows_default=lambda: [
             LoggingTarget(logname="stdout", loglevel="info"),
             LoggingTarget(
-                logname=pathlib.PureWindowsPath("C:/ProgramData/Audex/logs/audex.log"),
+                logname=pathlib.PureWindowsPath("%PROGRAMDATA%\\logs\\audex.log"),
                 loglevel="info",
                 rotation=Rotation(size_based=SizeBasedRotation()),
             ),
@@ -114,7 +114,7 @@ class LoggingConfig(BaseModel):
         linux_default=lambda: [
             LoggingTarget(logname="stdout", loglevel="info"),
             LoggingTarget(
-                logname=pathlib.PurePosixPath("/var/log/audex/audex.log"),
+                logname=pathlib.PurePosixPath("~/.local/share/audex/logs/audex.log"),
                 loglevel="info",
                 rotation=Rotation(size_based=SizeBasedRotation()),
             ),

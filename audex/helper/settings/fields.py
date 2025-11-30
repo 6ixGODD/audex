@@ -163,15 +163,15 @@ class AudexFieldInfo(FieldInfo):  # type: ignore[misc]
         # Linux FHS (Filesystem Hierarchy Standard) paths
         if platform == "linux":
             if self.system_path_type == "log":
-                return f"/var/log/{app_name}"
+                return f"~/.local/share/{app_name}/logs"
             if self.system_path_type == "data":
-                return f"/var/lib/{app_name}"
+                return f"~/.local/share/{app_name}"
             if self.system_path_type == "config":
-                return f"/etc/{app_name}"
+                return f"~/.config/{app_name}"
             if self.system_path_type == "cache":
-                return f"/var/cache/{app_name}"
+                return f"~/.cache/{app_name}"
             if self.system_path_type == "runtime":
-                return f"/run/{app_name}"
+                return f"~/.cache/{app_name}/runtime"
 
         # Windows standard paths
         elif platform == "windows":

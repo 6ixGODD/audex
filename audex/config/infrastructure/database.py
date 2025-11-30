@@ -9,7 +9,7 @@ class SQLiteConfig(BaseModel):
         default="sqlite+aiosqlite:///./audex.db",
         description="SQLite database URI.",
         windows_default="sqlite+aiosqlite:///C:/ProgramData/Audex/audex.db",
-        linux_default="sqlite+aiosqlite:////var/lib/audex/audex.db",
+        linux_default="sqlite+aiosqlite://~/.local/share/audex/audex.db",
     )
 
     echo: bool = Field(
