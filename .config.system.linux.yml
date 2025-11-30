@@ -1,6 +1,6 @@
 # Audex System Configuration
 # Platform: linux
-# Version: 1.0.7-a5
+# Version: 1.0.7-a6
 #
 # This file is generated automatically. Do not edit manually.
 # User configuration should be placed in ~/.config/audex/config.yml
@@ -10,7 +10,7 @@
 core:
   app:
     app_name: Audex
-    app_version: 1.0.7-a5
+    app_version: 1.0.7-a6
     debug: false
     native: true
   logging:
