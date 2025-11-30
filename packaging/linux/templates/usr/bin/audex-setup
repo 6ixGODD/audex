@@ -75,6 +75,90 @@ mkdir -p /var/lib/audex/store
 mkdir -p /var/log/audex
 
 # ============================================================================
+# Setup Audio System
+# ============================================================================
+
+setup_audio_system() {
+    echo -e "${BLUE}🔊 Setting up audio system for root access...${NC}"
+
+    mkdir -p /tmp/audex-audio
+    chmod 777 /tmp/audex-audio
+
+    if [ -d "/dev/snd" ]; then
+        echo "   ✓ ALSA devices detected"
+        chmod 666 /dev/snd/* 2>/dev/null || true
+    else
+        echo -e "   ${YELLOW}⚠️  No ALSA devices found${NC}"
+    fi
+
+    if command -v pulseaudio >/dev/null 2>&1; then
+        echo "   ✓ PulseAudio available"
+
+        mkdir -p /etc/pulse/system.pa.d
+        cat > /etc/pulse/system.pa.d/audex.pa << 'EOF'
+# Audex system audio configuration
+# Allow root access to audio devices
+load-module module-native-protocol-unix auth-anonymous=1 socket=/tmp/audex-pulse.sock
+EOF
+        echo "   ✓ PulseAudio system configuration created"
+    else
+        echo -e "   ${YELLOW}⚠️  PulseAudio not found, will use ALSA directly${NC}"
+    fi
+
+    if getent group audio >/dev/null; then
+        usermod -a -G audio root 2>/dev/null || true
+        echo "   ✓ Root added to audio group"
+    fi
+
+    echo "   ✅ Audio system setup completed"
+    echo ""
+}
+
+# ============================================================================
+# Audio Device Detection
+# ============================================================================
+
+detect_audio_devices() {
+    echo -e "${BLUE}🎤 Detecting audio devices...${NC}"
+
+    source "$AUDEX_VENV/bin/activate"
+
+    python3 -c "
+import pyaudio
+import sys
+
+try:
+    pa = pyaudio.PyAudio()
+    device_count = pa.get_device_count()
+
+    input_devices = []
+    for i in range(device_count):
+        info = pa.get_device_info_by_index(i)
+        if info['maxInputChannels'] > 0:
+            input_devices.append((i, info['name'], info['maxInputChannels']))
+
+    if input_devices:
+        print('   ✓ Available input devices:')
+        for idx, name, channels in input_devices:
+            print(f'     [{idx}] {name} ({channels} channels)')
+        print(f'   ✓ Total: {len(input_devices)} input device(s) found')
+    else:
+        print('   ⚠️  No input devices found')
+
+    pa.terminate()
+
+except Exception as e:
+    print(f'   ❌ Audio detection failed: {e}')
+    sys.exit(1)
+" 2>/dev/null || {
+        echo -e "   ${RED}❌ Audio device detection failed${NC}"
+        echo "   This may be resolved after completing the setup."
+    }
+
+    echo ""
+}
+
+# ============================================================================
 # Launch Setup Wizard
 # ============================================================================
 
@@ -82,8 +166,21 @@ echo ""
 echo -e "${BLUE}🔧 Audex Setup Wizard${NC}"
 echo ""
 
+# Setup audio system first
+setup_audio_system
+
+# Detect audio devices
+detect_audio_devices
+
 # Activate virtual environment
 source "$AUDEX_VENV/bin/activate"
+
+# Set audio environment for setup
+export ALSA_PCM_CARD=0
+export ALSA_PCM_DEVICE=0
+export PULSE_RUNTIME_PATH="/tmp/audex-audio"
+export PULSE_SERVER="unix:/tmp/audex-pulse.sock"
+export PA_ALSA_PLUGHW=1
 
 # Run setup wizard
 python3 -m audex init setup \
@@ -114,6 +211,7 @@ if [ $? -eq 0 ] && [ -f "$SYSTEM_CONFIG" ]; then
     echo "   - Configuration can be edited at: $SYSTEM_CONFIG"
     echo "   - Example configuration: $EXAMPLE_CONFIG"
     echo "   - Re-run setup anytime with: sudo audex-setup"
+    echo "   - Audio system configured for root access"
     echo ""
 else
     echo ""

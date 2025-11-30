@@ -97,6 +97,42 @@ init_system_dirs() {
 }
 
 # ============================================================================
+# Fix Audio Access for Root
+# ============================================================================
+
+fix_root_audio() {
+    echo -e "${BLUE}🔊 Configuring audio access for root...${NC}"
+
+    if [ -d "/dev/snd" ]; then
+        chmod 666 /dev/snd/* 2>/dev/null || true
+        echo "   ✓ ALSA device permissions updated"
+    fi
+
+    mkdir -p /tmp/audex-audio
+    chmod 777 /tmp/audex-audio
+
+    pkill -f "pulseaudio --start" 2>/dev/null || true
+
+    if command -v pulseaudio >/dev/null 2>&1; then
+        if !  pgrep -x "pulseaudio" > /dev/null; then
+            echo "   ⏳ Starting system PulseAudio..."
+            pulseaudio --system --daemonize --disable-shm --exit-idle-time=-1 2>/dev/null || {
+                echo "   ⚠️  System PulseAudio failed, trying user mode..."
+                PULSE_SERVER="unix:/tmp/audex-pulse.sock" pulseaudio --daemonize --exit-idle-time=-1 2>/dev/null || true
+            }
+        fi
+        echo "   ✓ PulseAudio configured"
+    fi
+
+    if getent group audio >/dev/null; then
+        usermod -a -G audio root 2>/dev/null || true
+        echo "   ✓ Audio group permissions updated"
+    fi
+
+    echo "   ✅ Audio configuration completed"
+}
+
+# ============================================================================
 # Setup Environment
 # ============================================================================
 
@@ -113,6 +149,30 @@ setup_environment() {
     # Qt WebEngine flags
     export XDG_RUNTIME_DIR="/run/audex"
     export QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox --disable-setuid-sandbox --disable-gpu --single-process"
+
+    # ============================================================================
+    # Audio Environment Configuration
+    # ============================================================================
+
+    # ALSA configuration
+    export ALSA_PCM_CARD=0
+    export ALSA_PCM_DEVICE=0
+
+    # PulseAudio configuration for root
+    export PULSE_RUNTIME_PATH="/tmp/audex-audio"
+    export PULSE_SERVER="unix:/tmp/audex-pulse.sock"
+
+    if pgrep -x "pulseaudio" > /dev/null; then
+        unset PULSE_SERVER
+        export PULSE_RUNTIME_PATH="/run/pulse"
+    fi
+
+    export PA_ALSA_PLUGHW=1
+
+    export AUDIO_GID=$(getent group audio | cut -d: -f3)
+    if [ -n "$AUDIO_GID" ]; then
+        export AUDIO_GROUP="audio"
+    fi
 }
 
 # ============================================================================
@@ -123,6 +183,7 @@ main() {
     check_venv
     check_configuration
     init_system_dirs
+    fix_root_audio
     setup_environment
 
     # Activate virtual environment

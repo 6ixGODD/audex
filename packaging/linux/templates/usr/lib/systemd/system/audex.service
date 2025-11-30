@@ -8,15 +8,23 @@ Wants=network-online.target
 Type=simple
 User=root
 Group=root
+SupplementaryGroups=audio
 WorkingDirectory=/usr/lib/audex
 
 # Environment
 Environment="PYTHONUNBUFFERED=1"
+Environment="ALSA_PCM_CARD=0"
+Environment="ALSA_PCM_DEVICE=0"
+Environment="PULSE_RUNTIME_PATH=/tmp/audex-audio"
+Environment="PULSE_SERVER=unix:/tmp/audex-pulse.sock"
+Environment="PA_ALSA_PLUGHW=1"
 
 # Ensure directories exist
 ExecStartPre=/bin/mkdir -p /var/log/audex
 ExecStartPre=/bin/mkdir -p /var/lib/audex/store
 ExecStartPre=/bin/mkdir -p /etc/audex
+ExecStartPre=/bin/mkdir -p /tmp/audex-audio
+ExecStartPre=/bin/chmod 777 /tmp/audex-audio
 
 # Start Audex
 ExecStart=/usr/bin/audex
@@ -27,7 +35,10 @@ RestartSec=10s
 
 # Security
 NoNewPrivileges=false
-PrivateTmp=true
+PrivateTmp=false
+
+# Audio access
+SupplementaryGroups=audio
 
 # Logging
 StandardOutput=journal
