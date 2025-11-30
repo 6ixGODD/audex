@@ -211,4 +211,22 @@ echo "   - Actual config is in ~/.config/audex/config.yml"
 echo ""
 print_separator
 
+# ============================================================================
+# Update Desktop Database
+# ============================================================================
+
+log_step "Updating desktop database..."
+
+if command -v update-desktop-database >/dev/null 2>&1; then
+    update-desktop-database /usr/share/applications 2>/dev/null || true
+    log_success "Desktop database updated"
+fi
+
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+    gtk-update-icon-cache -f -t /usr/share/icons/hicolor 2>/dev/null || true
+    log_success "Icon cache updated"
+fi
+
+log_success "Desktop integration completed"
+
 exit 0

@@ -1,22 +1,39 @@
 #!/usr/bin/env python3
-"""Build DEB package inside Docker container."""
+"""Build DEB package (supports both Docker and native WSL)."""
 
 from __future__ import annotations
 
 import argparse
+import os
 import pathlib
 import shutil
 import subprocess
 import sys
 
 # ============================================================================
-# Configuration
+# Configuration - Auto-detect environment
 # ============================================================================
 
-BUILD_DIR = pathlib.Path("/build")
-TEMPLATES_DIR = BUILD_DIR / "templates"
-OUTPUT_DIR = BUILD_DIR / "output"
-VERSION_FILE = BUILD_DIR / "VERSION"
+# Check if running in Docker
+IS_DOCKER = pathlib.Path("/.dockerenv").exists() or os.environ.get("CONTAINER") == "docker"
+
+# WSL mode flag (will be set by command line argument)
+WSL_MODE = False
+
+if IS_DOCKER:
+    # Docker environment (default)
+    BUILD_DIR = pathlib.Path("/build")
+    TEMPLATES_DIR = BUILD_DIR / "templates"
+    OUTPUT_DIR = BUILD_DIR / "output"
+    VERSION_FILE = BUILD_DIR / "VERSION"
+    ICON_SRC = BUILD_DIR / "logo.svg"
+else:
+    # Will be configured based on WSL_MODE flag
+    SCRIPT_DIR = pathlib.Path(__file__).parent.resolve()  # noqa: N806
+    BUILD_DIR = None  # Will be set later
+    TEMPLATES_DIR = SCRIPT_DIR / "templates"
+    VERSION_FILE = SCRIPT_DIR.parent.parent / "VERSION"
+    ICON_SRC = SCRIPT_DIR.parent.parent / "audex" / "view" / "static" / "images" / "logo.svg"
 
 PACKAGE_NAME = "audex"
 
@@ -111,17 +128,19 @@ def create_package_structure(pkg_dir: pathlib.Path) -> None:
     """Create DEB package directory structure."""
     log_step("Creating package structure...")
 
+    # Clean old build
+    if pkg_dir.exists():
+        shutil.rmtree(pkg_dir)
+
     directories = [
         pkg_dir / "DEBIAN",
-        pkg_dir / "etc" / "audex",
-        pkg_dir / "var" / "lib" / "audex" / "store",
-        pkg_dir / "var" / "log" / "audex",
+        pkg_dir / "etc" / "audex" / "templates",
+        pkg_dir / "opt" / "audex",
         pkg_dir / "usr" / "bin",
-        pkg_dir / "usr" / "lib" / "audex",
         pkg_dir / "usr" / "lib" / "systemd" / "system",
         pkg_dir / "usr" / "share" / "applications",
         pkg_dir / "usr" / "share" / "icons" / "hicolor" / "scalable" / "apps",
-        pkg_dir / "usr" / "share" / "polkit-1" / "actions",
+        pkg_dir / "usr" / "share" / "pixmaps",
         pkg_dir / "usr" / "share" / "doc" / "audex",
     ]
 
@@ -191,35 +210,23 @@ def copy_template_files(pkg_dir: pathlib.Path, version: str, arch: str) -> None:
         content = desktop_src.read_text(encoding="utf-8")
         content = normalize_line_endings(content)
         desktop_dst.write_text(content, encoding="utf-8")
+        desktop_dst.chmod(0o644)
         log_info("   Copied desktop file")
     else:
         log_warn("Desktop file not found, skipping")
 
-    # Copy systemd system service
-    service_src = TEMPLATES_DIR / "usr" / "lib" / "systemd" / "system" / "audex.service"
-    service_dst = pkg_dir / "usr" / "lib" / "systemd" / "system" / "audex.service"
+    # Copy systemd service
+    service_src = TEMPLATES_DIR / "usr" / "lib" / "systemd" / "system" / "audex@.service"
+    service_dst = pkg_dir / "usr" / "lib" / "systemd" / "system" / "audex@.service"
 
     if service_src.exists():
         content = service_src.read_text(encoding="utf-8")
         content = normalize_line_endings(content)
         service_dst.write_text(content, encoding="utf-8")
+        service_dst.chmod(0o644)
         log_info("   Copied systemd service")
     else:
         log_warn("Systemd service file not found, skipping")
-
-    # Copy PolicyKit policy
-    policy_src = (
-        TEMPLATES_DIR / "usr" / "share" / "polkit-1" / "actions" / "com.audex.pkexec.policy"
-    )
-    policy_dst = pkg_dir / "usr" / "share" / "polkit-1" / "actions" / "com.audex.pkexec.policy"
-
-    if policy_src.exists():
-        content = policy_src.read_text(encoding="utf-8")
-        content = normalize_line_endings(content)
-        policy_dst.write_text(content, encoding="utf-8")
-        log_info("   Copied PolicyKit policy")
-    else:
-        log_warn("PolicyKit policy not found, pkexec won't work")
 
     log_success("Template files copied")
 
@@ -228,19 +235,26 @@ def copy_icon(pkg_dir: pathlib.Path) -> None:
     """Copy application icon if available."""
     log_step("Copying icon...")
 
-    icon_src = BUILD_DIR / "logo.svg"
-    icon_dst = pkg_dir / "usr" / "share" / "icons" / "hicolor" / "scalable" / "apps" / "audex.svg"
+    icon_locations = [
+        pkg_dir / "usr" / "share" / "icons" / "hicolor" / "scalable" / "apps" / "audex.svg",
+        pkg_dir / "usr" / "share" / "pixmaps" / "audex.svg",
+    ]
 
-    if icon_src.exists():
-        shutil.copy2(icon_src, icon_dst)
-        log_success("Icon copied")
+    if ICON_SRC.exists():
+        for icon_dst in icon_locations:
+            shutil.copy2(ICON_SRC, icon_dst)
+            icon_dst.chmod(0o644)
+            log_info(f"   Copied icon to {icon_dst.relative_to(pkg_dir)}")
+        log_success("Icon copied to all locations")
     else:
-        log_warn("Icon not found, creating placeholder")
+        log_warn(f"Icon not found at {ICON_SRC}, creating placeholder")
         placeholder = """<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
   <circle cx="24" cy="24" r="20" fill="#1976d2"/>
   <text x="24" y="32" font-size="24" fill="white" text-anchor="middle" font-family="sans-serif" font-weight="bold">A</text>
 </svg>"""
-        icon_dst.write_text(placeholder, encoding="utf-8")
+        for icon_dst in icon_locations:
+            icon_dst.write_text(placeholder, encoding="utf-8")
+            icon_dst.chmod(0o644)
 
 
 def build_deb_package(pkg_dir: pathlib.Path, version: str, arch: str) -> pathlib.Path:
@@ -271,9 +285,25 @@ def show_summary(deb_file: pathlib.Path, version: str, arch: str) -> None:
     print("=" * 60)
     print(f"\n📦 Package: {deb_file.name}")
     print(f"📊 Size: {deb_file.stat().st_size / 1024 / 1024:.2f} MB")
-    print(f"📁 Location: /build/output/{deb_file.name}")
+
+    if IS_DOCKER:
+        print(f"📁 Location: /build/output/{deb_file.name}")
+    elif WSL_MODE:
+        print(f"📁 Location: {deb_file}")
+        print(f"📁 Relative: ~/{deb_file.relative_to(pathlib.Path.home())}")
+    else:
+        print(f"📁 Location: {deb_file}")
+
     print(f"\n🔖 Version: {version}")
     print(f"🏗️  Architecture: {arch}")
+
+    if IS_DOCKER:
+        print("🔧 Environment: Docker")
+    elif WSL_MODE:
+        print("🔧 Environment: WSL (native)")
+    else:
+        print("🔧 Environment: Native")
+
     print("\n" + "=" * 60 + "\n")
 
 
@@ -296,16 +326,44 @@ def parse_args() -> argparse.Namespace:
         default="arm64",
         help="Architecture (default: arm64)",
     )
+    parser.add_argument(
+        "--wsl",
+        action="store_true",
+        help="WSL mode: build in WSL home directory instead of project dist",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     """Main entry point."""
+    global WSL_MODE, BUILD_DIR, OUTPUT_DIR
+
     args = parse_args()
+    WSL_MODE = args.wsl
+
+    # Configure paths based on mode
+    if not IS_DOCKER:
+        SCRIPT_DIR = pathlib.Path(__file__).parent.resolve()  # noqa: N806
+
+        if WSL_MODE:
+            # WSL mode: use home directory
+            BUILD_DIR = pathlib.Path.home() / "audex-build"
+            OUTPUT_DIR = pathlib.Path.home() / "audex-output"
+            log_info(f"WSL mode: Output to {OUTPUT_DIR}")
+        else:
+            # Local mode: use project directory (may fail on Windows mounts)
+            BUILD_DIR = SCRIPT_DIR / "build"
+            OUTPUT_DIR = SCRIPT_DIR.parent.parent / "dist"
 
     print(f"{Colors.BLUE}")
     print("╔════════════════════════════════════════════════╗")
     print("║       Audex DEB Package Builder                ║")
+    if IS_DOCKER:
+        print("║            (Docker Mode)                        ║")
+    elif WSL_MODE:
+        print("║            (WSL Native Mode)                    ║")
+    else:
+        print("║            (Local Mode)                         ║")
     print("╚════════════════════════════════════════════════╝")
     print(f"{Colors.NC}\n")
 
