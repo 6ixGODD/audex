@@ -1,7 +1,7 @@
 core: # Core configuration settings.
   app: # Application specific configuration
     app_name: Audex # The name of the application.
-    app_version: 1.0.5-a # The version of the application.
+    app_version: 1.0.7-a2 # The version of the application.
     debug: false # Enable or disable debug mode.
     native: false # Indicates if the application is running in native mode.
   logging: # Logging configuration
@@ -12,7 +12,7 @@ core: # Core configuration settings.
       - logname: stderr
         loglevel: error
         rotation: ~
-      - logname: logs\audex.jsonl
+      - logname: logs/audex.jsonl
         loglevel: info
         rotation:
           size_based:
