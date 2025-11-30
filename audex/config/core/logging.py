@@ -114,7 +114,7 @@ class LoggingConfig(BaseModel):
         linux_default=lambda: [
             LoggingTarget(logname="stdout", loglevel="info"),
             LoggingTarget(
-                logname=pathlib.PurePosixPath("~/.local/share/audex/logs/audex.log"),
+                logname=pathlib.PurePosixPath("${HOME}/.local/share/audex/logs/audex.log"),
                 loglevel="info",
                 rotation=Rotation(size_based=SizeBasedRotation()),
             ),
