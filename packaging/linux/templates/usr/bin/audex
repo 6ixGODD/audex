@@ -109,6 +109,10 @@ setup_environment() {
 
     # Python unbuffered output
     export PYTHONUNBUFFERED="1"
+
+    # Qt WebEngine flags
+    export XDG_RUNTIME_DIR="/run/audex"
+    export QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox --disable-gpu --single-process"
 }
 
 # ============================================================================
