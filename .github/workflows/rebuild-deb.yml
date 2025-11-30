@@ -6,6 +6,8 @@ on:
       - 'packaging/linux/**'
     branches:
       - master
+    tags-ignore:
+      - 'v*.*.*'
 
 permissions:
   contents: write
@@ -14,6 +16,7 @@ jobs:
   check-latest-release:
     name: Get Latest Release
     runs-on: ubuntu-latest
+    if: github.ref_type != 'tag'
     outputs:
       version: ${{ steps.get_release.outputs.version }}
       upload_url: ${{ steps.get_release.outputs.upload_url }}
