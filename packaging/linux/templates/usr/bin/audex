@@ -2,28 +2,17 @@
 # ============================================================================
 # Audex Launcher Script
 # ============================================================================
-# Description: Launch Audex application (runs as current user)
-# ============================================================================
 
 set -e
-
-# ============================================================================
-# Constants
-# ============================================================================
 
 readonly AUDEX_VENV="/opt/audex/venv"
 readonly USER_CONFIG="$HOME/.config/audex/config.yml"
 readonly USER_DATA="$HOME/.local/share/audex"
 readonly USER_LOG="$HOME/.local/share/audex/logs"
 
-# ============================================================================
-# Color Codes
-# ============================================================================
-
 readonly RED='\033[0;31m'
 readonly YELLOW='\033[1;33m'
 readonly GREEN='\033[0;32m'
-readonly BLUE='\033[0;34m'
 readonly NC='\033[0m'
 
 # ============================================================================
@@ -35,11 +24,6 @@ if [ "$(id -u)" -eq 0 ]; then
     echo ""
     echo "Please run as a normal user:"
     echo -e "  ${GREEN}audex${NC}"
-    echo ""
-    echo "For system service, use:"
-    echo -e "  ${GREEN}sudo systemctl enable audex@\$USER.service${NC}"
-    echo -e "  ${GREEN}sudo systemctl start audex@\$USER. service${NC}"
-    echo ""
     exit 1
 fi
 
@@ -47,93 +31,60 @@ fi
 # Check Virtual Environment
 # ============================================================================
 
-check_venv() {
-    if [ ! -f "$AUDEX_VENV/bin/activate" ]; then
-        echo -e "${RED}❌ Error: Virtual environment not found at $AUDEX_VENV${NC}"
-        echo ""
-        echo "Please reinstall Audex:"
-        echo -e "  ${GREEN}sudo apt install --reinstall audex${NC}"
-        echo ""
-        exit 1
-    fi
-}
+if [ ! -f "$AUDEX_VENV/bin/activate" ]; then
+    echo -e "${RED}❌ Error: Virtual environment not found at $AUDEX_VENV${NC}"
+    echo ""
+    echo "Please reinstall Audex:"
+    echo -e "  ${GREEN}sudo apt install --reinstall audex${NC}"
+    exit 1
+fi
 
 # ============================================================================
 # Check Configuration
 # ============================================================================
 
-check_configuration() {
-    if [ ! -f "$USER_CONFIG" ]; then
-        echo -e "${YELLOW}⚠️  Configuration file not found! ${NC}"
-        echo ""
-        echo "Please run the setup wizard first:"
-        echo -e "  ${GREEN}audex-setup${NC}"
-        echo ""
-        exit 1
-    fi
+if [ ! -f "$USER_CONFIG" ]; then
+    echo -e "${YELLOW}⚠️  Configuration file not found! ${NC}"
+    echo ""
+    echo "Please run the setup wizard first:"
+    echo -e "  ${GREEN}audex-setup${NC}"
+    exit 1
+fi
 
-    # Check if API credentials are configured
-    if grep -q "<UNSET>" "$USER_CONFIG" 2>/dev/null; then
-        echo -e "${YELLOW}⚠️  API credentials not configured!${NC}"
-        echo ""
-        echo "Please complete the configuration:"
-        echo -e "  ${GREEN}audex-setup${NC}"
-        echo ""
-        exit 1
-    fi
-}
+if grep -q "<UNSET>" "$USER_CONFIG" 2>/dev/null; then
+    echo -e "${YELLOW}⚠️  API credentials not configured! ${NC}"
+    echo ""
+    echo "Please complete the configuration:"
+    echo -e "  ${GREEN}audex-setup${NC}"
+    exit 1
+fi
 
 # ============================================================================
 # Initialize User Directories
 # ============================================================================
 
-init_user_dirs() {
-    mkdir -p "$HOME/.config/audex"
-    mkdir -p "$USER_DATA/store"
-    mkdir -p "$USER_LOG"
-}
+mkdir -p "$HOME/.config/audex"
+mkdir -p "$USER_DATA/store"
+mkdir -p "$USER_LOG"
 
 # ============================================================================
 # Setup Environment
 # ============================================================================
 
-setup_environment() {
-    # Set user paths
-    export AUDEX_CONFIG="$USER_CONFIG"
-    export AUDEX_DATA_DIR="$USER_DATA"
-    export AUDEX_LOG_DIR="$USER_LOG"
-    export AUDEX_USER_INSTALL="1"
-
-    # Python unbuffered output
-    export PYTHONUNBUFFERED="1"
-
-    # Use user's PulseAudio/Pipewire
-    if [ -n "$XDG_RUNTIME_DIR" ]; then
-        export PULSE_RUNTIME_PATH="$XDG_RUNTIME_DIR/pulse"
-    fi
-}
+export AUDEX_CONFIG="$USER_CONFIG"
+export AUDEX_DATA_DIR="$USER_DATA"
+export AUDEX_LOG_DIR="$USER_LOG"
+export AUDEX_USER_INSTALL="1"
+export PYTHONUNBUFFERED="1"
 
 # ============================================================================
-# Main Execution
+# Launch Audex
 # ============================================================================
 
-main() {
-    check_venv
-    check_configuration
-    init_user_dirs
-    setup_environment
+source "$AUDEX_VENV/bin/activate"
 
-    # Activate virtual environment
-    source "$AUDEX_VENV/bin/activate"
-
-    # Launch Audex
-    if [ $# -eq 0 ]; then
-        # No arguments: use user config
-        exec python3 -m audex --config "$USER_CONFIG"
-    else
-        # Pass through all arguments
-        exec python3 -m audex "$@"
-    fi
-}
-
-main "$@"
+if [ $# -eq 0 ]; then
+    exec python3 -m audex --config "$USER_CONFIG"
+else
+    exec python3 -m audex "$@"
+fi
