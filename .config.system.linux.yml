@@ -1,0 +1,81 @@
+# Audex System Configuration
+# Platform: linux
+# Version: 1.0.7-a2
+#
+# This file is generated automatically. Do not edit manually.
+# User configuration should be placed in ~/.config/audex/config.yml
+#
+# For configuration examples, see: /etc/audex/config.example.yml
+
+core:
+  app:
+    app_name: Audex
+    app_version: 1.0.7-a2
+    debug: false
+    native: true
+  logging:
+    targets:
+      - logname: stdout
+        loglevel: info
+      - logname: ${HOME}/.local/share/audex/logs/audex.log
+        loglevel: info
+        rotation:
+          size_based:
+            max_size: 10
+            backup_count: 5
+  audio:
+    sample_rate: 16000
+    vpr_sample_rate: 16000
+    vpr_text_content: 您好，请问您今天需要什么帮助？
+    vpr_threshold: 0.5
+    key_prefix: audex
+    segment_buffer: 2000
+  session:
+    ttl_hours: 168
+provider:
+  transcription:
+    provider: dashscope
+    dashscope:
+      model: paraformer-realtime-v2
+      websocket:
+        max_connections: 10
+        idle_timeout: 60
+        drain_timeout: 5.0
+      session:
+        fmt: pcm
+  vpr:
+    provider: xfyun
+    xfyun:
+      group_id_path: ${HOME}/.config/audex/.xf.vprgroup
+      http:
+        timeout: 10.0
+    unisound:
+      group_id_path: ${HOME}/.config/audex/.unisound.vprgroup
+      http:
+        timeout: 10.0
+infrastructure:
+  sqlite:
+    uri: "sqlite+aiosqlite://${HOME}/.local/share/audex/audex.db"
+    echo: false
+    pool_size: 20
+    max_overflow: 10
+    pool_timeout: 30.0
+    pool_recycle: 3600
+    pool_pre_ping: true
+    create_all: true
+  cache:
+    provider: inmemory
+    split_char: ":"
+    prefix: audex
+    inmemory:
+      cache_type: ttl
+      max_size: 1024
+      default_ttl: 300
+      negative_ttl: 60
+  store:
+    type: localfile
+    base_url: store
+  recorder:
+    format: int16
+    channels: 1
+    chunk: 1024
