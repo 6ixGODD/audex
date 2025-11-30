@@ -26,6 +26,10 @@ VERSION_FILE="$PROJECT_ROOT/VERSION"
 PYPROJECT_FILE="$PROJECT_ROOT/pyproject.toml"
 PROJECT_NAME="audex"
 INIT_FILE="$PROJECT_ROOT/$PROJECT_NAME/__init__.py"
+CONFIG_EXAMPLE_YML="$PROJECT_ROOT/.config.example.yml"
+ENV_EXAMPLE_FILE="$PROJECT_ROOT/.env.example"
+
+PYTHON="poetry run python"
 
 # Flags
 DRY_RUN=0
@@ -192,6 +196,22 @@ update_init_py() {
 	sed -i.bak 's/^__version__ = .*/__version__ = "'"$new_version"'"/' "$INIT_FILE"
 	rm -f "$INIT_FILE.bak"
 	log_success "✓ Updated: $INIT_FILE"
+}
+
+# Update .env.example & .config.example.yml files
+update_example_files() {
+  log_step "Updating example configuration files..."
+
+  if [ $DRY_RUN -eq 1 ]; then
+    log_info "[DRY-RUN] Would update $CONFIG_EXAMPLE_YML and $ENV_EXAMPLE_FILE"
+    return 0
+  fi
+
+  echo y | $PYTHON -m audex init gencfg -o $CONFIG_EXAMPLE_YML --format yaml
+  log_success "✓ Updated: $CONFIG_EXAMPLE_YML"
+
+  echo y | $PYTHON -m audex init gencfg -o $ENV_EXAMPLE_FILE --format dotenv
+  log_success "✓ Updated: $ENV_EXAMPLE_FILE"
 }
 
 # Create git commit
@@ -449,6 +469,7 @@ main() {
 	update_version_file "$NEW_VERSION"
 	update_pyproject "$NEW_VERSION"
 	update_init_py "$NEW_VERSION"
+	update_example_files
 	echo ""
 
 	# Verify updates
