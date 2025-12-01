@@ -57,18 +57,15 @@ echo -e "${GREEN}✓${NC} Systemd user daemon reloaded"
 
 # Enable service
 systemctl --user enable audex.service
-echo -e "${GREEN}✓${NC} Service enabled"
+echo -e "${GREEN}✓${NC} Service enabled (will auto-start on login)"
 
-# Enable linger for boot persistence
+# Start service now
 echo ""
-echo -e "${YELLOW}🔑 Enabling boot persistence...${NC}"
-sudo loginctl enable-linger "$USER"
-echo -e "${GREEN}✓${NC} Linger enabled (service will start on boot)"
-
-# Start service
-echo ""
-echo -e "${BLUE}🚀 Starting service...${NC}"
+echo -e "${BLUE}🚀 Starting service... ${NC}"
 systemctl --user start audex.service
+
+# Wait a moment for service to start
+sleep 2
 
 # Show status
 echo ""
@@ -94,9 +91,12 @@ echo ""
 echo "  View logs:"
 echo -e "    ${GREEN}journalctl --user -u audex.service -f${NC}"
 echo ""
-echo "  Disable service:"
+echo "  Disable auto-start:"
 echo -e "    ${GREEN}systemctl --user disable audex.service${NC}"
-echo -e "    ${GREEN}sudo loginctl disable-linger \$USER${NC}"
+echo ""
+echo -e "${YELLOW}💡 Note:${NC}"
+echo "  Service will automatically start when you log in"
+echo "  and stop when you log out."
 echo ""
 
 exit 0

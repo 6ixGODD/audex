@@ -2,13 +2,13 @@
 Description=Audex Medical Transcription Service
 Documentation=https://github.com/6ixGODD/audex
 After=graphical-session.target
-Wants=graphical-session.target
+PartOf=graphical-session.target
 
 [Service]
 Type=simple
 
 # Wait for desktop environment
-ExecStartPre=/bin/sleep 5
+ExecStartPre=/bin/sleep 10
 
 # Start Audex
 ExecStart=/usr/bin/audex
@@ -22,4 +22,4 @@ StandardOutput=journal
 StandardError=journal
 
 [Install]
-WantedBy=default.target
+WantedBy=graphical-session.target
