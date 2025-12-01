@@ -1,0 +1,102 @@
+#!/bin/bash
+# ============================================================================
+# Audex User Service Installer
+# ============================================================================
+# Description: Install and enable Audex as a user systemd service
+# ============================================================================
+
+set -e
+
+readonly GREEN='\033[0;32m'
+readonly YELLOW='\033[1;33m'
+readonly BLUE='\033[0;34m'
+readonly RED='\033[0;31m'
+readonly NC='\033[0m'
+
+# ============================================================================
+# Check not running as root
+# ============================================================================
+
+if [ "$(id -u)" -eq 0 ]; then
+    echo -e "${RED}❌ Error: This script should NOT be run as root${NC}"
+    echo ""
+    echo "Run as your normal user:"
+    echo -e "  ${GREEN}audex-enable-service${NC}"
+    exit 1
+fi
+
+# ============================================================================
+# Install user service
+# ============================================================================
+
+echo ""
+echo -e "${BLUE}🔧 Installing Audex User Service${NC}"
+echo ""
+
+# Create user systemd directory
+USER_SYSTEMD_DIR="$HOME/.config/systemd/user"
+mkdir -p "$USER_SYSTEMD_DIR"
+
+# Copy service file from system template
+SYSTEM_SERVICE="/etc/audex/systemd/audex.service"
+USER_SERVICE="$USER_SYSTEMD_DIR/audex.service"
+
+if [ !  -f "$SYSTEM_SERVICE" ]; then
+    echo -e "${RED}❌ System service template not found: $SYSTEM_SERVICE${NC}"
+    echo "Please reinstall Audex:"
+    echo -e "  ${GREEN}sudo apt install --reinstall audex${NC}"
+    exit 1
+fi
+
+cp "$SYSTEM_SERVICE" "$USER_SERVICE"
+echo -e "${GREEN}✓${NC} Service file installed: $USER_SERVICE"
+
+# Reload systemd user daemon
+systemctl --user daemon-reload
+echo -e "${GREEN}✓${NC} Systemd user daemon reloaded"
+
+# Enable service
+systemctl --user enable audex.service
+echo -e "${GREEN}✓${NC} Service enabled"
+
+# Enable linger for boot persistence
+echo ""
+echo -e "${YELLOW}🔑 Enabling boot persistence...${NC}"
+sudo loginctl enable-linger "$USER"
+echo -e "${GREEN}✓${NC} Linger enabled (service will start on boot)"
+
+# Start service
+echo ""
+echo -e "${BLUE}🚀 Starting service...${NC}"
+systemctl --user start audex.service
+
+# Show status
+echo ""
+systemctl --user status audex.service --no-pager || true
+
+echo ""
+echo -e "${GREEN}✅ Audex service installed successfully! ${NC}"
+echo ""
+echo -e "${BLUE}📋 Service Management Commands:${NC}"
+echo ""
+echo "  Start service:"
+echo -e "    ${GREEN}systemctl --user start audex.service${NC}"
+echo ""
+echo "  Stop service:"
+echo -e "    ${GREEN}systemctl --user stop audex.service${NC}"
+echo ""
+echo "  Restart service:"
+echo -e "    ${GREEN}systemctl --user restart audex.service${NC}"
+echo ""
+echo "  View status:"
+echo -e "    ${GREEN}systemctl --user status audex.service${NC}"
+echo ""
+echo "  View logs:"
+echo -e "    ${GREEN}journalctl --user -u audex.service -f${NC}"
+echo ""
+echo "  Disable service:"
+echo -e "    ${GREEN}systemctl --user disable audex.service${NC}"
+echo -e "    ${GREEN}sudo loginctl disable-linger \$USER${NC}"
+echo ""
+
+exit 0

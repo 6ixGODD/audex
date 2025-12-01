@@ -1,0 +1,25 @@
+[Unit]
+Description=Audex Medical Transcription Service
+Documentation=https://github.com/6ixGODD/audex
+After=graphical-session.target
+Wants=graphical-session.target
+
+[Service]
+Type=simple
+
+# Wait for desktop environment
+ExecStartPre=/bin/sleep 5
+
+# Start Audex
+ExecStart=/usr/bin/audex
+
+# Restart policy
+Restart=on-failure
+RestartSec=30s
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

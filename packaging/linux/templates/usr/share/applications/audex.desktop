@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Audex
+GenericName=Medical Recording System
+Comment=Smart Medical Recording & Transcription System
+Exec=/usr/bin/audex
+Icon=/usr/share/pixmaps/audex.svg
+Terminal=false
+Categories=AudioVideo;Audio;Utility;Medical;
+Keywords=medical;recording;transcription;audio;voice;doctor;
+StartupNotify=true
+StartupWMClass=Audex
+X-GNOME-Autostart-enabled=false

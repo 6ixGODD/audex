@@ -29,7 +29,7 @@ if IS_DOCKER:
     ICON_SRC = BUILD_DIR / "logo.svg"
 else:
     # Will be configured based on WSL_MODE flag
-    SCRIPT_DIR = pathlib.Path(__file__).parent.resolve()  # noqa: N806
+    SCRIPT_DIR = pathlib.Path(__file__).parent.resolve()
     BUILD_DIR = None  # Will be set later
     TEMPLATES_DIR = SCRIPT_DIR / "templates"
     VERSION_FILE = SCRIPT_DIR.parent.parent / "VERSION"
@@ -135,9 +135,9 @@ def create_package_structure(pkg_dir: pathlib.Path) -> None:
     directories = [
         pkg_dir / "DEBIAN",
         pkg_dir / "etc" / "audex" / "templates",
+        pkg_dir / "etc" / "audex" / "systemd",
         pkg_dir / "opt" / "audex",
         pkg_dir / "usr" / "bin",
-        pkg_dir / "usr" / "lib" / "systemd" / "system",
         pkg_dir / "usr" / "share" / "applications",
         pkg_dir / "usr" / "share" / "icons" / "hicolor" / "scalable" / "apps",
         pkg_dir / "usr" / "share" / "pixmaps",
@@ -187,7 +187,7 @@ def copy_template_files(pkg_dir: pathlib.Path, version: str, arch: str) -> None:
     log_info("   Processed control file")
 
     # Copy launcher scripts
-    for script in ["audex", "audex-setup"]:
+    for script in ["audex", "audex-setup", "audex-enable-service"]:
         src = TEMPLATES_DIR / "usr" / "bin" / script
         dst = pkg_dir / "usr" / "bin" / script
 
@@ -215,18 +215,18 @@ def copy_template_files(pkg_dir: pathlib.Path, version: str, arch: str) -> None:
     else:
         log_warn("Desktop file not found, skipping")
 
-    # Copy systemd service
-    service_src = TEMPLATES_DIR / "usr" / "lib" / "systemd" / "system" / "audex@.service"
-    service_dst = pkg_dir / "usr" / "lib" / "systemd" / "system" / "audex@.service"
+    # Copy user systemd service template
+    user_service_src = TEMPLATES_DIR / "etc" / "audex" / "systemd" / "audex.service"
+    user_service_dst = pkg_dir / "etc" / "audex" / "systemd" / "audex.service"
 
-    if service_src.exists():
-        content = service_src.read_text(encoding="utf-8")
+    if user_service_src.exists():
+        content = user_service_src.read_text(encoding="utf-8")
         content = normalize_line_endings(content)
-        service_dst.write_text(content, encoding="utf-8")
-        service_dst.chmod(0o644)
-        log_info("   Copied systemd service")
+        user_service_dst.write_text(content, encoding="utf-8")
+        user_service_dst.chmod(0o644)
+        log_info("   Copied user systemd service template")
     else:
-        log_warn("Systemd service file not found, skipping")
+        log_warn("User systemd service template not found, skipping")
 
     log_success("Template files copied")
 
@@ -359,11 +359,11 @@ def main() -> None:
     print("╔════════════════════════════════════════════════╗")
     print("║       Audex DEB Package Builder                ║")
     if IS_DOCKER:
-        print("║            (Docker Mode)                        ║")
+        print("║            (Docker Mode)                       ║")
     elif WSL_MODE:
-        print("║            (WSL Native Mode)                    ║")
+        print("║            (WSL Native Mode)                   ║")
     else:
-        print("║            (Local Mode)                         ║")
+        print("║            (Local Mode)                        ║")
     print("╚════════════════════════════════════════════════╝")
     print(f"{Colors.NC}\n")
 
