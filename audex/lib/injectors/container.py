@@ -6,6 +6,7 @@ from dependency_injector import providers
 from audex.config import Config
 from audex.lib.injectors.cache import make_cache
 from audex.lib.injectors.exporter import make_exporter
+from audex.lib.injectors.filesys import make_filesys
 from audex.lib.injectors.recorder import make_recorder
 from audex.lib.injectors.server import make_server
 from audex.lib.injectors.session import make_session_manager
@@ -27,6 +28,7 @@ class InfrastructureContainer(containers.DeclarativeContainer):
     cache = providers.Singleton(make_cache, config=config)
     usb = providers.Singleton(make_usb_manager)
     wifi = providers.Singleton(make_wifi_manager)
+    filesys = providers.Singleton(make_filesys, config=config)
     sqlite = providers.Singleton(make_sqlite, config=config)
     store = providers.Singleton(make_store, config=config)
     vpr = providers.Singleton(make_vpr, config=config)
@@ -40,8 +42,4 @@ class InfrastructureContainer(containers.DeclarativeContainer):
         utterance_repo=repository.utterance,
         store=store,
     )
-    server = providers.Factory(
-        make_server,
-        doctor_repo=repository.doctor,
-        exporter=exporter,
-    )
+    server = providers.Factory(make_server, doctor_repo=repository.doctor, exporter=exporter)
