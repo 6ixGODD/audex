@@ -105,6 +105,9 @@ async def render(
             ui.separator().classes("flex-1")
 
         # Register button
-        ui.button("注册新账号", on_click=lambda: ui.navigate.to("/register")).props(
-            "flat size=lg no-caps"
-        ).classes("w-full register-button").style("height: 48px;")
+        (
+            ui.button("注册新账号", on_click=lambda: ui.navigate.to("/register"))
+            .props("flat size=lg no-caps")
+            .classes("w-full register-button")
+            .style("height: 48px;")
+        )

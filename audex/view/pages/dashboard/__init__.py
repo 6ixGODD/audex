@@ -9,10 +9,12 @@ from nicegui import ui
 
 from audex.config import Config
 from audex.container import Container
+from audex.lib.filesys import FileSystemManager
 from audex.lib.wifi import WiFiManager
 from audex.service.doctor import DoctorService
 from audex.service.session import SessionService
 from audex.view.decorators import handle_errors
+from audex.view.pages.dashboard.filesys import FileSystemIndicator
 from audex.view.pages.dashboard.wifi import WiFiIndicator
 
 
@@ -23,6 +25,7 @@ async def render(
     doctor_service: DoctorService = Depends(Provide[Container.service.doctor]),
     session_service: SessionService = Depends(Provide[Container.service.session]),
     wifi_manager: WiFiManager = Depends(Provide[Container.infrastructure.wifi]),
+    filesys_manager: FileSystemManager = Depends(Provide[Container.infrastructure.filesys]),
     config: Config = Depends(Provide[Container.config]),
 ) -> None:
     """Render dashboard page with clean Apple-inspired design."""
@@ -44,6 +47,10 @@ async def render(
             # WiFi indicator
             wifi_indicator = WiFiIndicator(wifi_manager)
             wifi_indicator.render()
+
+            # FileSystem indicator
+            filesys_indicator = FileSystemIndicator(filesys_manager)
+            filesys_indicator.render()
 
             # Doctor info
             with (
@@ -86,12 +93,9 @@ async def render(
                 ui.notify("已退出登录", type="info")
                 ui.navigate.to("/login")
 
-            (
-                ui.button(icon="logout", on_click=do_logout)
-                .props("flat round size=md")
-                .classes("press-button")
-                .tooltip("退出登录")
-            )
+            ui.button(icon="logout", on_click=do_logout).props("flat round size=md").classes(
+                "press-button"
+            ).tooltip("退出登录")
 
     # Main content
     with (
