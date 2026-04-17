@@ -437,3 +437,43 @@ html, body {
         padding: 130px 15px 170px 15px !important;
     }
 }
+
+/* Centered utterance display (no left/right distinction) */
+.utterance-final-centered {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 12px 20px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.utterance-final-centered .q-label {
+    max-width: 700px;
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.9) 0%,
+        rgba(248, 250, 252, 0.8) 100%
+    );
+    padding: 12px 20px;
+    border-radius: 12px;
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.04),
+        0 1px 4px rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(102, 126, 234, 0.06);
+}
+
+/* Slide up animation for new utterances */
+.utterance-final-centered {
+    animation: slideUpCentered 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideUpCentered {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}

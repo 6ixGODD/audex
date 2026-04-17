@@ -1,0 +1,116 @@
+/* Waveform Container - Vertically Centered */
+.waveform-section {
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    width: 100% !important;
+    max-width: 900px !important;
+    z-index: 998 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 40px 20px !important;
+    gap: 32px !important;
+}
+
+/* Current Text Display - Above Waveform */
+.current-text-display {
+    width: 100% !important;
+    max-width: 800px !important;
+    min-height: 100px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 20px 32px !important;
+    font-size: 1.8rem !important;
+    font-weight: 500 !important;
+    color: #1f2937 !important;
+    line-height: 1.7 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.current-text-display.has-text {
+    font-size: 2rem !important;
+    color: #111827 !important;
+}
+
+.current-text-display.empty {
+    color: #d1d5db !important;
+    font-size: 1.3rem !important;
+    font-weight: 400 !important;
+}
+
+/* Waveform Canvas Container - Below Text, Fully Transparent */
+.waveform-container {
+    width: 100% !important;
+    max-width: 900px !important;
+    height: 160px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Remove all overlays - pure transparent */
+.waveform-container::before,
+.waveform-container::after {
+    display: none !important;
+}
+
+#waveform-canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block !important;
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.current-text-display {
+    animation: fadeIn 0.3s ease-out;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .waveform-section {
+        max-width: 90% !important;
+        padding: 30px 15px !important;
+    }
+
+    .current-text-display {
+        font-size: 1.5rem !important;
+        min-height: 80px !important;
+    }
+
+    .current-text-display.has-text {
+        font-size: 1.7rem !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .current-text-display {
+        font-size: 1.3rem !important;
+        padding: 16px 24px !important;
+    }
+
+    .current-text-display.has-text {
+        font-size: 1.5rem !important;
+    }
+
+    .waveform-container {
+        height: 120px !important;
+    }
+}
