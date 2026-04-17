@@ -227,7 +227,7 @@ class SessionService(BaseService):
 
             # Calculate sessions in the current month
             now = utils.utcnow()
-            month_start = datetime.datetime(now.year, now.month, 1, tzinfo=datetime.UTC)
+            month_start = datetime.datetime(now.year, now.month, 1, tzinfo=datetime.timezone.utc)
             f_month = session_filter().doctor_id.eq(doctor_id).created_at.gte(month_start)
             sessions_count_in_this_month = await self.session_repo.count(f_month.build())
 
@@ -475,11 +475,11 @@ class SessionContext(LoggingMixin, AbstractSession):
                     buffer_seconds = self.config.segment_buffer_ms / 1000.0
                     utterance_start = datetime.datetime.fromtimestamp(
                         task.started_at - buffer_seconds,
-                        tz=datetime.UTC,
+                        tz=datetime.timezone.utc,
                     )
                     utterance_end = datetime.datetime.fromtimestamp(
                         task.ended_at + buffer_seconds,
-                        tz=datetime.UTC,
+                        tz=datetime.timezone.utc,
                     )
 
                     # Extract audio segment

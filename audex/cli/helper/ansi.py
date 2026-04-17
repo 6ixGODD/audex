@@ -14,7 +14,7 @@ class ANSI:
     Automatically detects color support in the terminal environment.
     """
 
-    class FG(enum.StrEnum):
+    class FG(str, enum.Enum):
         """Foreground colors."""
 
         BLACK = "\033[30m"
@@ -34,7 +34,7 @@ class ANSI:
         BRIGHT_CYAN = "\033[96m"
         BRIGHT_WHITE = "\033[97m"
 
-    class BG(enum.StrEnum):
+    class BG(str, enum.Enum):
         """Background colors."""
 
         BLACK = "\033[40m"
@@ -54,7 +54,7 @@ class ANSI:
         BRIGHT_CYAN = "\033[106m"
         BRIGHT_WHITE = "\033[107m"
 
-    class STYLE(enum.StrEnum):
+    class STYLE(str, enum.Enum):
         """Text styles."""
 
         RESET = "\033[0m"
