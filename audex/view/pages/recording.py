@@ -27,7 +27,7 @@ async def render(
     session_service: SessionService = Depends(Provide[Container.service.session]),
     session_id: str | None = Query(default=None),
 ) -> None:
-    """Render recording session page with lyrics-style scrolling."""
+    """Render recording session page with waveform visualization only."""
 
     doctor = await doctor_service.current_doctor()
     has_vp = await doctor_service.has_voiceprint()
@@ -37,10 +37,10 @@ async def render(
         ui.navigate.to("/voiceprint/enroll")
         return
 
+    # Load CSS and JS
     ui.add_head_html('<link rel="stylesheet" href="/static/css/recording.css">')
-
-    # Global auto-scroll JavaScript
-    ui.add_head_html('<script src="/static/js/recording.js"></script>')
+    ui.add_head_html('<link rel="stylesheet" href="/static/css/waveform.css">')
+    ui.add_head_html('<script src="/static/js/waveform.js"></script>')
 
     # Tasks
     asyncio_tasks: dict[str, asyncio.Task] = {}
@@ -51,8 +51,7 @@ async def render(
     session_context: dict[str, t.Any] = {"value": None}
     is_session_completed = {"value": False}
 
-    current_utterance_element: dict[str, t.Any] = {"element": None}
-    current_sequence: dict[str, int] = {"value": 0}
+    current_text_label: dict[str, t.Any] = {"label": None}
 
     # Header with glass effect
     with (
@@ -64,143 +63,45 @@ async def render(
         ).tooltip("返回主面板")
         ui.label("录音会话").classes("text-h6 font-semibold text-grey-8")
 
-    # Scroll to bottom button
-    (
-        ui.button(
-            icon="keyboard_arrow_down", on_click=lambda: ui.run_javascript("scrollToBottom()")
-        )
-        .props("round color=white text-color=grey-8")
-        .classes("scroll-bottom-btn")
-        .tooltip("滚动到底部")
-    )
+    # Waveform Section (Vertically Centered)
+    with ui.element("div").classes("waveform-section"):
+        # Current text display (above waveform)
+        text_display_container = ui.element("div").classes("current-text-display empty")
+        with text_display_container:
+            current_text_label["label"] = ui.label("等待输入...").classes("text-center")
 
-    # Main scrollable container
-    lyrics_container = ui.element("div").classes("lyrics-container").props('id="lyrics-container"')
-    with lyrics_container:
-        lyrics_column = ui.column().classes("w-full items-center")
+        # Waveform canvas container (below text)
+        with ui.element("div").classes("waveform-container"):
+            ui.html('<canvas id="waveform-canvas"></canvas>')
 
     # Footer glass overlay
     ui.element("div").classes("footer-glass")
 
-    async def load_existing_utterances():
-        """Load existing conversation history."""
-        if not session_id_state["value"]:
-            return
-
-        try:
-            utterances = await session_service.get_utterances(session_id_state["value"])
-
-            for utterance in utterances:
-                with lyrics_column:
-                    elem = ui.element("div").classes("utterance-final")
-
-                    if utterance.speaker.value == "doctor":
-                        elem.classes(add="is-doctor")
-                        with elem:
-                            ui.label("医生").classes("speaker-label")
-                            ui.html(
-                                f'<div class="bubble-doctor">{utterance.text}</div>', sanitize=False
-                            )
-                    else:
-                        elem.classes(add="is-patient")
-                        with elem:
-                            ui.label("患者").classes("speaker-label")
-                            ui.html(
-                                f'<div class="bubble-patient">{utterance.text}</div>',
-                                sanitize=False,
-                            )
-
-                current_sequence["value"] = max(current_sequence["value"], utterance.sequence)
-
-            # JavaScript handles auto-scroll via MutationObserver
-
-        except Exception as e:
-            print(f"Failed to load utterances: {e}")
-
-    async def wait_for_vpr_and_render(
-        elem: ui.element, sequence: int, text: str, max_retries: int = 30
-    ):
-        """Wait for VPR completion and render final bubble."""
-        ctx = session_context["value"]
-
-        for _ in range(max_retries):
-            is_doctor = ctx._vpr_results.get(sequence)
-
-            if is_doctor is not None:
-                elem.classes(remove="utterance-item utterance-current utterance-past")
-                elem.classes(add="utterance-final")
-
-                if is_doctor:
-                    elem.classes(add="is-doctor")
-                else:
-                    elem.classes(add="is-patient")
-
-                elem.clear()
-                with elem:
-                    ui.label("医生" if is_doctor else "患者").classes("speaker-label")
-                    ui.html(
-                        f'<div class="bubble-{"doctor" if is_doctor else "patient"}">{text}</div>',
-                        sanitize=False,
-                    )
-
-                # JavaScript MutationObserver will handle auto-scroll
-                return
-
-            await asyncio.sleep(0.1)
-
-        # Timeout - default to patient
-        elem.classes(remove="utterance-item utterance-current utterance-past")
-        elem.classes(add="utterance-final is-patient")
-        elem.clear()
-        with elem:
-            ui.label("患者").classes("speaker-label")
-            ui.html(f'<div class="bubble-patient">{text}</div>', sanitize=False)
-
     async def process_transcription():
-        """Process transcription events."""
+        """Process transcription events - only update current text display."""
         ctx = session_context["value"]
 
         async for event in ctx.receive():
             if isinstance(event, Start):
-                with lyrics_column:
-                    elem = ui.element("div").classes("utterance-item utterance-current slide-up")
-                    with elem:
-                        ui.label("")
-                current_utterance_element["element"] = elem
+                # Clear current text display
+                if current_text_label["label"]:
+                    current_text_label["label"].set_text("")
+                    text_display_container.classes(remove="empty")
+                    text_display_container.classes(add="has-text")
 
             elif isinstance(event, Delta):
-                elem = current_utterance_element["element"]
-
-                if elem is None:
-                    with lyrics_column:
-                        elem = ui.element("div").classes(
-                            "utterance-item utterance-current slide-up"
-                        )
-                        with elem:
-                            ui.label("")
-                    current_utterance_element["element"] = elem
-
-                elem.clear()
-                with elem:
-                    ui.label(event.text)
-
-                if not event.interim and event.sequence is not None:
-                    current_sequence["value"] = event.sequence
-                    elem.classes(remove="utterance-current")
-                    elem.classes(add="utterance-past")
-
-                # JavaScript MutationObserver handles auto-scroll
+                # Update current text display
+                if current_text_label["label"]:
+                    current_text_label["label"].set_text(event.text)
 
             elif isinstance(event, Done):
-                elem = current_utterance_element["element"]
-                if elem and current_sequence["value"] > 0:
-                    vpr_and_render_task = asyncio.create_task(
-                        wait_for_vpr_and_render(elem, current_sequence["value"], event.full_text)
-                    )
-                    asyncio_tasks.setdefault(
-                        f"vpr_render_{current_sequence['value']}", vpr_and_render_task
-                    )
-                    current_utterance_element["element"] = None
+                # Clear the text display after completion
+                if current_text_label["label"]:
+                    # Wait a bit before clearing so user can see the final text
+                    await asyncio.sleep(0.8)
+                    current_text_label["label"].set_text("等待输入...")
+                    text_display_container.classes(remove="has-text")
+                    text_display_container.classes(add="empty")
 
     @handle_errors
     async def toggle_recording():
@@ -219,6 +120,9 @@ async def render(
 
                     record_btn.props("icon=stop color=negative")
                     record_btn.classes(add="recording-pulse")
+
+                    # Start waveform
+                    await ui.run_javascript("startWaveform()")
 
                     ui.notify("继续录音", type="positive")
 
@@ -298,6 +202,9 @@ async def render(
                             record_btn.props("icon=stop color=negative")
                             record_btn.classes(add="recording-pulse")
 
+                            # Start waveform
+                            await ui.run_javascript("startWaveform()")
+
                             ui.notify("开始录音", type="positive")
 
                             transcription_task = asyncio.create_task(process_transcription())
@@ -332,6 +239,15 @@ async def render(
                 record_btn.props("icon=mic color=primary")
                 record_btn.classes(remove="recording-pulse")
 
+                # Stop waveform
+                await ui.run_javascript("stopWaveform()")
+
+                # Clear text display
+                if current_text_label["label"]:
+                    current_text_label["label"].set_text("等待输入...")
+                    text_display_container.classes(remove="has-text")
+                    text_display_container.classes(add="empty")
+
                 ui.notify("录音已保存，可继续添加内容", type="positive", timeout=3000)
 
             finally:
@@ -343,6 +259,3 @@ async def render(
         .props("round unelevated color=primary size=xl")
         .classes("record-btn")
     )
-
-    # Load existing utterances on page load
-    await load_existing_utterances()

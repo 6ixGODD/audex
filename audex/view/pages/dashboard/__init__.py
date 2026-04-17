@@ -86,9 +86,12 @@ async def render(
                 ui.notify("已退出登录", type="info")
                 ui.navigate.to("/login")
 
-            ui.button(icon="logout", on_click=do_logout).props("flat round size=md").classes(
-                "press-button"
-            ).tooltip("退出登录")
+            (
+                ui.button(icon="logout", on_click=do_logout)
+                .props("flat round size=md")
+                .classes("press-button")
+                .tooltip("退出登录")
+            )
 
     # Main content
     with (
