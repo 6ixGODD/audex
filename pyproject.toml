@@ -74,7 +74,7 @@ optional-dependencies.test = [
 audex = "audex.cli:cli"
 
 [tool.setuptools]
-packages = ["audex"]
+packages = { find = { where = ["."], include = ["audex*"] } }
 
 [tool.setuptools.package-data]
 audex = [
