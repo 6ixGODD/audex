@@ -22,7 +22,7 @@ English | [简体中文](README.zh-CN.md)
 ## System Requirements
 
 - Python 3.10-3.13
-- Poetry
+- uv (package manager)
 - PortAudio
 - FFmpeg
 - SQLite3
@@ -64,7 +64,7 @@ pip install audex
 ```bash
 git clone https://github.com/6ixGODD/audex.git
 cd audex
-poetry install
+uv sync
 ```
 
 ### DEB Package (Debian/Ubuntu/Raspberry Pi)
@@ -176,20 +176,20 @@ See `config.example.yml` for complete configuration options.
 
 ```bash
 # Development environment
-poetry install --extras dev
+uv sync --extra dev
 
 # Testing environment
-poetry install --extras test
+uv sync --extra test
 
 # Documentation environment
-poetry install --extras docs
+uv sync --extra docs
 ```
 
 ### Build Package
 
 ```bash
 # Build wheel and sdist
-poetry build
+uv build
 
 # Output: dist/audex-{version}-py3-none-any.whl
 ```
@@ -197,15 +197,15 @@ poetry build
 ### Run Tests
 
 ```bash
-poetry install --extras test
-poetry run pytest
+uv sync --extra test
+uv run pytest
 ```
 
 ### Documentation
 
 ```bash
-poetry install --extras docs
-poetry run mkdocs serve
+uv sync --extra docs
+uv run mkdocs serve
 
 # Visit: http://127.0.0.1:8000
 ```

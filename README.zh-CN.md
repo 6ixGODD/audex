@@ -23,7 +23,7 @@
 ## 系统要求
 
 - Python 3.10-3.13
-- Poetry
+- uv（包管理器）
 - PortAudio
 - FFmpeg
 - SQLite3
@@ -65,7 +65,7 @@ pip install audex
 ```bash
 git clone https://github.com/6ixGODD/audex.git
 cd audex
-poetry install
+uv sync
 ```
 
 ### DEB 包安装（Debian/Ubuntu/Raspberry Pi）
@@ -177,20 +177,20 @@ infrastructure:
 
 ```bash
 # 开发环境
-poetry install --extras dev
+uv sync --extra dev
 
 # 测试环境
-poetry install --extras test
+uv sync --extra test
 
 # 文档环境
-poetry install --extras docs
+uv sync --extra docs
 ```
 
 ### 构建包
 
 ```bash
 # 构建 wheel 和 sdist
-poetry build
+uv build
 
 # 输出：dist/audex-{version}-py3-none-any.whl
 ```
@@ -198,15 +198,15 @@ poetry build
 ### 运行测试
 
 ```bash
-poetry install --extras test
-poetry run pytest
+uv sync --extra test
+uv run pytest
 ```
 
 ### 文档
 
 ```bash
-poetry install --extras docs
-poetry run mkdocs serve
+uv sync --extra docs
+uv run mkdocs serve
 
 # 访问：http://127.0.0.1:8000
 ```
