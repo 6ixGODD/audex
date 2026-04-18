@@ -8,9 +8,10 @@
 #          .\scripts\bump.ps1 0.2.0 -NoGit
 # ============================================================================
 
+
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory=$true, Position=0)]
+    [Parameter(Mandatory=$false, Position=0)]
     [string]$NewVersion,
     
     [Parameter(Mandatory=$false)]
@@ -27,11 +28,24 @@ param(
 )
 
 # ============================================================================
+# Import Common Utilities
+# ============================================================================
+
+$ScriptDir = $PSScriptRoot
+$CommonScript = Join-Path $ScriptDir "tools\common.ps1"
+
+if (Test-Path $CommonScript) {
+    . $CommonScript
+} else {
+    Write-Host "ERROR: Common utilities not found at $CommonScript" -ForegroundColor Red
+    exit 1
+}
+
+# ============================================================================
 # Configuration
 # ============================================================================
 
 $ErrorActionPreference = "Stop"
-$ScriptDir = $PSScriptRoot
 $ProjectRoot = Split-Path -Parent $ScriptDir
 
 $VERSION_FILE = Join-Path $ProjectRoot "VERSION"
@@ -43,88 +57,12 @@ $CONFIG_SYSTEM_LINUX = Join-Path $ProjectRoot ".config.system.linux.yml"
 $CONFIG_SYSTEM_WINDOWS = Join-Path $ProjectRoot ".config.system.windows.yml"
 $ENV_EXAMPLE_FILE = Join-Path $ProjectRoot ".env.example"
 
-$PYTHON = "uv run python"
-
-# ============================================================================
-# Color Functions
-# ============================================================================
-
-function Write-ColorOutput {
-    param(
-        [string]$Message,
-        [string]$ForegroundColor = "White"
-    )
-    Write-Host $Message -ForegroundColor $ForegroundColor
-}
-
-function Write-Info {
-    param([string]$Message)
-    Write-ColorOutput "[INFO] $Message" -ForegroundColor Green
-}
-
-function Write-Error {
-    param([string]$Message)
-    Write-ColorOutput "[ERROR] $Message" -ForegroundColor Red
-}
-
-function Write-Warn {
-    param([string]$Message)
-    Write-ColorOutput "[WARN] $Message" -ForegroundColor Yellow
-}
-
-function Write-Step {
-    param([string]$Message)
-    Write-ColorOutput "[STEP] $Message" -ForegroundColor Cyan
-}
-
-function Write-Success {
-    param([string]$Message)
-    Write-ColorOutput "[SUCCESS] $Message" -ForegroundColor Green
-}
-
-# ============================================================================
-# Utility Functions
-# ============================================================================
-
-function Write-Separator {
-    Write-Host "========================================="
-}
-
-function Write-Header {
-    param([string]$Title)
-    Write-Host ""
-    Write-Separator
-    Write-Host $Title
-    Write-Separator
-    Write-Host ""
-}
-
-function Test-CommandExists {
-    param([string]$Command)
-    $null -ne (Get-Command $Command -ErrorAction SilentlyContinue)
-}
-
-function Request-Confirmation {
-    param([string]$Prompt = "Are you sure?")
-    $response = Read-Host "$Prompt (y/N)"
-    return $response -match '^[yY](es)?$'
-}
-
-function Exit-WithError {
-    param(
-        [string]$Message,
-        [int]$ExitCode = 1
-    )
-    Write-Error $Message
-    exit $ExitCode
-}
-
 # ============================================================================
 # Help Function
 # ============================================================================
 
 function Show-Usage {
-    @"
+    Write-Host @"
 Usage: bump.ps1 <new_version> [options]
 
 Arguments:
@@ -144,7 +82,8 @@ Examples:
 "@
 }
 
-if ($Help) {
+# Show help if requested or no version provided
+if ($Help -or (Test-EmptyString $NewVersion)) {
     Show-Usage
     exit 0
 }
@@ -156,8 +95,7 @@ if ($Help) {
 function Test-VersionFormat {
     param([string]$Version)
     
-    # Check semantic versioning format (X.Y.Z or X.Y.Z-suffix)
-    if ($Version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$') {
+    if (-not (Test-SemanticVersion $Version)) {
         Exit-WithError "Invalid version format: $Version (expected: X.Y.Z or X.Y.Z-suffix)"
     }
     
@@ -165,8 +103,8 @@ function Test-VersionFormat {
 }
 
 function Get-CurrentVersion {
-    if (Test-Path $VERSION_FILE) {
-        return (Get-Content $VERSION_FILE -Raw).Trim()
+    if (Test-FileExists $VERSION_FILE) {
+        return (Trim-String (Read-FileContentRaw $VERSION_FILE))
     }
     return "unknown"
 }
@@ -185,8 +123,8 @@ function Update-VersionFile {
         return
     }
     
-    Set-Content -Path $VERSION_FILE -Value $Version -NoNewline
-    Write-Success "✓ Updated: $VERSION_FILE"
+    Write-FileContentRaw -Path $VERSION_FILE -Content $Version
+    Write-Success "[OK] Updated: $VERSION_FILE"
 }
 
 function Update-PyProject {
@@ -194,7 +132,7 @@ function Update-PyProject {
     
     Write-Step "Updating pyproject.toml..."
     
-    if (-not (Test-Path $PYPROJECT_FILE)) {
+    if (-not (Test-FileExists $PYPROJECT_FILE)) {
         Write-Warn "File not found: $PYPROJECT_FILE"
         return
     }
@@ -205,13 +143,32 @@ function Update-PyProject {
     }
     
     # Read file content
-    $content = Get-Content $PYPROJECT_FILE -Raw
+    $content = Read-FileContent $PYPROJECT_FILE
     
-    # Update version in [project] section
-    if ($content -match '(?ms)\[project\].*?^version\s*=\s*"[^"]*"') {
-        $content = $content -replace '(?m)(?<=\[project\].*?^version\s*=\s*")[^"]*', $Version
-        Set-Content -Path $PYPROJECT_FILE -Value $content -NoNewline
-        Write-Success "✓ Updated: $PYPROJECT_FILE ([project] section)"
+    # Find and update version line in [project] section
+    $inProjectSection = $false
+    $updated = $false
+    
+    for ($i = 0; $i -lt $content.Length; $i++) {
+        if ($content[$i] -match '^\[project\]') {
+            $inProjectSection = $true
+        }
+        elseif ($content[$i] -match '^\[') {
+            $inProjectSection = $false
+        }
+        elseif ($inProjectSection -and $content[$i] -match '^version\s*=\s*"[^"]*"') {
+            $content[$i] = "version = `"$Version`""
+            $updated = $true
+            break
+        }
+    }
+    
+    if ($updated) {
+        Write-FileContent -Path $PYPROJECT_FILE -Content $content
+        Write-Success "[OK] Updated: $PYPROJECT_FILE ([project] section)"
+    }
+    else {
+        Write-Warn "Could not find version in [project] section"
     }
 }
 
@@ -220,7 +177,7 @@ function Update-InitPy {
     
     Write-Step "Updating $PROJECT_NAME/__init__.py..."
     
-    if (-not (Test-Path $INIT_FILE)) {
+    if (-not (Test-FileExists $INIT_FILE)) {
         Write-Warn "File not found: $INIT_FILE"
         return
     }
@@ -231,12 +188,12 @@ function Update-InitPy {
     }
     
     # Read file content
-    $content = Get-Content $INIT_FILE -Raw
+    $content = Read-FileContentRaw $INIT_FILE
     
     # Update __version__ variable
     $content = $content -replace '(?m)^__version__\s*=\s*"[^"]*"', "__version__ = `"$Version`""
-    Set-Content -Path $INIT_FILE -Value $content -NoNewline
-    Write-Success "✓ Updated: $INIT_FILE"
+    Write-FileContentRaw -Path $INIT_FILE -Content $content
+    Write-Success "[OK] Updated: $INIT_FILE"
 }
 
 function Update-ConfigFiles {
@@ -249,20 +206,20 @@ function Update-ConfigFiles {
     
     try {
         # Update config.example.yml
-        "y" | & $PYTHON.Split() -m audex init gencfg -o $CONFIG_EXAMPLE_YML --format yaml 2>&1 | Out-Null
-        Write-Success "✓ Updated: $CONFIG_EXAMPLE_YML"
+        "y" | uv run python -m audex init gencfg -o $CONFIG_EXAMPLE_YML --format yaml 2>&1 | Out-Null
+        Write-Success "[OK] Updated: $CONFIG_EXAMPLE_YML"
         
         # Update config.system.linux.yml
-        "y" | & $PYTHON.Split() -m audex init gencfg -o $CONFIG_SYSTEM_LINUX --format system --platform linux 2>&1 | Out-Null
-        Write-Success "✓ Updated: $CONFIG_SYSTEM_LINUX"
+        "y" | uv run python -m audex init gencfg -o $CONFIG_SYSTEM_LINUX --format system --platform linux 2>&1 | Out-Null
+        Write-Success "[OK] Updated: $CONFIG_SYSTEM_LINUX"
         
         # Update config.system.windows.yml
-        "y" | & $PYTHON.Split() -m audex init gencfg -o $CONFIG_SYSTEM_WINDOWS --format system --platform windows 2>&1 | Out-Null
-        Write-Success "✓ Updated: $CONFIG_SYSTEM_WINDOWS"
+        "y" | uv run python -m audex init gencfg -o $CONFIG_SYSTEM_WINDOWS --format system --platform windows 2>&1 | Out-Null
+        Write-Success "[OK] Updated: $CONFIG_SYSTEM_WINDOWS"
         
         # Update .env.example
-        "y" | & $PYTHON.Split() -m audex init gencfg -o $ENV_EXAMPLE_FILE --format dotenv 2>&1 | Out-Null
-        Write-Success "✓ Updated: $ENV_EXAMPLE_FILE"
+        "y" | uv run python -m audex init gencfg -o $ENV_EXAMPLE_FILE --format dotenv 2>&1 | Out-Null
+        Write-Success "[OK] Updated: $ENV_EXAMPLE_FILE"
     }
     catch {
         Write-Warn "Failed to update some configuration files: $_"
@@ -281,16 +238,7 @@ function New-GitCommit {
         return
     }
     
-    if (-not (Test-CommandExists git)) {
-        Write-Warn "Git is not installed, skipping git operations"
-        return
-    }
-    
-    # Check if we're in a git repository
-    try {
-        git rev-parse --git-dir 2>&1 | Out-Null
-    }
-    catch {
+    if (-not (Test-GitRepository)) {
         Write-Warn "Not a git repository, skipping git operations"
         return
     }
@@ -312,7 +260,7 @@ function New-GitCommit {
     }
     else {
         git commit -m "chore: bump version to $Version" 2>&1 | Out-Null
-        Write-Success "✓ Git commit created"
+        Write-Success "[OK] Git commit created"
     }
 }
 
@@ -324,15 +272,7 @@ function New-GitTag {
         return
     }
     
-    if (-not (Test-CommandExists git)) {
-        Write-Warn "Git is not installed, skipping git tag"
-        return
-    }
-    
-    try {
-        git rev-parse --git-dir 2>&1 | Out-Null
-    }
-    catch {
+    if (-not (Test-GitRepository)) {
         Write-Warn "Not a git repository, skipping git tag"
         return
     }
@@ -342,8 +282,7 @@ function New-GitTag {
     $tagName = "v$Version"
     
     # Check if tag already exists
-    try {
-        git rev-parse $tagName 2>&1 | Out-Null
+    if (Test-GitTagExists $tagName) {
         Write-Warn "Tag $tagName already exists"
         
         if (-not $DryRun) {
@@ -359,9 +298,6 @@ function New-GitTag {
             return
         }
     }
-    catch {
-        # Tag doesn't exist, continue
-    }
     
     if ($DryRun) {
         Write-Info "[DRY-RUN] Would create tag: $tagName"
@@ -370,7 +306,7 @@ function New-GitTag {
     
     # Create annotated tag
     git tag -a $tagName -m "Release version $Version"
-    Write-Success "✓ Git tag created: $tagName"
+    Write-Success "[OK] Git tag created: $tagName"
     Write-Host ""
     Write-Info "To push the tag, run: git push origin $tagName"
 }
@@ -383,14 +319,7 @@ function Push-GitTag {
         return
     }
     
-    if (-not (Test-CommandExists git)) {
-        return
-    }
-    
-    try {
-        git rev-parse --git-dir 2>&1 | Out-Null
-    }
-    catch {
+    if (-not (Test-GitRepository)) {
         return
     }
     
@@ -413,25 +342,25 @@ function Push-GitTag {
     }
     
     # Get current branch
-    $currentBranch = git branch --show-current
+    $currentBranch = Get-GitCurrentBranch
     
     # Push commit
     try {
         git push origin $currentBranch 2>&1 | Out-Null
-        Write-Success "✓ Pushed commit to remote"
+        Write-Success "[OK] Pushed commit to remote"
     }
     catch {
-        Write-Error "Failed to push commit"
+        Write-ErrorMsg "Failed to push commit"
         return
     }
     
     # Push tag
     try {
         git push origin $tagName 2>&1 | Out-Null
-        Write-Success "✓ Pushed tag to remote: $tagName"
+        Write-Success "[OK] Pushed tag to remote: $tagName"
     }
     catch {
-        Write-Error "Failed to push tag"
+        Write-ErrorMsg "Failed to push tag"
     }
 }
 
@@ -451,37 +380,37 @@ function Test-Updates {
     $errors = 0
     
     # Check VERSION file
-    if (Test-Path $VERSION_FILE) {
-        $current = (Get-Content $VERSION_FILE -Raw).Trim()
+    if (Test-FileExists $VERSION_FILE) {
+        $current = Trim-String (Read-FileContentRaw $VERSION_FILE)
         if ($current -eq $Version) {
-            Write-Success "✓ VERSION file: $current"
+            Write-Success "[OK] VERSION file: $current"
         }
         else {
-            Write-Error "✗ VERSION file: expected $Version, found $current"
+            Write-ErrorMsg "[X] VERSION file: expected $Version, found $current"
             $errors++
         }
     }
     
     # Check pyproject.toml
-    if (Test-Path $PYPROJECT_FILE) {
-        $content = Get-Content $PYPROJECT_FILE -Raw
-        if ($content -match "version\s*=\s*`"$([regex]::Escape($Version))`"") {
-            Write-Success "✓ pyproject.toml: $Version"
+    if (Test-FileExists $PYPROJECT_FILE) {
+        $content = Read-FileContentRaw $PYPROJECT_FILE
+        if ($content -match "version\s*=\s*`"$Version`"") {
+            Write-Success "[OK] pyproject.toml: $Version"
         }
         else {
-            Write-Error "✗ pyproject.toml: version not found or incorrect"
+            Write-ErrorMsg "[X] pyproject.toml: version not found or incorrect"
             $errors++
         }
     }
     
     # Check __init__.py
-    if (Test-Path $INIT_FILE) {
-        $content = Get-Content $INIT_FILE -Raw
-        if ($content -match "__version__\s*=\s*`"$([regex]::Escape($Version))`"") {
-            Write-Success "✓ __init__.py: $Version"
+    if (Test-FileExists $INIT_FILE) {
+        $content = Read-FileContentRaw $INIT_FILE
+        if ($content -match "__version__\s*=\s*`"$Version`"") {
+            Write-Success "[OK] __init__.py: $Version"
         }
         else {
-            Write-Error "✗ __init__.py: version not found or incorrect"
+            Write-ErrorMsg "[X] __init__.py: version not found or incorrect"
             $errors++
         }
     }

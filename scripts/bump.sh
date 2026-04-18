@@ -31,7 +31,7 @@ CONFIG_SYSTEM_LINUX="$PROJECT_ROOT/.config.system.linux.yml"
 CONFIG_SYSTEM_WINDOWS="$PROJECT_ROOT/.config.system.windows.yml"
 ENV_EXAMPLE_FILE="$PROJECT_ROOT/.env.example"
 
-PYTHON="poetry run python"
+PYTHON="uv run python"
 
 # Flags
 DRY_RUN=0
@@ -160,17 +160,7 @@ update_pyproject() {
 		return 0
 	fi
 
-	# Update version in [tool.poetry] section
-	if grep -q '^\[tool\.poetry\]' "$PYPROJECT_FILE"; then
-		# Use sed to update version under [tool.poetry]
-		sed -i.bak '/^\[tool\.poetry\]/,/^\[/ s/^version = .*/version = "'"$new_version"'"/' "$PYPROJECT_FILE"
-		rm -f "$PYPROJECT_FILE.bak"
-		log_success "✓ Updated: $PYPROJECT_FILE ([tool.poetry] section)"
-	else
-		log_warn "Section [tool.poetry] not found in $PYPROJECT_FILE"
-	fi
-
-	# Also update [project] section if it exists
+	# Update version in [project] section
 	if grep -q '^\[project\]' "$PYPROJECT_FILE"; then
 		sed -i.bak '/^\[project\]/,/^\[/ s/^version = .*/version = "'"$new_version"'"/' "$PYPROJECT_FILE"
 		rm -f "$PYPROJECT_FILE.bak"

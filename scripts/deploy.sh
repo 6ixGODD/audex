@@ -53,26 +53,25 @@ deploy_pypi() {
 
 	cd "$PROJECT_ROOT"
 
-	if !  command_exists poetry; then
-		die "Poetry is not installed"
+	if !  command_exists uv; then
+		die "uv is not installed"
 	fi
 
 	# Build if no dist/
 	if [ ! -d "dist" ] || [ -z "$(ls -A dist 2>/dev/null)" ]; then
 		log_info "No build artifacts found, building..."
-		poetry build
+		uv build
 	fi
 
-	# Configure repository
+	# Deploy with uv publish
 	if [ "$target" = "test" ]; then
-		poetry config repositories.testpypi https://test.pypi.org/legacy/
-		poetry publish -r testpypi
+		uv publish --publish-url https://test.pypi.org/legacy/
 	else
 		if !  confirm "Deploy to production PyPI?"; then
 			log_info "Deployment cancelled"
 			exit 0
 		fi
-		poetry publish
+		uv publish
 	fi
 
 	log_success "Deployment complete"

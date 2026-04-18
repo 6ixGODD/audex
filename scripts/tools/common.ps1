@@ -422,8 +422,10 @@ function Test-SemanticVersion {
 # Export Functions
 # ============================================================================
 
-# Export all functions for use in other scripts
-Export-ModuleMember -Function *
+# Note: When using dot-sourcing (. script.ps1), all functions are automatically
+# available in the calling scope. Export-ModuleMember is only needed for modules.
+# If you want to use this as a module (.psm1), uncomment the line below:
+# Export-ModuleMember -Function *
 
 # ============================================================================
 # Script Information

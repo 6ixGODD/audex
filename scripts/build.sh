@@ -25,7 +25,7 @@ Usage: $(basename "$0") <command> [options]
 Build tools for Audex project
 
 Commands:
-  python                 Build Python wheel/sdist with Poetry
+  python                 Build Python wheel/sdist with uv
   docs                   Build documentation with MkDocs
   deb <arch>             Build DEB package (arm64/amd64)
   all                    Build everything (Python + docs)
@@ -56,11 +56,11 @@ build_python() {
 		rm -rf dist/ build/ *.egg-info
 	fi
 
-	if !  command_exists poetry; then
-		die "Poetry is not installed. Install: pip install poetry"
+	if !  command_exists uv; then
+		die "uv is not installed. Install: pip install uv"
 	fi
 
-	poetry build
+	uv build
 
 	echo ""
 	log_success "Python package built successfully"
