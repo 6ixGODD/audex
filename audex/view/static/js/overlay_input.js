@@ -114,6 +114,10 @@
         if (!isTA) field.type = isPwd ? 'password' : 'text';
         field.placeholder = ph;
         field.value = initVal;
+        // Linux平板输入法需要这些属性来识别可输入元素
+        field.setAttribute('inputmode', isPwd ? 'text' : 'text');
+        field.setAttribute('autocomplete', 'off');
+        field.setAttribute('autocapitalize', 'off');
 
         var btn = document.createElement('button');
         btn.className = 'audex-oi-confirm';
@@ -159,17 +163,24 @@
 
         function _focusField() {
             if (!_active) return;
-            field.focus();
-            if (!isTA) {
-                try { field.setSelectionRange(field.value.length, field.value.length); } catch (_) {}
-            }
+            // Linux平板输入法需要先触发一次blur再focus来强制唤起
+            field.blur();
+            setTimeout(function() {
+                field.focus();
+                // 触发一次click事件来激活输入法上下文
+                field.click();
+                if (!isTA) {
+                    try { field.setSelectionRange(field.value.length, field.value.length); } catch (_) {}
+                }
+            }, 10);
         }
 
-        /* Try to focus immediately, on next frame, and after a short delay
-           to win the race against any async focus-trap redirect. */
+        /* Try to focus immediately, on next frame, and after multiple delays
+           to ensure the DOM is fully rendered and the input method daemon recognizes it. */
         _focusField();
         requestAnimationFrame(_focusField);
         setTimeout(_focusField, 80);
+        setTimeout(_focusField, 200);  // 额外延迟确保输入法守护进程响应
     }
 
     function _hide() {
