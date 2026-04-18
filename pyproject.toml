@@ -1,10 +1,10 @@
 [build-system]
-build-backend = "poetry.core.masonry.api"
-requires = [ "poetry-core>=2,<3" ]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=68", "wheel"]
 
 [project]
 name = "audex"
-version = "1.0.7-a6"
+version = "1.0.0-a2"
 description = ""
 readme = "README.md"
 authors = [
@@ -70,17 +70,19 @@ optional-dependencies.test = [
   "types-pyyaml>=6.0.12.20250915,<7",
 ]
 
-[tool.poetry]
-packages = [ { include = "audex" } ]
-include = [
-  "audex/view/static/**/*.js",
-  "audex/view/static/**/*.css",
-  "audex/view/static/images/**/*",
-  "audex/lib/server/templates/**/*.j2",
-  "audex/lib/server/templates/**/*.html",
-  "audex/lib/server/templates/**/*.js",
-  "audex/lib/server/templates/**/*.css",
-]
-
-[tool.poetry.scripts]
+[project.scripts]
 audex = "audex.cli:cli"
+
+[tool.setuptools]
+packages = ["audex"]
+
+[tool.setuptools.package-data]
+audex = [
+  "view/static/**/*.js",
+  "view/static/**/*.css",
+  "view/static/images/**/*",
+  "lib/server/templates/**/*.j2",
+  "lib/server/templates/**/*.html",
+  "lib/server/templates/**/*.js",
+  "lib/server/templates/**/*.css",
+]
