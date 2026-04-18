@@ -7,7 +7,7 @@
 ## System Requirements
 
 - Python 3.10-3.13
-- Poetry
+- uv (package manager)
 - PortAudio
 - FFmpeg
 - SQLite3
@@ -49,7 +49,7 @@ pip install audex
 ```bash
 git clone https://github.com/6ixGODD/audex.git
 cd audex
-poetry install
+uv sync
 ```
 
 ### DEB Package (Debian/Ubuntu/Raspberry Pi)
@@ -161,20 +161,20 @@ See `config.example.yml` for complete configuration options.
 
 ```bash
 # Development environment
-poetry install --extras dev
+uv sync --extra dev
 
 # Testing environment
-poetry install --extras test
+uv sync --extra test
 
 # Documentation environment
-poetry install --extras docs
+uv sync --extra docs
 ```
 
 ### Build Package
 
 ```bash
 # Build wheel and sdist
-poetry build
+uv build
 
 # Output: dist/audex-{version}-py3-none-any.whl
 ```
@@ -182,15 +182,15 @@ poetry build
 ### Run Tests
 
 ```bash
-poetry install --extras test
-poetry run pytest
+uv sync --extra test
+uv run pytest
 ```
 
 ### Documentation
 
 ```bash
-poetry install --extras docs
-poetry run mkdocs serve
+uv sync --extra docs
+uv run mkdocs serve
 
 # Visit: http://127.0.0.1:8000
 ```
@@ -293,7 +293,7 @@ audex/
 ## 系统要求
 
 - Python 3.10-3.13
-- Poetry
+- uv（包管理器）
 - PortAudio
 - FFmpeg
 - SQLite3
@@ -335,7 +335,7 @@ pip install audex
 ```bash
 git clone https://github.com/6ixGODD/audex.git
 cd audex
-poetry install
+uv sync
 ```
 
 ### DEB 包安装（Debian/Ubuntu/Raspberry Pi）
@@ -447,20 +447,20 @@ infrastructure:
 
 ```bash
 # 开发环境
-poetry install --extras dev
+uv sync --extra dev
 
 # 测试环境
-poetry install --extras test
+uv sync --extra test
 
 # 文档环境
-poetry install --extras docs
+uv sync --extra docs
 ```
 
 ### 构建包
 
 ```bash
 # 构建 wheel 和 sdist
-poetry build
+uv build
 
 # 输出：dist/audex-{version}-py3-none-any.whl
 ```
@@ -468,15 +468,15 @@ poetry build
 ### 运行测试
 
 ```bash
-poetry install --extras test
-poetry run pytest
+uv sync --extra test
+uv run pytest
 ```
 
 ### 文档
 
 ```bash
-poetry install --extras docs
-poetry run mkdocs serve
+uv sync --extra docs
+uv run mkdocs serve
 
 # 访问：http://127.0.0.1:8000
 ```
