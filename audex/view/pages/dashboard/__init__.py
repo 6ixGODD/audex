@@ -44,23 +44,52 @@ async def render(
             ui.label(config.core.app.app_name).classes("text-h6 font-semibold text-grey-9")
 
         with ui.row().classes("items-center gap-4"):
-            # WiFi indicator
-            wifi_indicator = WiFiIndicator(wifi_manager)
-            wifi_indicator.render()
-
             # FileSystem indicator
             filesys_indicator = FileSystemIndicator(filesys_manager)
             filesys_indicator.render()
 
-            # Doctor info
-            with (
-                ui.card()
-                .classes("px-4 py-2")
-                .style(
-                    "border-radius: 16px; box-shadow: none; background: rgba(248, 249, 250, 0.6); backdrop-filter: blur(20px);"
-                )
-            ):
-                ui.label(f"{doctor.name}").classes("text-sm font-medium text-grey-9")
+            # WiFi indicator
+            wifi_indicator = WiFiIndicator(wifi_manager)
+            wifi_indicator.render()
+
+            # Logout button
+            @handle_errors
+            async def do_logout() -> None:
+                await doctor_service.logout()
+                ui.notify("已退出登录", type="info")
+                ui.navigate.to("/login")
+
+            async def confirm_logout() -> None:
+                """Show confirmation dialog before logout."""
+                with (
+                    ui.dialog() as dialog,
+                    ui.card().style("min-width: 400px; border-radius: 16px; padding: 24px;"),
+                ):
+                    ui.label("确认退出登录").classes("text-h6 font-semibold text-grey-9 mb-4")
+                    ui.label("您确定要退出登录吗？").classes("text-body2 text-grey-7 mb-6")
+
+                    with ui.row().classes("gap-3 w-full justify-end"):
+                        (
+                            ui.button("取消", on_click=dialog.close)
+                            .props("flat color=grey-7")
+                            .classes("px-4")
+                        )
+
+                        async def confirm_and_close() -> None:
+                            dialog.close()
+                            await do_logout()
+
+                        (
+                            ui.button("确认退出", on_click=confirm_and_close)
+                            .props("flat color=negative")
+                            .classes("px-4")
+                        )
+
+                dialog.open()
+
+            ui.button(icon="logout", on_click=confirm_logout).props("flat round size=md").classes(
+                "press-button"
+            ).tooltip("退出登录")
 
             # Screen mode toggle button
             is_fullscreen_state = {"value": True}
@@ -86,16 +115,15 @@ async def render(
 
                 fullscreen_btn.on("click", toggle_fullscreen)
 
-            # Logout button
-            @handle_errors
-            async def do_logout() -> None:
-                await doctor_service.logout()
-                ui.notify("已退出登录", type="info")
-                ui.navigate.to("/login")
-
-            ui.button(icon="logout", on_click=do_logout).props("flat round size=md").classes(
-                "press-button"
-            ).tooltip("退出登录")
+            # Doctor info
+            with (
+                ui.card()
+                .classes("px-4 py-2")
+                .style(
+                    "border-radius: 16px; box-shadow: none; background: rgba(248, 249, 250, 0.6); backdrop-filter: blur(20px);"
+                )
+            ):
+                ui.label(f"{doctor.name}").classes("text-sm font-medium text-grey-9")
 
     # Main content
     with (
@@ -120,7 +148,7 @@ async def render(
         with ui.column().classes("gap-8").style("min-width: 100px; max-width: 360px; width: 100%;"):
             # Welcome
             with ui.column().classes("gap-2 mb-6"):
-                candidate_words = ["Hi,", "Hello,", "您好,", ":)", "欢迎回来,", "很高兴见到您,"]
+                candidate_words = ["Hi,", "Hello,", "你好,", ":)", "欢迎回来,", "很高兴见到您,"]
                 ui.label(random.choice(candidate_words)).classes("text-h3 font-bold text-grey-9")
                 ui.label(doctor.name).classes("text-h2 gradient-text").style("line-height: 1.2;")
 
