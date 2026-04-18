@@ -34,36 +34,21 @@ jobs:
         run: |
           choco install portaudio -y
         continue-on-error: true
-      - name: Install Poetry (Unix)
-        if: runner.os != 'Windows'
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - name: Install Poetry (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -
-          echo "$env:APPDATA\Python\Scripts" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-        shell: pwsh
-      - name: Verify Poetry installation
-        run: poetry --version
-      - name: Configure Poetry
-        run: |
-          poetry config virtualenvs.create true
-          poetry config virtualenvs.in-project true
+      - name: Install uv
+        run: pip install uv
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
           path: .venv
-          key: venv-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          key: venv-${{ runner.os }}-py${{ matrix.python-version }}-${{ hashFiles('**/uv.lock') }}
           restore-keys: |
             venv-${{ runner.os }}-py${{ matrix.python-version }}-
       - name: Install dependencies
-        run: poetry install --no-interaction --all-extras
+        run: uv sync --all-extras
       - name: Run tests
         run: |
-          poetry run pytest tests/ -v \
-            --cov=boxlab \
+          uv run pytest tests/ -v \
+            --cov=audex \
             --cov-report=xml \
             --cov-report=term-missing \
             --tb=short \
@@ -101,32 +86,24 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y portaudio19-dev python3-pyaudio
-      - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
-      - name: Verify Poetry installation
-        run: poetry --version
-      - name: Configure Poetry
-        run: |
-          poetry config virtualenvs.create true
-          poetry config virtualenvs.in-project true
+      - name: Install uv
+        run: pip install uv
       - name: Cache dependencies
         uses: actions/cache@v4
         with:
           path: .venv
-          key: venv-ubuntu-py3.11-${{ hashFiles('**/poetry.lock') }}
+          key: venv-ubuntu-py3.11-${{ hashFiles('**/uv.lock') }}
       - name: Install dependencies
-        run: poetry install --no-interaction --all-extras
+        run: uv sync --all-extras
       - name: Run ruff
         run: |
-          poetry run ruff check .|| echo "Ruff check completed with warnings"
+          uv run ruff check .|| echo "Ruff check completed with warnings"
         continue-on-error: true
       - name: Run mypy
         run: |
-          poetry run mypy boxlab || echo "MyPy check completed with warnings"
+          uv run mypy audex || echo "MyPy check completed with warnings"
         continue-on-error: true
       - name: Check formatting
         run: |
-          poetry run ruff format --check .|| echo "Format check completed with warnings"
+          uv run ruff format --check .|| echo "Format check completed with warnings"
         continue-on-error: true
