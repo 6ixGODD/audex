@@ -134,9 +134,7 @@ echo ""
 
 echo -e "${BLUE}🎤 Detecting audio devices...${NC}"
 
-source "$AUDEX_VENV/bin/activate"
-
-python3 -c "
+"$AUDEX_VENV/bin/python" -c "
 import pyaudio
 import sys
 
@@ -174,7 +172,10 @@ echo ""
 # Run Setup Wizard
 # ============================================================================
 
-python3 -m audex init setup \
+echo -e "${BLUE}🔧 Starting configuration wizard...${NC}"
+echo ""
+
+"$AUDEX_VENV/bin/python" -m audex init setup \
     --config "$TEMP_CONFIG" \
     --output "$USER_CONFIG"
 

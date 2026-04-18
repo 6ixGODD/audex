@@ -81,10 +81,8 @@ export PYTHONUNBUFFERED="1"
 # Launch Audex
 # ============================================================================
 
-source "$AUDEX_VENV/bin/activate"
-
 if [ $# -eq 0 ]; then
-    exec python3 -m audex --config "$USER_CONFIG"
+    exec "$AUDEX_VENV/bin/python" -m audex --config "$USER_CONFIG"
 else
-    exec python3 -m audex "$@"
+    exec "$AUDEX_VENV/bin/python" -m audex "$@"
 fi
