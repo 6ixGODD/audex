@@ -331,7 +331,7 @@ class Settings(BaseSettings):
     # ============================================================================
 
     def _serl_value(self, value: t.Any, include_none: bool = False) -> t.Any:
-        """Serialize a value, handling special cases like callables.
+        """Serialize a value, handling special cases like callables and enums.
 
         Args:
             value: The value to serialize.
@@ -357,6 +357,11 @@ class Settings(BaseSettings):
 
         if isinstance(value, PydBaseModel):
             return value.model_dump()
+
+        # Handle Enum - extract the value
+        from enum import Enum
+        if isinstance(value, Enum):
+            return value.value
 
         serialized: list[t.Any] | dict[str, t.Any]
 
