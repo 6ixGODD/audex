@@ -265,7 +265,7 @@ function Read-FileContentRaw {
 function Write-FileContent {
     <#
     .SYNOPSIS
-    Write content to file with UTF-8 encoding
+    Write content to file with UTF-8 encoding (no BOM)
     .PARAMETER Path
     The file path to write
     .PARAMETER Content
@@ -276,7 +276,9 @@ function Write-FileContent {
         [string[]]$Content
     )
     try {
-        $Content | Set-Content -Path $Path -Encoding UTF8
+        # Use UTF8 without BOM
+        $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+        [System.IO.File]::WriteAllLines($Path, $Content, $utf8NoBom)
     }
     catch {
         Exit-WithError "Failed to write file: $Path - $_"
@@ -286,7 +288,7 @@ function Write-FileContent {
 function Write-FileContentRaw {
     <#
     .SYNOPSIS
-    Write raw content to file with UTF-8 encoding (no newline)
+    Write raw content to file with UTF-8 encoding (no BOM, no newline)
     .PARAMETER Path
     The file path to write
     .PARAMETER Content
@@ -297,7 +299,9 @@ function Write-FileContentRaw {
         [string]$Content
     )
     try {
-        Set-Content -Path $Path -Value $Content -Encoding UTF8 -NoNewline
+        # Use UTF8 without BOM
+        $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+        [System.IO.File]::WriteAllText($Path, $Content, $utf8NoBom)
     }
     catch {
         Exit-WithError "Failed to write file: $Path - $_"
