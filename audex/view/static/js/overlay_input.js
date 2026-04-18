@@ -163,24 +163,32 @@
 
         function _focusField() {
             if (!_active) return;
-            // Linux平板输入法需要先触发一次blur再focus来强制唤起
-            field.blur();
+            // Linux输入法的特殊处理：必须确保元素完全可编辑且可见
+            field.removeAttribute('readonly');
+            field.removeAttribute('disabled');
+            field.style.opacity = '1';
+            
+            field.focus();
+            if (!isTA) {
+                try { field.setSelectionRange(field.value.length, field.value.length); } catch (_) {}
+            }
+            
+            // 强制触发一次input事件，某些Linux IME需要这个信号
             setTimeout(function() {
-                field.focus();
-                // 触发一次click事件来激活输入法上下文
-                field.click();
-                if (!isTA) {
-                    try { field.setSelectionRange(field.value.length, field.value.length); } catch (_) {}
-                }
-            }, 10);
+                if (!_active) return;
+                field.dispatchEvent(new Event('focus', { bubbles: true }));
+                field.dispatchEvent(new MouseEvent('click', { 
+                    bubbles: true,
+                    cancelable: true,
+                    view: window 
+                }));
+            }, 50);
         }
 
-        /* Try to focus immediately, on next frame, and after multiple delays
-           to ensure the DOM is fully rendered and the input method daemon recognizes it. */
-        _focusField();
+        /* Focus multiple times to win race against async focus traps */
         requestAnimationFrame(_focusField);
-        setTimeout(_focusField, 80);
-        setTimeout(_focusField, 200);  // 额外延迟确保输入法守护进程响应
+        setTimeout(_focusField, 100);
+        setTimeout(_focusField, 250);
     }
 
     function _hide() {
