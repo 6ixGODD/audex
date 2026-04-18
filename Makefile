@@ -12,7 +12,7 @@
 # ============================================================================
 
 PYTHON := python3
-POETRY := poetry
+UV := uv
 MKDOCS := mkdocs
 SCRIPTS_DIR := scripts
 PACKAGING_DIR := packaging/linux
@@ -47,24 +47,24 @@ help: ## Show this help message
 # Development Setup
 # ============================================================================
 
-install: ## Install project dependencies with Poetry
+install: ## Install project dependencies with uv
 	@echo "$(BLUE)Installing dependencies... $(NC)"
-	$(POETRY) install
+	$(UV) sync
 	@echo "$(GREEN)✓ Dependencies installed$(NC)"
 
 install-dev: ## Install development dependencies
 	@echo "$(BLUE)Installing development dependencies...$(NC)"
-	$(POETRY) install --with dev
+	$(UV) sync --extra dev
 	@echo "$(GREEN)✓ Development dependencies installed$(NC)"
 
 install-docs: ## Install documentation dependencies
 	@echo "$(BLUE)Installing documentation dependencies...$(NC)"
-	$(POETRY) install --with docs
+	$(UV) sync --extra docs
 	@echo "$(GREEN)✓ Documentation dependencies installed$(NC)"
 
 install-all: ## Install all dependencies (including dev and docs)
 	@echo "$(BLUE)Installing all dependencies...$(NC)"
-	$(POETRY) install --with dev,docs
+	$(UV) sync --all-extras
 	@echo "$(GREEN)✓ All dependencies installed$(NC)"
 
 setup: install-all ## Complete development setup
@@ -100,19 +100,19 @@ dev-clean-stubs: ## Clean generated stubs
 
 format: ## Format code with black and isort
 	@echo "$(BLUE)Formatting code...$(NC)"
-	$(POETRY) run black audex/
-	$(POETRY) run isort audex/
+	$(UV) run black audex/
+	$(UV) run isort audex/
 	@echo "$(GREEN)✓ Code formatted$(NC)"
 
 lint: ## Run linters (ruff, mypy)
 	@echo "$(BLUE)Running linters...$(NC)"
-	$(POETRY) run ruff check audex/
-	$(POETRY) run mypy audex/
+	$(UV) run ruff check audex/
+	$(UV) run mypy audex/
 	@echo "$(GREEN)✓ Linting complete$(NC)"
 
 type-check: ## Run type checking with mypy
 	@echo "$(BLUE)Type checking...$(NC)"
-	$(POETRY) run mypy audex/
+	$(UV) run mypy audex/
 	@echo "$(GREEN)✓ Type checking complete$(NC)"
 
 check: format lint ## Run all code quality checks
@@ -123,16 +123,16 @@ check: format lint ## Run all code quality checks
 
 test: ## Run all tests
 	@echo "$(BLUE)Running tests...$(NC)"
-	$(POETRY) run pytest
+	$(UV) run pytest
 	@echo "$(GREEN)✓ Tests passed$(NC)"
 
 test-cov: ## Run tests with coverage report
 	@echo "$(BLUE)Running tests with coverage...$(NC)"
-	$(POETRY) run pytest --cov=audex --cov-report=html --cov-report=term
+	$(UV) run pytest --cov=audex --cov-report=html --cov-report=term
 	@echo "$(GREEN)✓ Coverage report generated: htmlcov/index.html$(NC)"
 
 test-watch: ## Run tests in watch mode
-	$(POETRY) run pytest-watch
+	$(UV) run pytest-watch
 
 # ============================================================================
 # Build
@@ -307,8 +307,8 @@ ci: ## Simulate CI pipeline locally
 # Utilities
 # ============================================================================
 
-shell: ## Open Poetry shell
-	$(POETRY) shell
+shell: ## Open uv shell
+	$(UV) run bash
 
 info: ## Show project information
 	@echo "$(BLUE)Project Information:$(NC)"
@@ -316,20 +316,20 @@ info: ## Show project information
 	@echo "Python version:"
 	@$(PYTHON) --version
 	@echo ""
-	@echo "Poetry version:"
-	@$(POETRY) --version
+	@echo "uv version:"
+	@$(UV) --version
 	@echo ""
 	@echo "Project dependencies:"
-	@$(POETRY) show --tree
+	@$(UV) tree
 
 update: ## Update dependencies
 	@echo "$(BLUE)Updating dependencies...$(NC)"
-	$(POETRY) update
+	$(UV) sync --upgrade
 	@echo "$(GREEN)✓ Dependencies updated$(NC)"
 
 lock: ## Update lock file
 	@echo "$(BLUE)Updating lock file...$(NC)"
-	$(POETRY) lock
+	$(UV) lock
 	@echo "$(GREEN)✓ Lock file updated$(NC)"
 
 # ============================================================================
