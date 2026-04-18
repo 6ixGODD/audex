@@ -133,6 +133,7 @@ plugins:
 nav:
   - Home: index.md
   - Installation: installation.md
+  - Development: development.md
   - API Reference:
       - reference/index.md
       - Library:
