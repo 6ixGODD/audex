@@ -138,10 +138,12 @@ class ANSI:
         style_str = "".join(valid_styles)
 
         # Handle text that already contains reset codes
-        if cls.STYLE.RESET in text:
-            text = text.replace(cls.STYLE.RESET, f"{cls.STYLE.RESET}{style_str}")
+        # Use the actual ANSI code value, not the enum object
+        reset_code = cls.STYLE.RESET.value if hasattr(cls.STYLE.RESET, 'value') else cls.STYLE.RESET
+        if reset_code in text:
+            text = text.replace(reset_code, f"{reset_code}{style_str}")
 
-        return f"{style_str}{text}{cls.STYLE.RESET}"
+        return f"{style_str}{text}{reset_code}"
 
     @classmethod
     def success(cls, text: str, /) -> str:
@@ -187,7 +189,8 @@ class ANSI:
 
         code = 48 if background else 38
         color_seq = f"\033[{code};2;{r};{g};{b}m"
-        return f"{color_seq}{text}{cls.STYLE.RESET}"
+        reset_code = cls.STYLE.RESET.value if hasattr(cls.STYLE.RESET, 'value') else cls.STYLE.RESET
+        return f"{color_seq}{text}{reset_code}"
 
 
 ANSI.enable()
