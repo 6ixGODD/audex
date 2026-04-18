@@ -1,6 +1,6 @@
 # Audex System Configuration
 # Platform: linux
-# Version: 1.0.7-a6
+# Version: 1.1.0-a3
 #
 # This file is generated automatically. Do not edit manually.
 # User configuration should be placed in ~/.config/audex/config.yml
@@ -10,7 +10,7 @@
 core:
   app:
     app_name: Audex
-    app_version: 1.0.7-a6
+    app_version: 1.1.0-a3
     debug: false
     native: true
   logging:
@@ -32,6 +32,8 @@ core:
     segment_buffer: 2000
   session:
     ttl_hours: 168
+  ui:
+    input_mode: auto
 provider:
   transcription:
     provider: dashscope

@@ -1,7 +1,7 @@
 core: # Core configuration settings.
   app: # Application specific configuration
     app_name: Audex # The name of the application.
-    app_version: 1.0.7-a6 # The version of the application.
+    app_version: 1.1.0-a3 # The version of the application.
     debug: false # Enable or disable debug mode.
     native: false # Indicates if the application is running in native mode.
   logging: # Logging configuration
@@ -12,7 +12,7 @@ core: # Core configuration settings.
       - logname: stderr
         loglevel: error
         rotation: ~
-      - logname: logs/audex.jsonl
+      - logname: logs\audex.jsonl
         loglevel: info
         rotation:
           size_based:
@@ -28,6 +28,8 @@ core: # Core configuration settings.
     segment_buffer: 2000 # The buffer time in milliseconds for audio segmentation.
   session: # Session management configuration
     ttl_hours: 168 # Time to live for a session in hours.
+  ui: # UI behaviour configuration
+    input_mode: auto # Overlay input mode for touch/tablet devices. 'never': never show overlay input; 'always': always show overlay input on double-click; 'auto': show overlay only when no physical keyboard is detected.
 provider: # Provider configuration settings.
   transcription: # Transcription provider configuration
     provider: dashscope # The transcription service provider.
