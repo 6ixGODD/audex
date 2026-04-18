@@ -91,6 +91,9 @@ pyrightconfig.json
 # Config files
 .config.yml
 
+# Notes directory (development notes, not for repo)
+notes/
+
 !audex/lib/
 !/tests/lib/
 !/docs/reference/lib/
