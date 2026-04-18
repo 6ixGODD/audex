@@ -12,6 +12,7 @@ from audex.service.doctor.types import UpdateCommand
 from audex.valueobj.common.auth import Password
 from audex.valueobj.common.email import Email
 from audex.valueobj.common.phone import CNPhone
+from audex.view.components import overlay_input
 from audex.view.decorators import handle_errors
 
 
@@ -161,7 +162,7 @@ async def render(
                 edit_form.visible = False
                 with edit_form:
                     name_input = (
-                        ui.input("", placeholder="姓名")
+                        overlay_input("", placeholder="姓名")
                         .classes("w-full clean-input")
                         .props("standout dense hide-bottom-space")
                     )
@@ -170,21 +171,21 @@ async def render(
                     # Two columns
                     with ui.row().classes("w-full gap-4"):
                         department_input = (
-                            ui.input("", placeholder="科室")
+                            overlay_input("", placeholder="科室")
                             .classes("flex-1 clean-input")
                             .props("standout dense hide-bottom-space")
                         )
                         department_input.value = doctor.department or ""
 
                         title_input = (
-                            ui.input("", placeholder="职称")
+                            overlay_input("", placeholder="职称")
                             .classes("flex-1 clean-input")
                             .props("standout dense hide-bottom-space")
                         )
                         title_input.value = doctor.title or ""
 
                     hospital_input = (
-                        ui.input("", placeholder="医院")
+                        overlay_input("", placeholder="医院")
                         .classes("w-full clean-input")
                         .props("standout dense hide-bottom-space")
                     )
@@ -192,14 +193,14 @@ async def render(
 
                     with ui.row().classes("w-full gap-4"):
                         phone_input = (
-                            ui.input("", placeholder="手机号")
+                            overlay_input("", placeholder="手机号")
                             .classes("flex-1 clean-input")
                             .props("standout dense hide-bottom-space")
                         )
                         phone_input.value = str(doctor.phone) if doctor.phone else ""
 
                         email_input = (
-                            ui.input("", placeholder="邮箱")
+                            overlay_input("", placeholder="邮箱")
                             .classes("flex-1 clean-input")
                             .props("standout dense hide-bottom-space")
                         )
@@ -265,7 +266,7 @@ async def render(
                         )
 
                         eid_confirm = (
-                            ui.input("", placeholder=f"请输入工号: {doctor.eid}")
+                            overlay_input("", placeholder=f"请输入工号: {doctor.eid}")
                             .classes("w-full mb-4 clean-input")
                             .props("outlined dense")
                         )
@@ -311,7 +312,7 @@ async def render(
                     .style("max-width: 100%; width: 25vw; min-width: 300px;")
                 ):
                     old_password_input = (
-                        ui.input(
+                        overlay_input(
                             "",
                             placeholder="当前密码",
                             password=True,
@@ -322,7 +323,7 @@ async def render(
                     )
 
                     new_password_input = (
-                        ui.input(
+                        overlay_input(
                             "",
                             placeholder="新密码",
                             password=True,
@@ -333,7 +334,7 @@ async def render(
                     )
 
                     confirm_password_input = (
-                        ui.input(
+                        overlay_input(
                             "",
                             placeholder="确认新密码",
                             password=True,

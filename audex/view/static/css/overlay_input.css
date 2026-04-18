@@ -1,0 +1,123 @@
+/* ============================================================
+   Audex Overlay Input
+   Full-screen blurred backdrop + top-anchored input bar
+   ============================================================ */
+
+.audex-oi-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 28px;
+    animation: audex-oi-fade-in 0.18s ease;
+}
+
+@keyframes audex-oi-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Input bar – pill shape, frosted glass */
+.audex-oi-bar {
+    width: min(640px, 88vw);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 9999px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 8px 8px 8px 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    animation: audex-oi-slide-down 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: border-color 0.2s ease;
+}
+
+/* Focused state – white border */
+.audex-oi-bar:focus-within {
+    border-color: rgba(255, 255, 255, 0.8);
+}
+
+/* Textarea variant – rounded rectangle */
+.audex-oi-bar.audex-oi-bar--ta {
+    border-radius: 20px;
+    padding: 14px 10px 14px 24px;
+    align-items: flex-start;
+}
+
+@keyframes audex-oi-slide-down {
+    from { transform: translateY(-16px); opacity: 0; }
+    to   { transform: translateY(0);     opacity: 1; }
+}
+
+/* Text field */
+.audex-oi-field {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 18px;
+    font-family: inherit;
+    color: #ffffff;
+    line-height: 1.5;
+    min-width: 0;
+    caret-color: #fff;
+}
+
+.audex-oi-field::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.audex-oi-textarea {
+    resize: none;
+    min-height: 80px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+/* Confirm button – circle with checkmark icon */
+.audex-oi-confirm {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #374151;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s ease, transform 0.1s ease;
+    padding: 0;
+}
+
+.audex-oi-confirm::before {
+    /* Material Design checkmark via unicode, sized to fill the circle */
+    content: '';
+    display: block;
+    width: 20px;
+    height: 20px;
+    background: currentColor;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E") center/contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z'/%3E%3C/svg%3E") center/contain no-repeat;
+}
+
+.audex-oi-confirm:hover  { background: #ffffff; }
+.audex-oi-confirm:active { transform: scale(0.92); }
+
+/* Hint text below the bar */
+.audex-oi-backdrop::after {
+    content: 'Esc 取消';
+    margin-top: 14px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    font-family: inherit;
+    letter-spacing: 0.04em;
+}

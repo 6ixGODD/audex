@@ -9,6 +9,8 @@ from nicegui import ui
 from audex.container import Container
 from audex.service.session import SessionService
 from audex.service.session.types import UpdateSessionCommand
+from audex.view.components import overlay_input
+from audex.view.components import overlay_textarea
 from audex.view.decorators import handle_errors
 
 
@@ -123,14 +125,14 @@ async def render(
             with edit_form:
                 with ui.row().classes("w-full gap-4"):
                     patient_name_input = (
-                        ui.input("", placeholder="患者姓名")
+                        overlay_input("", placeholder="患者姓名")
                         .classes("flex-1 clean-input")
                         .props("standout dense hide-bottom-space")
                     )
                     patient_name_input.value = session.patient_name or ""
 
                     clinic_number_input = (
-                        ui.input("", placeholder="门诊号")
+                        overlay_input("", placeholder="门诊号")
                         .classes("flex-1 clean-input")
                         .props("standout dense hide-bottom-space")
                     )
@@ -138,21 +140,21 @@ async def render(
 
                 with ui.row().classes("w-full gap-4 mt-3"):
                     medical_record_number_input = (
-                        ui.input("", placeholder="病历号")
+                        overlay_input("", placeholder="病历号")
                         .classes("flex-1 clean-input")
                         .props("standout dense hide-bottom-space")
                     )
                     medical_record_number_input.value = session.medical_record_number or ""
 
                     diagnosis_input = (
-                        ui.input("", placeholder="诊断")
+                        overlay_input("", placeholder="诊断")
                         .classes("flex-1 clean-input")
                         .props("standout dense hide-bottom-space")
                     )
                     diagnosis_input.value = session.diagnosis or ""
 
                 notes_input = (
-                    ui.textarea("", placeholder="备注")
+                    overlay_textarea("", placeholder="备注")
                     .classes("w-full mt-3 clean-input notes-textarea")
                     .props("standout hide-bottom-space")
                 )
