@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import typing as t
+import urllib.parse
 
 from starlette.requests import Request
 from starlette.responses import Response
@@ -112,7 +113,7 @@ class RequestHandlers(LoggingMixin):
             return response
 
         except Exception as e:
-            self.logger.error(f"Login failed: {e}")
+            self.logger.exception(f"Login failed: {e}")
             return self._error_response(str(e), 500)
 
     async def api_logout(self, _: Request) -> Response:
@@ -163,7 +164,7 @@ class RequestHandlers(LoggingMixin):
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to list sessions: {e}")
+            self.logger.exception(f"Failed to list sessions: {e}")
             return self._error_response(str(e), 500)
 
     async def api_export_session(self, request: Request) -> Response:
@@ -192,14 +193,16 @@ class RequestHandlers(LoggingMixin):
 
             self.logger.info(f"Exported session {session_id} for doctor {doctor_id}")
 
+            encoded_filename = urllib.parse.quote(filename)
+
             return Response(
                 content=zip_data,
                 media_type="application/zip",
-                headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+                headers={"Content-Disposition": f'attachment; filename="{encoded_filename}"'},
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to export session: {e}")
+            self.logger.exception(f"Failed to export session: {e}")
             return self._error_response(str(e), 500)
 
     async def api_export_multiple(self, request: Request) -> Response:
@@ -235,7 +238,7 @@ class RequestHandlers(LoggingMixin):
             )
 
         except Exception as e:
-            self.logger.error(f"Failed to export multiple sessions: {e}")
+            self.logger.exception(f"Failed to export multiple sessions: {e}")
             return self._error_response(str(e), 500)
 
     def _error_response(self, message: str, status_code: int = 500) -> Response:
