@@ -12,7 +12,6 @@ from audex.service.doctor import DoctorService
 from audex.service.doctor.exceptions import InvalidCredentialsError
 from audex.service.doctor.types import LoginCommand
 from audex.valueobj.common.auth import Password
-from audex.view.components import overlay_input
 from audex.view.decorators import handle_errors
 
 
@@ -58,13 +57,13 @@ async def render(
 
         # Input fields - only bottom border
         eid_input = (
-            overlay_input("", placeholder="工号")
+            ui.input("", placeholder="工号")
             .classes("w-full mb-3 clean-input")
             .props("standout dense hide-bottom-space")
         )
 
         password_input = (
-            overlay_input(
+            ui.input(
                 "",
                 placeholder="密码",
                 password=True,

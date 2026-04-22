@@ -14,7 +14,6 @@ from audex.service.doctor.types import RegisterCommand
 from audex.valueobj.common.auth import Password
 from audex.valueobj.common.email import Email
 from audex.valueobj.common.phone import CNPhone
-from audex.view.components import overlay_input
 from audex.view.decorators import handle_errors
 
 
@@ -62,19 +61,19 @@ async def render(
         ui.label("基本信息").classes("text-subtitle2 font-semibold text-grey-8 mb-3")
 
         eid_input = (
-            overlay_input("", placeholder="工号 *")
+            ui.input("", placeholder="工号 *")
             .classes("w-full mb-3 clean-input")
             .props("standout dense hide-bottom-space")
         )
 
         name_input = (
-            overlay_input("", placeholder="姓名 *")
+            ui.input("", placeholder="姓名 *")
             .classes("w-full mb-3 clean-input")
             .props("standout dense hide-bottom-space")
         )
 
         password_input = (
-            overlay_input(
+            ui.input(
                 "",
                 placeholder="密码 *",
                 password=True,
@@ -85,7 +84,7 @@ async def render(
         )
 
         password2_input = (
-            overlay_input(
+            ui.input(
                 "",
                 placeholder="确认密码 *",
                 password=True,
@@ -100,31 +99,31 @@ async def render(
         ui.label("其他信息（选填）").classes("text-subtitle2 font-semibold text-grey-8 mb-3")
 
         department_input = (
-            overlay_input("", placeholder="科室")
+            ui.input("", placeholder="科室")
             .classes("w-full mb-3 clean-input")
             .props("standout dense hide-bottom-space")
         )
 
         title_input = (
-            overlay_input("", placeholder="职称")
+            ui.input("", placeholder="职称")
             .classes("w-full mb-3 clean-input")
             .props("standout dense hide-bottom-space")
         )
 
         hospital_input = (
-            overlay_input("", placeholder="医院")
+            ui.input("", placeholder="医院")
             .classes("w-full mb-3 clean-input")
             .props("standout dense hide-bottom-space")
         )
 
         phone_input = (
-            overlay_input("", placeholder="手机号")
+            ui.input("", placeholder="手机号")
             .classes("w-full mb-3 clean-input")
             .props("standout dense hide-bottom-space")
         )
 
         email_input = (
-            overlay_input("", placeholder="邮箱")
+            ui.input("", placeholder="邮箱")
             .classes("w-full mb-3 clean-input")
             .props("standout dense hide-bottom-space")
         )

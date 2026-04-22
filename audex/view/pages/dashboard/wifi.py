@@ -7,8 +7,6 @@ from nicegui import ui
 from audex.lib.wifi import WiFiManager
 from audex.lib.wifi import WiFiNetwork
 from audex.lib.wifi import WiFiSecurity
-from audex.view.components import overlay_input
-from audex.view.components.overlay_input import _ensure_assets
 
 
 def _get_wifi_icon_and_color(signal_quality: int, is_connected: bool) -> tuple[str, str]:
@@ -56,10 +54,6 @@ class WiFiIndicator:
 
     def render(self) -> ui.button:
         """Render WiFi indicator as a simple icon button."""
-        # Preload overlay assets during initial page render so the WiFi
-        # password input (created later inside an async task) can use them.
-        _ensure_assets()
-
         self.icon_display = (
             ui.button(icon="signal_wifi_off", on_click=self._show_dialog)
             .props("flat round")
@@ -359,7 +353,7 @@ class WiFiIndicator:
             with form_container, ui.row().classes("items-center w-full").style("gap: 12px;"):
                 if network.security != WiFiSecurity.OPEN:
                     password_input = (
-                        overlay_input("密码", password=True, password_toggle_button=True)
+                        ui.input("密码", password=True, password_toggle_button=True)
                         .classes("flex-1 clean-input")
                         .props("standout dense outlined")
                         .style("margin: 0;")
