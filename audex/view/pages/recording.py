@@ -72,7 +72,7 @@ async def render(
 
         # Waveform canvas container (below text)
         with ui.element("div").classes("waveform-container"):
-            ui.html('<canvas id="waveform-canvas"></canvas>')
+            ui.html('<canvas id="waveform-canvas"></canvas>', sanitize=False)
 
     # Footer glass overlay
     ui.element("div").classes("footer-glass")

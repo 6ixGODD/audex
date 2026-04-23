@@ -150,7 +150,8 @@ class FileSystemIndicator:
                                         style="transition: stroke-dashoffset 0.5s ease;"
                                     />
                                 </svg>
-                                """
+                                """,
+                                sanitize=False,
                             )
 
                             # Center text
